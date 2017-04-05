@@ -9,9 +9,27 @@ const json = require('koa-json');
 const bodyparser = require('koa-bodyparser')();
 const logger = require('koa-logger');
 
+/*热更新开始*/
+const webpack = require('webpack');
+const webpackDevMiddleware = require('webpack-dev-middleware');
+const webpackHotMiddleware = require('webpack-hot-middleware');
+const { koaDevMiddleware, koaHotMiddleware } = require('koa-webpack-middleware-zm');
+const devConfig = require('./webpack.config.js');
+const devCompiler = webpack(devConfig);
+const expressDevMiddleware = webpackDevMiddleware(devCompiler, {
+    publicPath: devConfig.output.publicPath,
+    stats: {
+        colors: true
+    }
+});
+app.use(koaDevMiddleware(expressDevMiddleware));
+const expressHotMiddleware = webpackHotMiddleware(devCompiler);
+app.use(koaHotMiddleware(expressHotMiddleware));
+/*热更新结束*/
+
+
 const index = require('./routes/index');
 const users = require('./routes/users');
-
 // middlewares
 app.use(convert(bodyparser));
 app.use(convert(json()));
@@ -19,7 +37,6 @@ app.use(convert(logger()));
 app.use(require('koa-static')(__dirname + '/public'));
 
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));
-
 // logger
 app.use(async (ctx, next) => {
   const start = new Date();

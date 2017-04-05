@@ -1,11 +1,13 @@
 var path = require('path');
 var webpack = require('webpack');
 module.exports = {
-  entry: './public/javascripts/main.js',
+  entry: {
+    'main': ['./public/javascripts/main.js',
+      'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000']},
   output: {
     path: path.resolve(__dirname, './public/dist'),
-    publicPath: '/public/dist',
-    filename: 'build.js'
+    publicPath: '/dist',
+    filename: '[name].build.js'
   },
   module: {
     rules: [
@@ -43,6 +45,10 @@ module.exports = {
   performance: {
     hints: false
   },
+  plugins: [
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NoEmitOnErrorsPlugin()
+  ],
   devtool: '#eval-source-map'
 };
 
