@@ -21,7 +21,7 @@ const moduleA = {
   }
 };
 
-window.store = new Vuex.Store({
+const store = new Vuex.Store({
   state: {
     count: 0
   },
@@ -34,7 +34,7 @@ window.store = new Vuex.Store({
     moduleA
   }
 });
-window.router = new VueRouter({
+const router = new VueRouter({
   mode: 'hash',
   routes: [
 	{ path: '/index', component: App,
