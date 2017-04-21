@@ -8,6 +8,7 @@ const json = require('koa-json');
 //const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser')();
 const logger = require('koa-logger');
+const favicon = require('koa-favicon');
 
 /*热更新开始*/
 const webpack = require('webpack');
@@ -34,6 +35,8 @@ const users = require('./routes/users');
 app.use(convert(bodyparser));
 app.use(convert(json()));
 app.use(convert(logger()));
+
+app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
 
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));
