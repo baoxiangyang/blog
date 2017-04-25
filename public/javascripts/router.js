@@ -7,6 +7,7 @@ Vue.use(VueRouter);
 export default new VueRouter({
   mode: 'hash',
   routes: [
-	{ path: '/', component: articleList}
+		{ path: '/',  redirect:'/articleList'},
+		{ path:'/articleList', component: articleList}
   ]
 });

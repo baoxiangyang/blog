@@ -1,7 +1,7 @@
 <template>
-  <div class="container">
+  <div class="main">
     <header>
-      <el-menu theme="dark" :default-active="activeIndex" class="nav" @select="handleSelect">
+      <el-menu theme="dark" :default-active="activeIndex" class="nav maxWidth" @select="handleSelect">
         <el-row>
           <el-col :sm="5" class="headerItem">
             <h1>
@@ -44,10 +44,9 @@
   };
 </script>
 <style lang="less">
-  .container {
-    max-width: 1140px;
-    margin: 0 auto;
+  .main {
     header {
+      background-color: #324157;
       .el-menu-item {
         float: none !important;
         display: inline-block;
