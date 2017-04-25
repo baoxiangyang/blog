@@ -57,6 +57,15 @@
         console.log(arguments);
       }
     },
+    created: function(){
+      this.$http.post('/api/articleList', {
+        data: {a:1}
+      }).then((res) => {
+        console.log(res);
+      }).catch((error) => {
+        console.log(error);
+      });
+    },
     components: {
       articleItem: articleItem
     }

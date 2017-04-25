@@ -6,8 +6,11 @@ import 'element-ui/lib/theme-default/index.css';
 import index from './layout/index.vue';
 import store from './store.js';
 import router from './router.js';
+import axios from 'axios';
+import VueAxios from 'vue-axios';
 
 Vue.use(ElementUI);
+Vue.use(VueAxios, axios);
 
 new Vue({
   el: '#app',
