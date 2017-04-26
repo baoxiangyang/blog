@@ -28,17 +28,17 @@
     <div class="page maxWidth">
       <el-pagination
       @current-change="handleCurrentChange"
-      :current-page="currentPage"
-      :page-size="10"
-      layout="total, prev, pager, next"
-      :total="100">
+      :current-page="this.articleData.currentPage"
+      :page-size="this.articleData.pageSize"
+      :total="this.articleData.total"
+      layout="total, prev, pager, next">
     </el-pagination>
     </div>
   </div>
 </template>
 <script type="text/javascript">
   import articleItem from '../components/articleItem.vue';
-  import { mapActions } from 'vuex';
+  import { mapActions, mapState, mapGetters } from 'vuex';
   export default {
     data() {
       return {
@@ -46,6 +46,9 @@
         searchData: '',
         currentPage: 5
       };
+    },
+    computed: {
+      ...mapGetters(['articleData'])
     },
     methods: {
       ...mapActions([

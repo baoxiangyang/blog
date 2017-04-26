@@ -15,8 +15,24 @@ db.connection.on('error', function(err){
 let sfModel = db.model('sfdatas', schema.articleList_Schema);
 
 //查数文章列表 返回promise
-let findArticleArr = function(obj){
-	return	sfModel.find(obj, {_id: 0, __v: 0});
+let findArticleArr = function({find = {}, pageSize = 10, currentPage = 1}){
+	return	sfModel.find(find, {_id: 0, __v: 0}).then((docs) => {
+		let data = {
+			total: docs.length,
+			pageSize: pageSize,
+			currentPage: currentPage,
+			list: docs.slice((currentPage -1) * pageSize, currentPage * pageSize),
+			error: false
+		};
+		docs = null;
+		return Promise.resolve(data);
+	}).catch((error) => {
+		return Promise.resolve({
+			errorMsg: error,
+			error: true,
+			errorCode: -1
+		});
+	});
 };
 
 module.exports = {

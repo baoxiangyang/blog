@@ -3,11 +3,11 @@ let router = require('koa-router')(),
 
 router.post('/articleList', async function (ctx, next) {
 	console.log(ctx.request.body);
-	let list = await mongo.findArticleArr({});
+	let articleData = await mongo.findArticleArr({});
 	ctx.body = {
 		state: 0,
 		data: {
-			list
+			articleData
 		},
 		msg: '获取文章列表成功'
 	};
