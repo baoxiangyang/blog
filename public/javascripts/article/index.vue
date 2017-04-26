@@ -38,6 +38,7 @@
 </template>
 <script type="text/javascript">
   import articleItem from '../components/articleItem.vue';
+  import { mapActions } from 'vuex';
   export default {
     data() {
       return {
@@ -47,6 +48,9 @@
       };
     },
     methods: {
+      ...mapActions([
+        'get_articleList' 
+      ]),
       handleSelect(){
 
       },
@@ -55,16 +59,10 @@
       },
       handleCurrentChange(){
         console.log(arguments);
-      }
+      },
     },
     created: function(){
-      this.$http.post('/api/articleList', {
-        data: {a:1}
-      }).then((res) => {
-        console.log(res);
-      }).catch((error) => {
-        console.log(error);
-      });
+      this.get_articleList({a:1});
     },
     components: {
       articleItem: articleItem
