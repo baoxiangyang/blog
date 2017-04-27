@@ -1,5 +1,6 @@
 import {set_articleList, set_articleStatus} from '../mutation-types.js';
 import axios from 'axios';
+import {formatTime} from "../base.js";
 const articleModule = {
 	state: {
 		list: [],
@@ -23,17 +24,19 @@ const articleModule = {
 		}
 	},
 	getters: {
-		articleData: state => {
-			return state;
+		articleList: state => {
+			return state.list.map(item => {
+				item.timeMsg = formatTime(item.time, true);
+				item.label = item.label.split(',');
+				return item;
+			});
 		}
 	},
 	actions: {
 		//获取文章列表
-get_articleList({commit, state}, obj) {
+get_articleList({commit, state}, postData) {
 	commit(set_articleStatus, {loading: true});
-	return axios.post('/api/articleList', {
-    data: obj
-  }).then(res => {
+	return axios.post('/api/articleList', postData).then(res => {
     commit(set_articleList, res.data.data.articleData);
   }).catch(error => {
 		commit(set_articleStatus, {error: true, errorMsg: '网络错误请重试！', errorCode: error.status});

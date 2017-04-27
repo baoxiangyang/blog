@@ -2,8 +2,7 @@ let router = require('koa-router')(),
 	mongo = require('../dbs/mongodb.js');
 
 router.post('/articleList', async function (ctx, next) {
-	console.log(ctx.request.body);
-	let articleData = await mongo.findArticleArr({});
+	let articleData = await mongo.findArticleArr(ctx.request.body || {});
 	ctx.body = {
 		state: 0,
 		data: {

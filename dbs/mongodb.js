@@ -17,6 +17,9 @@ let sfModel = db.model('sfdatas', schema.articleList_Schema);
 //查数文章列表 返回promise
 let findArticleArr = function({find = {}, pageSize = 10, currentPage = 1}){
 	return	sfModel.find(find, {_id: 0, __v: 0}).then((docs) => {
+		docs = docs.sort((a, b) => {
+			return (new Date(b.time).getTime() - new Date(a.time).getTime());
+		});
 		let data = {
 			total: docs.length,
 			pageSize: pageSize,

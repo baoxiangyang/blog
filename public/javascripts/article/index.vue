@@ -2,70 +2,89 @@
   <div class="articleList">
     <div class="articleHeader">
       <el-menu :default-active="activeIndex" class="articleNav maxWidth" mode="horizontal" @select="handleSelect">
-        <el-menu-item index="1">javascript</el-menu-item>
-        <el-menu-item index="2">html</el-menu-item>
-        <el-menu-item index="3">css</el-menu-item>
-        <el-menu-item index="4">webpack</el-menu-item>
-        <el-menu-item index="5">gulp</el-menu-item>
-        <el-menu-item index="6">node</el-menu-item>
-        <el-menu-item index="7">vue</el-menu-item>
-        <el-menu-item index="8">react</el-menu-item>
-        <el-menu-item index="9">其他</el-menu-item>
+        <el-menu-item index="all">全部</el-menu-item>
+        <el-menu-item index="javascript">javascript</el-menu-item>
+        <el-menu-item index="html">html</el-menu-item>
+        <el-menu-item index="css">css</el-menu-item>
+        <el-menu-item index="webpack">webpack</el-menu-item>
+        <el-menu-item index="gulp">gulp</el-menu-item>
+        <el-menu-item index="node">node</el-menu-item>
+        <el-menu-item index="vue">vue</el-menu-item>
+        <el-menu-item index="react">react</el-menu-item>
+        <el-menu-item index="other">其他</el-menu-item>
         <el-input class="search" icon="search" v-model="searchData" :on-icon-click="handleSearchClick" placeholder="搜索" size="small"></el-input>
       </el-menu>
     </div>
-    <el-row :gutter="20" class="articleLayout maxWidth">
+    <el-row :gutter="20" class="articleLayout maxWidth" v-loading="loading"
+    element-loading-text="拼命加载中">
       <el-col :span="20">
-        <articleItem key="1"></articleItem>
-        <articleItem key="2"></articleItem>
-        <articleItem key="3"></articleItem>
-        <articleItem key="4"></articleItem>
+        <articleItem  v-for="item in list" key="item.id" :detailsData="item"></articleItem>
       </el-col>
       <el-col :span="4">
         <el-button type="text">发布文章</el-button>
       </el-col>
+      <el-col :span="24" class="page maxWidth">
+        <el-pagination 
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          layout="total, prev, pager, next">
+        </el-pagination>
+      </el-col>
     </el-row>
-    <div class="page maxWidth">
-      <el-pagination
-      @current-change="handleCurrentChange"
-      :current-page="this.articleData.currentPage"
-      :page-size="this.articleData.pageSize"
-      :total="this.articleData.total"
-      layout="total, prev, pager, next">
-    </el-pagination>
-    </div>
+    
   </div>
 </template>
 <script type="text/javascript">
   import articleItem from '../components/articleItem.vue';
   import { mapActions, mapState, mapGetters } from 'vuex';
+  import { backToTop } from '../base.js';
   export default {
     data() {
       return {
-        activeIndex: '',
-        searchData: '',
-        currentPage: 5
+        activeIndex: 'all',
+        searchData: ''
       };
     },
     computed: {
-      ...mapGetters(['articleData'])
+      ...mapState({
+        currentPage: state => state.articleModule.currentPage,
+        pageSize: state => state.articleModule.pageSize,
+        total: state => state.articleModule.total,
+        loading: state => state.articleModule.loading,
+        error: state => state.articleModule.error,
+        errorMsg: state => state.articleModule.errorMsg,
+        errorCode: state => state.articleModule.errorCode
+      }),
+      ...mapGetters({
+        list: 'articleList'
+      })
     },
     methods: {
       ...mapActions([
         'get_articleList' 
       ]),
-      handleSelect(){
-
+      //点击分类
+      handleSelect(activeIndex){
+        this.activeIndex = activeIndex;
+        this.get_articleList({type: activeIndex, currentPage: 1}).then(() => {
+          backToTop();
+        });
       },
+      //input搜索
       handleSearchClick(){
 
       },
-      handleCurrentChange(){
-        console.log(arguments);
-      },
+      //点击分页
+      handleCurrentChange(currentPage){
+        this.get_articleList({type: this.activeIndex, search: this.searchData, currentPage: currentPage}).then(() => {
+          backToTop();
+        });
+      }
     },
     created: function(){
-      this.get_articleList({a:1});
+      this.get_articleList();
     },
     components: {
       articleItem: articleItem
@@ -93,7 +112,7 @@
       padding: 0 5px;
     }
     .page {
-      padding: 10px 25px;
+      padding: 10px 25px 30px;
       overflow: hidden;
       .el-pagination {
         float: right;
