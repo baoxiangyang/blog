@@ -27,7 +27,6 @@ const articleModule = {
 		articleList: state => {
 			return state.list.map(item => {
 				item.timeMsg = formatTime(item.time, true);
-				item.label = item.label.split(',');
 				return item;
 			});
 		}
