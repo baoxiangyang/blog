@@ -38,7 +38,7 @@ get_articleList({commit, state}, postData) {
 	return axios.post('/api/articleList', postData).then(res => {
     commit(set_articleList, res.data.data.articleData);
   }).catch(error => {
-		commit(set_articleStatus, {error: true, errorMsg: '网络错误请重试！', errorCode: error.status});
+		commit(set_articleStatus, {error: true, errorMsg: '网络错误请重试！', errorCode: error.status, loading: false});
   });
 	}
 }

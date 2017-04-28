@@ -19,11 +19,12 @@
     element-loading-text="拼命加载中">
       <el-col :span="20">
         <articleItem  v-for="item in list" key="item.id" :detailsData="item"></articleItem>
+        <p v-show="!list.length" class="nodata">暂无数据</p>
       </el-col>
       <el-col :span="4">
         <el-button type="text">发布文章</el-button>
       </el-col>
-      <el-col :span="24" class="page maxWidth">
+      <el-col :span="24" class="page maxWidth" v-show="list.length">
         <el-pagination 
           @current-change="handleCurrentChange"
           :current-page="currentPage"
@@ -38,7 +39,7 @@
 </template>
 <script type="text/javascript">
   import articleItem from '../components/articleItem.vue';
-  import { mapActions, mapState, mapGetters } from 'vuex';
+  import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
   import { backToTop } from '../base.js';
   export default {
     data() {
@@ -65,16 +66,28 @@
       ...mapActions([
         'get_articleList' 
       ]),
+      ...mapMutations([
+        'set_articleStatus'
+      ]),
       //点击分类
       handleSelect(activeIndex){
         this.activeIndex = activeIndex;
-        this.get_articleList({type: activeIndex, currentPage: 1}).then(() => {
-          backToTop();
-        });
+        this.searchData = '';
+        if(this.currentPage == 1){
+          this.handleCurrentChange(1);
+        }else{
+          this.set_articleStatus({
+            currentPage: 1
+          });
+        }
       },
       //input搜索
       handleSearchClick(){
-
+        this.activeIndex = 'all';
+        this.handleCurrentChange(1);
+      },
+      handleSearchChange(event){
+        console.log(arguments)
       },
       //点击分页
       handleCurrentChange(currentPage){
@@ -110,6 +123,11 @@
     }
     .articleLayout {
       padding: 0 5px;
+      min-height: 1233px;
+      .nodata {
+        padding:12px 0;
+        text-align: center;
+      }
     }
     .page {
       padding: 10px 25px 30px;
