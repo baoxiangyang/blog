@@ -1,66 +1,38 @@
 <template>
   <div class="articleList">
     <div class="articleHeader">
-      <el-menu :default-active="activeIndex" class="articleNav maxWidth" mode="horizontal" @select="handleSelect">
-        <el-menu-item index="all">全部</el-menu-item>
-        <el-menu-item index="javascript">javascript</el-menu-item>
-        <el-menu-item index="html">html</el-menu-item>
-        <el-menu-item index="css">css</el-menu-item>
-        <el-menu-item index="webpack">webpack</el-menu-item>
-        <el-menu-item index="gulp">gulp</el-menu-item>
-        <el-menu-item index="node">node</el-menu-item>
-        <el-menu-item index="vue">vue</el-menu-item>
-        <el-menu-item index="react">react</el-menu-item>
-        <el-menu-item index="other">其他</el-menu-item>
-        <el-input class="search" icon="search" v-model="searchData" :on-icon-click="handleSearchClick" placeholder="搜索" size="small"></el-input>
+      <el-menu :default-active="activeIndex" :router="true" @select="handleSelect" class="articleNav maxWidth" mode="horizontal">
+        <el-menu-item index="/article?type=all">全部</el-menu-item>
+        <el-menu-item index="/article?type=javascript">javascript</el-menu-item>
+        <el-menu-item index="/article?type=html">html</el-menu-item>
+        <el-menu-item index="/article?type=css">css</el-menu-item>
+        <el-menu-item index="/article?type=webpack">webpack</el-menu-item>
+        <el-menu-item index="/article?type=gulp">gulp</el-menu-item>
+        <el-menu-item index="/article?type=node">node</el-menu-item>
+        <el-menu-item index="/article?type=vue">vue</el-menu-item>
+        <el-menu-item index="/article?type=react">react</el-menu-item>
+        <el-menu-item index="/article?type=other">其他</el-menu-item>
+        <el-input class="search" icon="search" v-model="search" :on-icon-click="handleSearchClick" placeholder="搜索" size="small" @change="handleInputChange"></el-input>
       </el-menu>
     </div>
-    <el-row :gutter="20" class="articleLayout maxWidth" v-loading="loading"
-    element-loading-text="拼命加载中">
-      <el-col :span="20">
-        <articleItem  v-for="item in list" key="item.id" :detailsData="item"></articleItem>
-        <p v-show="!list.length" class="nodata">暂无数据</p>
-      </el-col>
-      <el-col :span="4">
-        <el-button type="text">发布文章</el-button>
-      </el-col>
-      <el-col :span="24" class="page maxWidth" v-show="list.length">
-        <el-pagination 
-          @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-size="pageSize"
-          :total="total"
-          layout="total, prev, pager, next">
-        </el-pagination>
-      </el-col>
-    </el-row>
-    
+    <router-view></router-view>  
   </div>
 </template>
 <script type="text/javascript">
-  import articleItem from '../components/articleItem.vue';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
-  import { backToTop } from '../base.js';
   export default {
     data() {
       return {
-        activeIndex: 'all',
-        searchData: ''
+        oldSearch: ''
       };
     },
-    computed: {
+    computed:{
       ...mapState({
+        activeIndex: state => state.articleModule.activeIndex,
         currentPage: state => state.articleModule.currentPage,
-        pageSize: state => state.articleModule.pageSize,
-        total: state => state.articleModule.total,
-        loading: state => state.articleModule.loading,
-        error: state => state.articleModule.error,
-        errorMsg: state => state.articleModule.errorMsg,
-        errorCode: state => state.articleModule.errorCode
+        search: state => state.articleModule.search,
+        type: state => state.articleModule.type,
       }),
-      ...mapGetters({
-        list: 'articleList'
-      })
     },
     methods: {
       ...mapActions([
@@ -69,38 +41,32 @@
       ...mapMutations([
         'set_articleStatus'
       ]),
-      //点击分类
-      handleSelect(activeIndex){
-        this.activeIndex = activeIndex;
-        this.searchData = '';
-        if(this.currentPage == 1){
-          this.handleCurrentChange(1);
-        }else{
-          this.set_articleStatus({
-            currentPage: 1
-          });
-        }
-      },
       //input搜索
       handleSearchClick(){
-        this.activeIndex = 'all';
-        this.handleCurrentChange(1);
+        if(this.oldSearch == this.search){
+          if(this.currentPage != 1){
+            this.set_articleStatus({currentPage: 1});
+          }else{
+            this.get_articleList({currentPage:1, type: this.type, search: this.search});
+          }
+        }else{
+          this.$router.push({ path: '/article', query: {type: 'all', search: this.search}});
+        }
+        this.oldSearch = this.search;
       },
-      handleSearchChange(event){
-        console.log(arguments)
+      handleInputChange(value){
+        this.set_articleStatus({search: value});
       },
-      //点击分页
-      handleCurrentChange(currentPage){
-        this.get_articleList({type: this.activeIndex, search: this.searchData, currentPage: currentPage}).then(() => {
-          backToTop();
-        });
+      handleSelect(index){
+        this.set_articleStatus({search: ''});
+        if(this.activeIndex == index){
+          if(this.currentPage == 1){
+            this.get_articleList({currentPage:1, type: this.type});
+          }else{
+            this.set_articleStatus({currentPage: 1});
+          }
+        }
       }
-    },
-    created: function(){
-      this.get_articleList();
-    },
-    components: {
-      articleItem: articleItem
     }
   };
 </script>
@@ -119,21 +85,6 @@
         float: right;
         margin-right: 25px;
         margin-top: 5px;
-      }
-    }
-    .articleLayout {
-      padding: 0 5px;
-      min-height: 1233px;
-      .nodata {
-        padding:12px 0;
-        text-align: center;
-      }
-    }
-    .page {
-      padding: 10px 25px 30px;
-      overflow: hidden;
-      .el-pagination {
-        float: right;
       }
     }
   }

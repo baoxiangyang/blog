@@ -1,0 +1,129 @@
+<h3>1. letter-spacing,word-spacing,white-space的区别</h3>
+<p>letter-spacing指字母间距，对英文和汉字，空格都有效，也可以叫字符间距。</p>
+<p>word-spacing指单词间距，对汉字不支持。</p>
+<p>white-space指空白和换行的处理。有以下几个值</p>
+<table>
+<thead><tr>
+<th>序号</th>
+<th align="left">名称</th>
+<th align="center">说明</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td align="left">normal</td>
+<td align="center">压缩空白和换行符，排满时换行</td>
+</tr>
+<tr>
+<td>2</td>
+<td align="left">nowrap</td>
+<td align="center">压缩空白和换行符，排满也不换行</td>
+</tr>
+<tr>
+<td>3</td>
+<td align="left">pre</td>
+<td align="center">不压缩空白和换行符，排满不换行</td>
+</tr>
+<tr>
+<td>4</td>
+<td align="left">pre-line</td>
+<td align="center">不压缩空白和换行符，排满不换行</td>
+</tr>
+<tr>
+<td>5</td>
+<td align="left">pre-wrap</td>
+<td align="center">不压缩空白和换行符，排满换行</td>
+</tr>
+</tbody>
+</table>
+<pre><code>&lt;p&gt;
+    hello     world hello you hello me hello !!!
+    hello     world hello you hello me hello !!!
+    hello     world hello you hello me hello !!!
+    hello     world hello you hello me hello !!!
+&lt;/p&gt;</code></pre>
+<p>normal时的效果：压缩空白和换行符，排满换行。</p>
+<p><img data-src="/img/bVJ0m4?w=324&amp;h=236" src="/img/bVJ0m4?w=324&amp;h=236.png"></p>
+<p>nowrap时的效果：压缩空白和换行符，排满不换行。</p>
+<p><img data-src="/img/bVJ0m5?w=1219&amp;h=42" src="/img/bVJ0m5?w=1219&amp;h=42.png"></p>
+<p>pre时的效果：不压缩空白和换行符，排满不换行。</p>
+<p><img data-src="/img/bVJ0nb?w=475&amp;h=147" src="/img/bVJ0nb?w=475&amp;h=147.png"></p>
+<p>pre-line时的效果：压缩空白，不压缩换行符，排满换行。</p>
+<p><img data-src="/img/bVJ0nV?w=460&amp;h=301" src="/img/bVJ0nV?w=460&amp;h=301.png"></p>
+<p>pre-wrap时的效果：不压缩空白和换行符，排满换行。</p>
+<p><img data-src="/img/bVJ0ox?w=273&amp;h=311" src="/img/bVJ0ox?w=273&amp;h=311.png"></p>
+<h3>2. word-break,word-wrap的区别</h3>
+<p>word-wrap处理单词内是否换行。word-break处理单词是否换行。</p>
+<pre><code>&lt;p class=word&gt;
+    hello world aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+&lt;/p&gt;</code></pre>
+<p>默认情况：</p>
+<p><img data-src="/img/bVJ0sp?w=506&amp;h=69" src="/img/bVJ0sp?w=506&amp;h=69.png"></p>
+<p>word-wrap: break-word;时</p>
+<p><img data-src="/img/bVJ0ss?w=309&amp;h=124" src="/img/bVJ0ss?w=309&amp;h=124.png"></p>
+<p>word-break: break-all;时：</p>
+<p><img data-src="/img/bVJ0sz?w=346&amp;h=104" src="/img/bVJ0sz?w=346&amp;h=104.png"></p>
+<h3>3. text-overflow的使用</h3>
+<p>单行时：</p>
+<pre><code>p{
+    border: 1px solid red;
+    width: 100px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+
+    text-overflow: ellipsis;/*重点1*/
+    overflow: hidden;/*重点2*/
+    white-space: nowrap;/*重点3*/
+}</code></pre>
+<p>多行时：只支持webkit的浏览器，火狐和ie都不支持。</p>
+<pre><code>p.muti{
+    width: 200px;
+    border: 1px solid red;
+
+    text-overflow: ellipsis;
+    overflow: hidden; 
+
+    display: -webkit-box; /**对象作为伸缩盒子模型显示 **/
+    -webkit-box-orient: vertical; /** 设置或检索伸缩盒对象的子元素的排列方式 **/
+    -webkit-line-clamp: 2; /** 显示的行数 **/
+}</code></pre>
+<h3>4. text-shadow的使用</h3>
+<pre><code>text-shadow: 3px 2px 1px gray;</code></pre>
+<p>3px:横向长度，可为负值，向右为正。<br>2px:纵向长度，可为负值，向下为正。<br>1px:阴影的模糊长度。<br>gray:阴影颜色。</p>
+<p>可叠加，代码如下：</p>
+<pre><code>text-shadow: 1px 3px 1px gray,2px 3px 1px red,3px 3px 1px maroon;</code></pre>
+<p>效果：</p>
+<p><img data-src="/img/bVJ0xI?w=350&amp;h=70" src="/img/bVJ0xI?w=350&amp;h=70.png"></p>
+<h3>5. text-stroke的使用</h3>
+<p>text-stroke由text-stroke-color和text-stroke-width组成。下面是简写形式：</p>
+<pre><code>-webkit-text-stroke: 1px red;</code></pre>
+<p>效果：</p>
+<p><img data-src="/img/bVJ0zR?w=249&amp;h=57" src="/img/bVJ0zR?w=249&amp;h=57.png"></p>
+<p>目前支持情况不太乐观</p>
+<p><img data-src="/img/bVJ0Af?w=1259&amp;h=293" src="/img/bVJ0Af?w=1259&amp;h=293.png"></p>
+<p>查看支持情况的网址：<a href="http://caniuse.com">caniuse.com</a></p>
+<p>使用text-shadow也可以实现描边效果：</p>
+<pre><code>h1.shadow{text-shadow:-0.025em -0.025em 0 #f00,
+        0.025em -0.025em 0 #f00,
+        -0.025em 0.025em 0 #f00,
+        0.025em 0.025em 0 #f00;}</code></pre>
+<p>原理是在文字的上下左右加阴影。</p>
+<h3>6. text-fill-color的使用</h3>
+<p>有了文字描边，就有文字填充色。和text-stroke配合使用，支持情况也一样。</p>
+<pre><code> h1.stroke{
+    color: black; /*不起作用*/
+    -webkit-text-stroke: 1px red;
+    -webkit-text-fill-color:transparent;
+}</code></pre>
+<p>效果：</p>
+<p><img data-src="/img/bVJ0Bz?w=303&amp;h=72" src="/img/bVJ0Bz?w=303&amp;h=72.png"></p>
+<p>还可以和渐变背景色配合使用：</p>
+<pre><code> h1.textStroke1{
+    background:linear-gradient(90deg, #EEF85B 5%, #7AEC8D 53%, #09E5C3 91%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:#fff;
+    -webkit-text-stroke:6px transparent;
+ }</code></pre>
+<p>效果：</p>
+<p><img data-src="/img/bVJ0CP?w=311&amp;h=72" src="/img/bVJ0CP?w=311&amp;h=72.png"></p>

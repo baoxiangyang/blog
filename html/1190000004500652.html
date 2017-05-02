@@ -1,0 +1,171 @@
+<blockquote><p>了解 CSS 中属性的值及其特性， 透彻分析问题和需求才可以选择和设计最适合的布局解决方案。</p></blockquote>
+<p>多列布局在网页中非常常见（例如两列布局），多列布局可以是两列定宽，一列自适应， 或者多列不定宽一列自适应还有等分布局等。</p>
+<h2>定宽-自适应</h2>
+<p>有如下布局</p>
+<pre><code>&lt;div class="parent"&gt;
+  &lt;div class="left"&gt;
+    &lt;p&gt;left&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div class="right"&gt;
+    &lt;p&gt;right&lt;/p&gt;
+    &lt;p&gt;right&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<h3>float+margin</h3>
+<pre><code>  .left {
+    float: left;
+    width: 100px;
+  }
+  .right {
+    margin-left: 100px
+    /*间距可再加入 margin-left */
+  }</code></pre>
+<p><img data-src="/img/bVs2Y3" src="/img/bVs2Y3.png"></p>
+<p>优点：容易理解<br>缺点：IE6中会有3像素的BUG， 解决方法可以在.left 加入 <code>margin-left:-3px</code>。<br>因为left是浮动元素，right是没有浮动的，如果right内容中有清楚浮动就会产生bug。</p>
+<p><img data-src="/img/bVs2Y7" src="/img/bVs2Y7.png"></p>
+<h3>改进：float + margin + (fix)</h3>
+<pre><code>&lt;div class="parent"&gt;
+  &lt;div class="left"&gt;
+    &lt;p&gt;left&lt;/p&gt;
+  &lt;/div&gt;
+    /*外层在包裹一个容器*/
+  &lt;div class="right-fix"&gt;
+    &lt;div class="right"&gt;
+      &lt;p&gt;right&lt;/p&gt;
+      &lt;p&gt;right&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;style&gt;
+  .left {
+    float: left;
+    width: 100px;
+  }
+  .right-fix {
+    float: right;
+    width: 100%;
+    margin-left: -100px;
+  }
+  .right {
+    margin-left: 100px
+    /*间距可再加入 margin-left */
+  }
+&lt;/style&gt;</code></pre>
+<p>兼容性很好，适用于多版本浏览器（包括 IE6）但是多了层right-fix的结构。但left不可选择，被right-fix盖住。需要设置left的 <code>position: relative;</code>来提高层级。</p>
+<h3>float+overflow</h3>
+<pre><code> .left{ 
+       float: left;
+       width: 100px;
+       margin-right: 20px;
+  }
+  .right{ overflow: hidden; //触发BFC }</code></pre>
+<p><code>overflow:hidden</code>使得div产生了BFC 模式（Block Formatting Context）块级格式化文本，根据BFC的布局规则之一，div那个产生的BFC区域不会与左边浮动的元素所重叠。具体什么是BFC可以看看这篇<a href="http://www.cnblogs.com/dojo-lzz/p/3999013.html">文章</a></p>
+<h3>table</h3>
+<pre><code> .parent {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .left {
+    display: table-cell;
+    width: 100px;
+  }
+  .right {
+    display: table-cell;
+    /*宽度为剩余宽度*/
+  }</code></pre>
+<p><code>table</code> 的显示特性为每列的单元格宽度合一定等与表格宽度。 <code>table-layout: fixed;</code> 可加速渲染，也是设定布局优先。</p>
+<p><code>table-cell</code> 中不可以设置 <code>margin</code> 但是可以通过 <code>padding</code> 来设置间距。</p>
+<h3>flex</h3>
+<pre><code> .parent{ 
+      display: flex ; 
+  }
+ .left { 
+       width: 100px;
+       margin-right: 20px;
+  }
+  .right{
+        /*等价于flex:1 1 0; 增长因子和收缩因子都为1，
+         基础宽度为0,那么剩余宽度都分配给right*/
+        flex: 1 ; 
+    } </code></pre>
+<p><code>flex-item</code> 默认为内容宽度。<br>缺点： CSS3 兼容性。根据内容判断，性能会有问题，做小范围布局，不适合大范围布局。</p>
+<h2>不定宽-自适应</h2>
+<p><img data-src="/img/bVs2Ze" src="/img/bVs2Ze.png"></p>
+<h3>float + overflow</h3>
+<pre><code>  .left{ 
+       float: left;
+       width: 200px;
+       margin-right: 20px;
+  }
+  .right{ overflow: hidden; //触发BFC }</code></pre>
+<h3>table</h3>
+<pre><code> .parent{ 
+      display:table; 
+      width: 100%;
+  }
+ .left, .right { 
+       display: table-cell;
+  }
+  .left{ 
+       width:0.1%;  //写的够小就行，不写1px的原因是IE8会有问题
+       padding-right:20px; 
+   }
+  .left p{ width : 200px;}  //用内部元素撑开，宽度可以不定</code></pre>
+<h3>flex</h3>
+<pre><code>.parent{display:flex;}
+.left{margin-right:20px;}
+.right{flex:1;}</code></pre>
+<p>三列不定宽 + 自适应 与两列的做法一样</p>
+<h2>等分布局</h2>
+<p>每一列的宽度和间距均相等。<br>有如下HTML结构</p>
+<pre><code>&lt;div class="parent"&gt;
+    &lt;div class="column"&gt;&lt;p&gt;1&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="column"&gt;&lt;p&gt;2&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="column"&gt;&lt;p&gt;3&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="column"&gt;&lt;p&gt;4&lt;/p&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<h3>float</h3>
+<pre><code> .parent{
+    margin-left ：-20px; //为父元素增加20px宽度
+    }
+ .column{
+       float : left;
+       width: 25%;
+       padding-left : 20px;
+       box-sizing : border-box;
+      }</code></pre>
+<p><img data-src="/img/bVs2Zj" src="/img/bVs2Zj.png"><br>缺点：结构和样式稍微有点耦合性</p>
+<h3>table</h3>
+<pre><code> .parent-fix{  margin-left ：-20px; //为父元素增加20px宽度 }
+ .parent{ 
+      display : table;
+      width : 100%;
+      table-layout : fixed;
+  }     
+  .column{
+       float : left;
+       width: 25%;
+       padding-left : 20px;
+       box-sizing : border-box;
+  }</code></pre>
+<h3>fix</h3>
+<pre><code> .parent{ 
+      display : flex;
+  }     
+  .column{
+      flex: 1;
+  }
+  .column+.column{  margin-left: 20px;  } //选择2，3，4</code></pre>
+<h2>等高需求</h2>
+<h3>table</h3>
+<p>上面自适应的table布局就具有登高的布局</p>
+<h3>flex</h3>
+<p>如上面自适应的例子，flex 天然等高</p>
+<h3>float</h3>
+<pre><code> .parent{  overflow : hidden; }
+ .left, .right{
+       padding-bottom : 9999px;
+       margin-bottom : -9999px;
+  }</code></pre>
+<p>优点是兼容性比较好<br>缺点是伪等高 不是正真意义上的登高</p>

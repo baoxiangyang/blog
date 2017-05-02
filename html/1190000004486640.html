@@ -1,0 +1,128 @@
+<h1>亲，你知道缓存是什么吗？</h1>
+<p>其实缓存就像办健身卡，我第一次花了699办了一年的卡之后，接下来的一年我都可以免费锻炼。 在web 中， 我们交的不是钱，而是空间，我们耗费一定的空间之后，能够获得网页打开速度质的飞跃。 当我们第一次访问一个页面时，我们需要交纳一定的空间， 将下载的css,js,html已经img等相关资源保存在本地。 在第二次，第三次。。。访问时，就可以不用去下载文件了。<br>通常来说，设置文件的缓存有两种方式，一种是在服务器内设置响应头文件，另外一个是使用h5的manifest文件来进行相关设置.<br>我们先看看报文设置响应头的方式吧</p>
+<h1>服务器的缓存协商</h1>
+<p>这种方式设置的缓存有两种，一种是需要服务器验证，另外一种是不用发送请求验证。</p>
+<h2>ETag/Last-Modified</h2>
+<p>这两种方式做法类似，都要向服务器发送一次请求进行验证。简直，缓存就缓存呗，为什么还要验证呢？ 其实，这是该协议的一种特有方式，发送一次验证主要是检查文件是否发生变化。</p>
+<h3>ETag</h3>
+<p>ETag是用来计算文件的内容是否发生变化，比如，你在文件中删除一个空格，这样都算文件内容发生变化。 通常做法是用md5或者SHA1算法，计算出文件的唯一值。 在前端其实都可以完成， 找到一个文件文件解析的md5算法，然后将文件传入，就可以得到ETag的值。 不过这里，我们着重点并不是让你生成Etag，而是看看ETag在缓存中的重要作用。<br>ETag是HTTP/1.1A的一种办法，由Web服务器生成，并写入响应头中。</p>
+<pre><code>//response Headers
+ETag:"751F63A30AB5F98F855D1D90D217B356"</code></pre>
+<p>接着，到了浏览器之后，便缓存在本地。 当下次打开同样的文章时，会在请求头中发送If-None-Match, 给服务器检查文件是否发生变化。如果没有，则告诉浏览器使用本地的，否则返回新文件</p>
+<pre><code>//request Headers
+If-None-Match: "751F63A30AB5F98F855D1D90D217B356"</code></pre>
+<p>通常情况下，服务器默认是打开Etag的，但是为了防止你的同事，或者后台哥哥的后台配置文件不正确，关闭了Etag，这时候，就需要你对对<a href="https://zhanzhang.baidu.com/college/articleinfo?id=457">配置文件</a>做一些设置。 这里我以Nginx为例:<br>打开ngnix.conf文件，检查是否有以下语句:</p>
+<pre><code>etag off;
+more_set_headers -s 404 -t 'ETag';
+more_clear_headers 'Etag';</code></pre>
+<p>如果有则将其删除掉。然后重启nginx就可以了。他们将Etag关闭的原因其实也很简单，就是因为，Etag打开之后会增加服务器的负载，造成性能的局限性，所以，关闭或者打开Etag都要经过权衡的。</p>
+<h3>Last-Modified</h3>
+<p>这和文档内容信息验证不同，这里采用的是日期验证办法。 即，服务器上会对文件打上一个文件改动的日期，然后客户端接受该日期，下次请求时，返回该日期，服务器验证，如果日期未变，则告诉浏览器使用本地缓存即可。<br>即，在服务器的相应头中，可以设置Last-Modified，来启用这一缓存协议.</p>
+<pre><code>//Response Header
+Last-Modified:Tue, 03 Mar 2015 01:38:18 GMT</code></pre>
+<p>接受到这一响应头之后，浏览器会对该文件做一个缓存，并保存该日期。当下次请求的时候，会通过If-Modified-Since将日期传入并验证:</p>
+<pre><code>If-Modified-Since:Tue, 03 Mar 2015 01:38:18 GMT</code></pre>
+<p>如果日期未变，则告诉浏览器使用缓存。<br>那我们通常应该怎样启用服务器这一功能呢？<br>默认情况下，服务器会对静态资源发送Last-modified的tag。 但是，需要注意，Last-Modified的更新时间只能以秒来计，如果你文件改动过于频繁，Last-Modified是无效的(不过，谁牛逼到1s内能多次更新文件嘞~)<br>实际上.Last-Modified的这个标签的我们通常并不会单独使用它，通常与expires结合，形成一个可降级的缓存.</p>
+<h2>Expires/Cache-Control</h2>
+<p>Expires/Cache协议与上述验证协议最大的不同在于，他可以省略发送验证请求环节，不需要服务器的验证，而直接使用本地缓存。 通常这种方式，适用于，项目稳定，版本迭代不多的时候。</p>
+<h3>Expires</h3>
+<p>在服务器端可以设置Expires的一个绝对时间。</p>
+<pre><code>//Response Headers
+Expires:Tue, 03 May 2016 09:33:34 GMT</code></pre>
+<p>这告诉浏览器,在2016.5.3号之前,可以直接使用该文本的缓存副本。但是，可能会因为服务器和客户端的GMT时间不同，会有一定的bug。 所以，这里只提议在长时间缓存的情况下使用。否则，应该选择Cache-Control.<br>那在服务器端该怎么设置呢？ 这里以nginx为例:</p>
+<pre><code>location ~* \.(?:css|js)$ {
+  expires 1d;
+  access_log off;
+  add_header Cache-Control "public";
+}</code></pre>
+<p>通过<a href="http://www.qiansw.com/nginx-expires.html">expires</a>设置过期时间为一天，此时，服务器会根据当前的时间，加上一天.同时添加Expires和Cache-Control头部标签。<br>即,得到的Response Header为:</p>
+<pre><code>Expires: Fri, 28 Feb 2014 10:42:09 GMT
+Cache-Control: max-age=86400 //24*60*60</code></pre>
+<p>(HTTP规定，如果出现max-age和expires，则max-age默认覆盖掉expires)<br>当expires为负数表示no-cache，正数或零表示max-age=time。<br>如果你不想缓存，可以直接设置:</p>
+<pre><code>expires -1;  //永远过期，Cache-Control: no-cache</code></pre>
+<p>详细可以直接参阅:<a href="https://github.com/h5bp/server-configs-nginx/blob/master/h5bp/location/expires.conf">nginx配置</a></p>
+<h3>Cache-Control</h3>
+<p>这应该是HTTP1.1为了解决HTTP1.0中expires的时间差的bug，而新添加的一个tag. 他的配置项很多，其实完全都可以取代expires(现在大多数服务器都支持). 引用一段原话:</p>
+<blockquote><p><a href="https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=zh-cn">Cache-Control 头在 HTTP/1.1 规范中定义，取代了之前用来定义响应缓存策略的头（例如 Expires）。当前的所有浏览器都支持 Cache-Control，因此，使用它就够了。</a></p></blockquote>
+<p>不过，目前大部分服务器都会将两者添加上，因为HTTP规定，如果Cache-Control和expires同时出现的话，expires会默认被覆盖掉。<br>此时，返回的响应码不再是304(文件未改动),而是200(资源成功访问). </p>
+<p><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-2-23/84579045.jpg&amp;objectId=1190000004486640&amp;token=f17a33b404494c028f0182ca3c806b1d" src="/img/84579045.jpg&amp;objectId=1190000004486640&amp;token=f17a33b404494c028f0182ca3c806b1d"></p>
+<p>当前每次发送请求之前浏览器会检查缓存系统里，是否有相应文件的备份，如果有的话，则直接从本地模仿一个Response头<br>理论知识铺垫完毕，我们来take a look. 看看cache-control 有哪些可以配置的属性(以下属性都跟在cache-control后)</p>
+<pre><code>public: 共有缓存，可被缓存代理服务器缓存,比如CDN
+private: 私有缓存，不能被共有缓存代理服务器缓存，可被用户的代理缓存如浏览器。
+
+max-age=[秒]：表示在这个时间范围内缓存是新鲜的无需更新。类似Expires时间，不过这个时间是相对的，而不是绝对的。也就是某次请求成功后多少秒内缓存是新鲜的。
+
+s-maxage=[秒]：类似max-age, 除了仅应用于共享缓存（如代理）。
+
+no-cache：这里不是不缓存的意思，只是每次在使用缓存之前都强制发送请求给源服务器进行验证，检查文件该没改变(其实这里和ETag/Last区别不大)
+
+no-store：就是禁止缓存，不让浏览器保留缓存副本
+
+must-revalidate：告诉浏览器，你这必须再次验证检查信息是否过期, 返回的代号就不是200而是304了。
+
+proxy-revalidate：类似must-revalidate，除了只能应用于代理缓存。
+</code></pre>
+<p>比如，这里我可以设置Cache-Control为:</p>
+<pre><code>//Response Headers
+Cache-Control:private, max-age=0, must-revalidate</code></pre>
+<p>该文件是一个私有文件,只能被浏览器缓存，而不能被代理缓存。max-age标识该缓存<a href="http://stackoverflow.com/questions/1046966/whats-the-difference-between-cache-control-max-age-0-and-no-cache">立即过期</a>，其实和no-cache实际上区别不大. 然后must-revalidate告诉浏览器，你必须给我再验证文件过没过期，比如接下来可能会验证Last-Modified或者ETag.如果没有过期则使用本地缓存.<br>其实上面可以直接等同于:</p>
+<pre><code>//Response Headers
+Cache-Control:private,no-cache</code></pre>
+<p><strong>使用no-store的结果</strong></p>
+<pre><code>//Response Headers
+Cache-Control:no-store;</code></pre>
+<p>这样表明，不管一不一样都需要重新下载. 强烈表示，不让你使用缓存文件。后续的就不会去验证ETag了。<br>当然，如果你将IE6那种古老的浏览器考虑进来的话，那你干脆就做的不要脸一点，直接用下面的tag就行:</p>
+<pre><code>Cache-Control: no-cache, no-store, must-revalidate //HTTP1.1
+Pragma: no-cache //HTTP1.0
+Expires: 0 //Proxy</code></pre>
+<p>不过现在基本上也没有不支持Cache-Control的浏览器了。所以，正常情况下，可以直接使用.如下的策略来进行设置:(From <a href="https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=zh-cn">google developer</a>)<br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-2-23/28130284.jpg&amp;objectId=1190000004486640&amp;token=130bdb7e74e1663c561dc9891a2c2cf3" src="/img/28130284.jpg&amp;objectId=1190000004486640&amp;token=130bdb7e74e1663c561dc9891a2c2cf3"><br>我们通常在nginx怎么配置对应的cache-control头呢？</p>
+<pre><code>##设置no-cache
+//Nginx
+expires -1;
+//cache-control
+Cache-Control:no-cache
+
+##设置max-age=0
+//Nginx
+expires 0;
+//cache-control
+Cache-Control:max-age=0
+
+##设置其他头部
+//nginx
+add_header  Cache-Control "no-cache";
+add_header  Pragma no-cache;</code></pre>
+<p>上面说的基本上是服务器的响应头，那在浏览器的Request headers里存在cache-control代表什么呢？<br>当请求头中有:<code>Cache-Control: max-age=0</code>,表示缓存需要进行验证(ETag||Last-Modified)，如果缓存未过期,则可以使用。<br>当请求头中有:<code>Cache-Control: no-cache</code>,表示浏览器只能获取最新的文件。 和Response Header中的no-store相对应。</p>
+<h2>组合拳法之缓存策略</h2>
+<p>上面介绍的last/ETag/Expires/Cache都是HTTP协议的缓存策略。当然，缓存不止这一种，比如在HTML 4.0中定义的某些meta也可以实现自定义缓存的</p>
+<pre><code>&lt;meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" /&gt;
+&lt;meta http-equiv="Pragma" content="no-cache" /&gt;
+&lt;meta http-equiv="Expires" content="0" /&gt;</code></pre>
+<p>但，实际情况是，这些meta只能在file:// 本地文件中使用，如果是服务器则默认被覆盖。现在目前主流的就是使用HTTP1.1协议缓存<br>不过我们一般都不会单独使用某一项。 但是，组合之后他们的效果是怎样的呢？<br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-2-23/8668139.jpg&amp;objectId=1190000004486640&amp;token=64d8d89056bcfefc1419786e3bb4ba61" src="/img/8668139.jpg&amp;objectId=1190000004486640&amp;token=64d8d89056bcfefc1419786e3bb4ba61"><br>如果你的网页不是什么特别定制化的(私密)的，使用缓存能给你网站的性能带来极大的提升。所以很推荐使用。 <br>一个网站，说白了就是HTML+JS+CSS+fonts+img 这几类文件(视频就呵呵了).<br>我们可以针对这几类文件做一些缓存层级</p>
+<table>
+<thead><tr>
+<th align="left">文件</th>
+<th align="left">缓存层级</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">HTML</td>
+<td align="left">Cache-Control: no-cache,must-revalidate</td>
+</tr>
+<tr>
+<td align="left">JS</td>
+<td align="left">Cache-Control:private,max-age=86400</td>
+</tr>
+<tr>
+<td align="left">CSS</td>
+<td align="left">Cache-Control:max-age=2629000</td>
+</tr>
+<tr>
+<td align="left">img\fonts</td>
+<td align="left">Cache-Control:max-age=2629000</td>
+</tr>
+</tbody>
+</table>
+<p>上面只是一个简单的设置，要知道HTML是一定不能缓存的(大部分网页)。 缓存设置时间应该在你版本稳定之后设置，否则会得不偿失。 另外设置Cache-Control还可以配合ETag或者Last-Modified进行补偿验证，如果后面文件变化也可以及时反映出来。</p>
+<h2>清除缓存</h2>
+<p>最常用的办法就是修改文件的版本号，或者生成随机文件名。<br>如果你只是在本地测试，想手动清楚缓存的话，可以使用.<br><img data-src="https://segmentfault.com/image?src=http://alloyteam.com/wp-content/uploads/2012/03/user-action2.png&amp;objectId=1190000004486640&amp;token=9a0b5ce37ac4c9e62321c5623fcd4f1e" src="/img/user-action2.png&amp;objectId=1190000004486640&amp;token=9a0b5ce37ac4c9e62321c5623fcd4f1e"><br>但是在Mac中不一样，使用command+R = F5刷新， command+shift+R= ctrl+F5硬性重新加载.<br>另外，即使你设置了缓存策略，但是他也不会进行缓存的文件。 这些文件包括动态认证的文件，比如需要cookie验证，输入验证码等产生的文件。POST请求文件不能被缓存。</p>

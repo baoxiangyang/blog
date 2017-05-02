@@ -1,0 +1,58 @@
+是CommonJS工作组为异步编程提供的统一接口，是ECMAScript6中提供了对Promise的原生支持，Promise就是在未来发生的事情，使用Promise可以避免回调函数的层层嵌套，还提供了规范更加容易的对异步操作进行控制。提供了<code>reject</code>,<code>resolve</code>,<code>then</code>和<code>catch</code>等方法。</p>
+<h2>使用Promise</h2>
+<p>Promise是ES6之后原生的对象，我们只需要实例化Promise对象就可以直接使用。<br>实例化Promise:</p>
+<pre><code>var promise = new Promise(function (resolve, reject) {
+    console.log('begin do something');
+    if (Math.random() * 10.0 &gt; 5) {
+        console.log(" run success");
+        resolve();
+    } else {
+        console.log(" run failed");
+        reject();
+
+    }
+});</code></pre>
+<p>这里定义了一个回调方法<em>function(resolve,reject)</em>,如果成功了就调用<em>resolve</em>,失败了就会调用reject。<br><code>Promise.prototype.then</code>是Promise执行完之后的回调，可以用then方法分别指定resolve和reject的回调。</p>
+<pre><code>promise.then(function () {
+    console.log(' resolve from promise');
+}, function () {
+    console.log(' reject from promise');
+});</code></pre>
+<p>执行结果一:</p>
+<pre><code>begin do something
+ run success
+ resolve from promise</code></pre>
+<p>执行结果二:</p>
+<pre><code>begin do something
+ run failed
+ reject from promise</code></pre>
+<h2>使用Promise进行网络请求</h2>
+<pre><code>getRequest = function (url) {
+    var promise = new Promise(function (resolve, reject) {
+        var request = require('request');
+        request(url, function (error, respones, body) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            if (respones.statusCode == 200) {
+                resolve(body)
+
+            } else {
+                reject(respones.status);
+
+            }
+        });
+    });
+    return promise;
+
+};
+
+getRequest("https://github.com/").then(function (result) {
+    console.log(result);
+}, function (error) {
+    console.error('error', error);
+});
+</code></pre>
+<p>使用Promise进行网络请求，也可以使用Promise在浏览上实现Ajax请求。</p>
+<p>代码地址：<a href="https://github.com/jjz/node">https://github.com/jj

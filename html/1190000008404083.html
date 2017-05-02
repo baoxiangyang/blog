@@ -1,0 +1,48 @@
+，后端传来的文本数据长短不可控，如果接收到的文本非常长且又没有作自适应处理，页面效果会十分可怕。自适应处理在这种场景下确实很重要，不过，另一种解决方案同样也可以考虑，那就是本文将要讨论的省略多余文字，尤其是在移动端屏幕资源有限的情况下，更应该采用省略文字的解决方案。<br>本文将讨论单行和多行文字省略的方案，特别是多行文字的省略，不像单行省略的解决方案那么简单全面，故本文重点讨论多行文字的方案。</p>
+<h2>单行文字省略</h2>
+<p>单行文字的省略方案已经有比较主流又有效的解决方案，就是CSS3的text-overflow属性。该属性能够优雅地完成所有单行文字省略的需求，而且覆盖了目前市场上几乎所有的浏览器版本（浏览器支持情况，请参考：<a href="http://caniuse.com/#search=text-overflow">http://caniuse.com/#search=te...</a> ）。<br>在使用中唯一需要注意的是要加上代码：</p>
+<pre><code>.truncation {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+</code></pre>
+<p><code>white-space: nowrap</code> 保证单行文字不会换行，若无此属性文字会自动换行而不会显示省略号。<code>overflow: hidden</code> 则不显示超出容器的文字内容，若无此属性，文字会显示超过容器而不省略。</p>
+<h2>多行文字省略</h2>
+<h3>方案一：-webkit-line-clamp（仅适用于webkit内核浏览器）</h3>
+<p>在webkit内核的浏览器中，多行文字省略可以采用CSS属性<code>-webkit-line-clamp</code>实现。</p>
+<pre><code>.multiple-line {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+}
+</code></pre>
+<p>其中<code>overflow:hidden</code> 保证超出行数的内容不显示；<code>display: -webkit-box</code>与<code>-webkit-box-orient: vertical</code> 表示采用-webkit-box显示，其行数方向为垂直。<br>这种方法实现起来简单明了，缺点就是受用面太窄，<strong>只适用于webkit内核浏览器</strong>。而且，-webkit-box已经被flex替代，后续不太可能被其他内核浏览器支持。不过，由于大部分移动端浏览器（Safari, Android Browser, Chrome）都是webkit内核的，如果该页面仅在移动端浏览，那么这不失为一种最简单有效的方案。</p>
+<h3>方案二：clamp.js</h3>
+<p>CSS搞不定的事情，只能交给JS了。<br>解决方案代码，请参考这个仓库~ <a href="https://github.com/yuanqing/line-clamp/blob/master/src/index.js">https://github.com/yuanqing/l...</a></p>
+<h5>基本思路</h5>
+<p>先按单词截断，再按字符进行截断。单词与字符的截断方法类似，以截断字符的思路为例：</p>
+<ul>
+<li><p>每次循环减少element.innerHTML一个字符；</p></li>
+<li><p>观察此时的<strong>element元素内容的高度</strong>是否满足<strong>要求的最大高度</strong>；</p></li>
+<li><ul><li><p>其中元素内容的高度用<code>element.offsetHeight</code>获取；</p></li></ul></li>
+<li><ul><li><p>获取要求的最大高度：由于传入的是<strong>最大行数</strong>，故而将其与<code>line-height</code>相乘得到（<code>line-height</code>可以由计算样式获得<code>window.getComputedStyle(element).lineHeight</code>）；</p></li></ul></li>
+</ul>
+<pre><code>function truncateByCharacter(element, maximumHeight, ellipsisCharacter) {
+  const innerHTML = element.innerHTML;
+  let length = innerHTML.length;
+
+  while (length &gt; 0) {
+      element.innerHTML = innerHTML.substring(0, length).replace(TRAILING_WHITESPACE_REGEX, '') + ellipsisCharacter;
+    if (element.offsetHeight &lt;= maximumHeight) {
+      return;
+    }
+    length--;
+  }
+}
+</code></pre>
+<p>JS的解决方案相比CSS的更加灵活，如需要隐藏或显示更多文字信息时，则应该采用clamp.js解决方案。</p>
+<h2>总结</h2>
+<p>本文介绍的多余文字省略方案，都是较为常用的。单行文字解决方案中的<code>text-overflow</code>已经足以应对各种场景各种浏览器；而多行省略文字的解决方案较简单的可采用<code>-webkit-line-clamp</code>方法，尤其是移动端，若存在兼容性问题则参考clamp

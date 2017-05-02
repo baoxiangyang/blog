@@ -1,0 +1,214 @@
+<p>亲，如果你还在为你没网打开不网页而烦恼吗？<br>亲，你还在为你web服务器复杂的配置项而蛋疼吗？<br>不要998，manifest抱回家~<br>manifest自H5横空出世以来给前端网页的浏览带来了翻天覆地的变化，以前我们的网页必须在有网的前提下打开(主要还是打开HTML), 但是现在，我们可以offline 浏览。 可以算是实现web app的一个特技。<br>manifest的兼容性 <a href="http://caniuse.com/#search=manifest">IE9+</a>.  由于是现代的技术，IE9以下的古老浏览器是不支持的。所以，manifest主要应用是针对现代浏览器或者手机端更多一些。</p>
+<h2>入门manifest</h2>
+<p>浏览器检测你是否使用manifest特技时，是检测html标签.</p>
+<pre><code>&lt;html lang="en" manifest="usable.manifest"&gt;</code></pre>
+<p>当解析你的HTML时，发现存在manifest文件时，则会进行如下的操作:<br><img data-src="https://segmentfault.com/image?src=http://alloyteam.com/wp-content/uploads/2012/01/app-cache2.png&amp;objectId=1190000004486660&amp;token=018fb0176425f169c0805862446d0e86" src="/img/app-cache2.png&amp;objectId=1190000004486660&amp;token=018fb0176425f169c0805862446d0e86"><br>(from alloy team)<br>manifest文件可以是任意后缀比如. usable.manifest||usable.mf等，但是他的MIMEtype必须设置正确.<br>记住，这个时候manifest会将HTML文件也一并保存，这需要注意。</p>
+<h2>书写manifest文件</h2>
+<p>一个简单的demo:</p>
+<pre><code>CACHE MANIFEST
+#version 1.3
+/public/static/index.css
+/public/static/header.css
+NETWORK:
+*
+FALLBACK:
+/userInfo/ /404.html
+#额外需要添加的缓存文件
+CACHE:
+images/logo1.png
+images/logo2.png</code></pre>
+<p>基本样式就是上述</p>
+<h3>CACHE MANIFEST/CACHE</h3>
+<p>第一行必须是指定头即, "CACHE MANIFEST"(不能有其他的). 表示哪些文件需要缓存。如果是相对路径则是，在manifest文件所在的目录下。而且，不能使通配符!!!(tm 你是还不是傻). 所以一般而言只能一个一个配置.</p>
+<pre><code>CACHE MANIFEST
+#相对于manifest文件所在的目录
+    ./index.css </code></pre>
+<p><strong>注释</strong>: 注释使用#+"info"<br>可以对缓存文件性质进行适当的说明。缓存后的文件，就会被带上Expires的头，表示可以不经过服务器验证直接使用本地文件。所以，返回status Code 为 200.<br>另外,CACHE 定义的文件内容，和CACHE MANIFEST 是一个效果，只是跟在CACHE MANIFEST之后，就可以省略书写CACHE，你添加上也可以。</p>
+<pre><code>CACHE MANIFEST
+#version 1.3
+CACHE:
+/favicon.ico</code></pre>
+<p>而且CACHE可以放在文中的任意位置，不过一般都是放开头，或者省略.</p>
+<pre><code>CACHE MANIFEST
+
+# 缓存文件
+index.html
+css/style.css
+
+NETWORK:
+*
+
+# 额外的需要缓存的文件
+CACHE:
+images/logo1.png
+images/logo2.png
+images/logo3.png</code></pre>
+<h3>NETWORK</h3>
+<p>这里设置不使用缓存的文件，可以使用通配符"*"等。<br><strong>*</strong> 表示，除了CACHE MANIFEST定义的文件之外的文件都不能被缓存。<br>当然也可以手动指定文件:</p>
+<pre><code>NETWORK
+*
+http://www.example.com/index.html
+http://www.example.com/header.png
+http://www.example.com/blah/blah</code></pre>
+<p>这些浏览器都不能直接使用缓存，即,可能会要求你重新验证，或者直接使用服务器文件。</p>
+<h3>FALLBACK</h3>
+<p>这个tag,可用可不用。 用来表示，指定文件无法加载时，使用另外的文件代替。参数有两部分构成，第一部分是指定资源(可能存在文件未加载),第二部分是替代资源</p>
+<pre><code>FALLBACK:
+/index.html /404.html
+/static/* /404.html
+/images/* /NotFound.jpg</code></pre>
+<p>当index.html无法加载时，使用404.html代替. 这里有个要求，两个路径必须使用相对路径并且与清单文件同源。</p>
+<h3>SETTINGS</h3>
+<p>这算是一个附加属性吧。通常设置内容就只有:</p>
+<pre><code>SETTINGS:
+prefer-online</code></pre>
+<p>表示，在有网的情况下，会先访问服务器的文件，看有没有更新，相当于设置了Cache-Control:max-age=0,must-revalidate; + ETag||Last-modified.  不过，比较stupid的是，只有FF(Opera 12)支持.</p>
+<h2>服务器设置manifest</h2>
+<p>而在服务器端，需要对manifest文件的MIME设置正确。这里以nginx为例, 具体设置一下MIME type</p>
+<pre><code>type{
+  image/gif                             gif;  
+  image/jpeg                            jpeg jpg;  
+  application/x-javascript              js;  
+  }</code></pre>
+<p>详情可以参考: <a href="http://blog.csdn.net/spring21st/article/details/7065297">manifest文件配置</a></p>
+<h2>自动生成manifest文件配置</h2>
+<p>这里以gulp为例。 可以在npm里面很容易找到<a href="https://github.com/hillmanov/gulp-manifest#usage-example">gulp-manifest</a>这个生成插件.<br>直接下载:</p>
+<pre><code>npm install gulp-manifest --save-dev</code></pre>
+<p>然后在gulpfile里面配置:</p>
+<pre><code>gulp.task('manifest', function(){
+  gulp.src(['build/**'], { base: './' })
+    .pipe(manifest({
+      hash: true,
+      preferOnline: true,
+      network: ['*'],
+      fallback:['/images/* /404.html']
+      filename: 'app.manifest',
+      exclude: 'app.manifest'  //不保存manifest，不过有没有效果一样
+     }))
+    .pipe(gulp.dest('./'));
+});</code></pre>
+<p>接着就会在目录下生成app.manifest文件，里面就是一些基本的文件格式了。另外如果你想查看你电脑有多少网页是manifest，可以直接访问 <a>chrome://appcache-internals/</a>.</p>
+<h2>manifest的坑点</h2>
+<p>manifest对于单页应用可谓是如鱼得水，但是，到了多页应用的层面，他的bug真的是暴露无遗。</p>
+<pre><code>1.页面保存的复杂度，
+2.文件的及时更新，
+3.缓存文件的设置, 
+4.死都会保存HTML,
+5.文件下载出错，则这次更新缓存失败,
+6.覆盖所有缓存头，除了Cache-Control:no-store
+7.在Android 4.4的webview里，关闭之后会丢失cache
+8.IE10不能很好的支持FALLBACK部分.</code></pre>
+<p>所以，appCache的bug也是非常多的。<br>例如，长尾更新问题，当你的页面保持在线的时候，是无法检测文件已经更新，除非你reload页面，但是用户并不知道你已经更新，所以这里我们需要引进js的提供的缓存检测API.</p>
+<h2>window.applicationCache</h2>
+<p>这是前端能够摸到缓存最真实的API。我们可以通过这个API接口获取到我们很多想要的东西:</p>
+<pre><code>var appcache = window.applicationCache;
+console.log(appcache.status); //检查当前缓存状态
+console.log(appcache.IDLE); //缓存状态常量，下面解释</code></pre>
+<h3>常用的属性有:</h3>
+<table>
+<thead><tr>
+<th align="left">属性名</th>
+<th align="left">explanation</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">status</td>
+<td align="left">当前缓存状态，为Number类型. 为0~5</td>
+</tr>
+<tr>
+<td align="left">UNCACHED(0)</td>
+<td align="left">浏览器未缓存文件</td>
+</tr>
+<tr>
+<td align="left">IDLE(1)</td>
+<td align="left">空闲状态，浏览器已经全部缓存</td>
+</tr>
+<tr>
+<td align="left">CHECKING(2)</td>
+<td align="left">页面正在检查当前离线缓存是否需要更新</td>
+</tr>
+<tr>
+<td align="left">DOWNLOADING(3)</td>
+<td align="left">页面正在下载需要更新的缓存文件</td>
+</tr>
+<tr>
+<td align="left">UPDATEREADY(4)</td>
+<td align="left">页面缓存更新完毕</td>
+</tr>
+<tr>
+<td align="left">OBSOLETE(5)</td>
+<td align="left">缓存已经过期</td>
+</tr>
+</tbody>
+</table>
+<h3>常用的方法:</h3>
+<pre><code>window.applicationCache.update()  
+//update方法调用时，页面会主动与服务器通信，检查页面当前的缓存是否为最新的，如不是，则下载更新后的资源
+
+window.applicationCache.swapCache()  //updateready后，更新到最新的应用缓存</code></pre>
+<p>通常结合上述两个方法和相应的属性我们可以手动触发文件的更新(前提是 manifest文件改动).</p>
+<pre><code>var appCache = window.applicationCache;
+
+appCache.update(); 
+//检查更新
+
+if (appCache.status == window.applicationCache.UPDATEREADY) { 
+//如果存在更新，并且已经下载ok,则替换浏览器缓存
+  appCache.swapCache();  
+}</code></pre>
+<p>但是，此时页面并不能用上最新的文件，只是浏览器的缓存已经改变，网页实际内容还是原来的内容，还需要手动进行reload，才能进行更新文件</p>
+<pre><code>window.addEventListener('load', function(e) {
+
+  window.applicationCache.addEventListener('updateready', function(e) {
+    if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+      if (confirm('文件有更新，手否重新加载文件')) {
+        window.location.reload();
+      }
+    } else {
+      //如果，拒绝则不刷新网页
+    }
+  }, false);
+
+}, false);</code></pre>
+<h3>cache相关事件</h3>
+<p>相关事件有: checking,downloading,updateready,obsolete,cached,error,noupdate,progress.<br>对照上述的status就可以很容易知道每个事件对应的效果是神马。 需要说的就是:</p>
+<pre><code>progress: 当浏览器在下载资源时，每下载成功一次，就会触发一次
+noupdate:当浏览器检查更新之后发现没有资源更新的时候触发这个事件
+error: 更新出错时会触发，比如文件无法正常下载，manifest文件被删除.
+</code></pre>
+<p>其实，使用manifest的时候，无外乎就是3种常用状态</p>
+<ol>
+<li><p>第一次访问页面时</p></li>
+<li><p>再次访问页面时，没有更新</p></li>
+<li><p>再次访问页面时，有更新</p></li>
+</ol>
+<p>每次，触发的事件顺序为:</p>
+<table>
+<thead><tr>
+<th align="left">行为</th>
+<th align="left">事件顺序</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">第一次访问页面</td>
+<td align="left">checking-&gt;downloading-&gt;progress(多次)-&gt;cached</td>
+</tr>
+<tr>
+<td align="left">再次访问时，没有更新</td>
+<td align="left">checking-&gt;noupdate</td>
+</tr>
+<tr>
+<td align="left">再次访问时，有更新</td>
+<td align="left">checking-&gt;downloading-&gt;progress(多次)-&gt;updateready</td>
+</tr>
+</tbody>
+</table>
+<p>上面看不懂没关系，我们可以看看更直观的Console的内容。</p>
+<ol><li><p>第一次访问页面时<br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-2-24/30984685.jpg&amp;objectId=1190000004486660&amp;token=48025f4fb92f3d03f03a762250afe9fc" src="/img/30984685.jpg&amp;objectId=1190000004486660&amp;token=48025f4fb92f3d03f03a762250afe9fc"></p></li></ol>
+<p><strong>checking-&gt;downloading-&gt;progress(多次)-&gt;cache</strong></p>
+<p>2\. 再次访问页面时，没有更新<br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-2-24/47382163.jpg&amp;objectId=1190000004486660&amp;token=72ca3f903753991893446311e4d23d3d" src="/img/47382163.jpg&amp;objectId=1190000004486660&amp;token=72ca3f903753991893446311e4d23d3d"><br><strong>checking-&gt;noupdate</strong></p>
+<p>3\. 再次访问页面时，有更新<br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-2-24/55499642.jpg&amp;objectId=1190000004486660&amp;token=486a608ac81c827f96dcfd2440f21abe" src="/img/55499642.jpg&amp;objectId=1190000004486660&amp;token=486a608ac81c827f96dcfd2440f21abe"><br><strong>checking-&gt;downloading-&gt;progress(多次)-&gt;updateready</strong></p>
+<h2>浅谈manifest</h2>
+<p>其实，manifest就是为了离线应用而生的，但是由于设计之初，没有很好的规范，导致现在manifest的bug，真的超级多。<br>看到whatwg上面说的一句话，真的更加蛋疼.</p>
+<blockquote><p>This feature is in the process of being removed from the Web platform. (This is a long process that takes many years.) Using any of the offline Web application features at this time is highly discouraged. Use service workers instead.</p></blockquote>
+<p>意思就是让你不要用manifest，应该他迟早要被fire的，但是，这一天还有很多年，很多年。 另外一个替代方案就是使用<a href="https://jakearchibald.github.io/isserviceworkerready/resources.html">SS</a>，但是兼容性，真的<a href="http://caniuse.com/#search=service">极其差</a>。几乎现在的浏览器都没有实现(除了布道师FF实现了部分). 现在我们真的很尴尬，不过，目前的情况而言，in my opinion, 是十分推荐使用的(也没有其他的办法了). 那该怎么做，才能将manifest的Bug减到最低呢？<br>推荐的做法是将逻辑页面和用户数据给分离开。 逻辑页面使用app cache，而用户数据可以保存在web Storage || indexDB 等浏览器数据库里，动态更新data时，使用web Socket,ajax,SSE等技术.</p>

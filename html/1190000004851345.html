@@ -1,0 +1,149 @@
+f="https://css-tricks.com/centering-css-complete-guide/">https://css-tricks.com/centering-css-com...</a></p>
+<blockquote><p>我将原作者的代码整理成了Github Repo，并且在持续更新使用CSS居中的方法，欢迎fork和star我的项目<a href="https://github.com/Erichain/css-center-complete">css-center-complete</a>。</p></blockquote>
+<p>大家总是会抱怨如何在CSS中居中一个元素。为什么会这么难呢？呵呵(使用这个来词翻译再好不过了)。我认为问题不在有多难，而是居中在不同的场景中有那么多种方式，很难抉择到底该使用哪一种。</p>
+<p>所以，我们把这些选择做成一棵树状，希望使用起来更简单吧。</p>
+<h3>横向居中</h3>
+<h4>是行内元素或者行内块级元素？(inline 或者 inline-block)</h4>
+<p>你可以将行内元素居中在块级元素中，就像这样：</p>
+<pre><code class="css">.center-children {
+    text-align: center;
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/HulzB">代码链接</a></p>
+<p>这个方法对于<code>display</code>属性为<code>inline, inline-block, inline-table, inline-flex</code>等的元素都有作用。</p>
+<h4>块级元素？</h4>
+<p>对于块级元素，可以通过设置他的<code>margin</code>属性为<code>auto</code>来达到居中的效果。前提是要设置一个宽度。如果不设置宽度的话，默认为100%，就用不着居中了。就像这样：</p>
+<pre><code class="css">.center-me {
+    margin: 0 auto;
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/eszon">代码链接</a></p>
+<h4>多个块级元素？</h4>
+<p>如果需要在一行中居中两个及以上的块级元素，最好给他们设置<code>display</code>属性为<code>inline-block</code>。下面这个例子是在flexbox中给他们设置<code>display: inline-block;</code>的：</p>
+<p><a href="http://codepen.io/chriscoyier/pen/ebing">代码链接</a></p>
+<p>除非你是想多个块级元素都在各自的顶部，如果是这样的话，那么使用<code>amrgin: 0 auto；</code>也可以；</p>
+<p><a href="http://codepen.io/chriscoyier/pen/haCGt">代码链接</a></p>
+<hr>
+<h3>垂直居中</h3>
+<h4>行内元素或者行内块级元素？(inline 或者 inline-block)</h4>
+<h5>单独一行</h5>
+<p>有的时候行内元素很明显可以垂直居中。只需要设置它们的上下<code>padding</code>值相等：</p>
+<pre><code class="css">.link {
+    padding-top: 30px;
+    padding-bottom: 30px;
+}</code></pre>
+<p>如果设置<code>padding</code>不行，而且你想居中的是文本的话，那么，可以设置文本的<code>line-height</code>与元素的<code>height</code>相等。</p>
+<pre><code class="css">.center-text-trick {
+    height: 100px;
+    line-height: 100px;
+    white-space: nowrap;
+}</code></pre>
+<h5>多行</h5>
+<p><strong>1、</strong>相等的<code>padding</code>对多行的情况也适用。如果不起作用的话，那么这个元素或者文本的<code>display</code>属性可能是<code>table-cell</code>。这种情况下，<code>vertical-align</code>就有作用了。与其它情况不同，这个是用来处理一行内的元素居中的。</p>
+<p><a href="http://codepen.io/chriscoyier/pen/ekoFx">代码链接</a></p>
+<p><strong>2、</strong>如果类表格元素的居中不起作用，那么是否考虑使用flexbox？在flexbox的父元素中居中flexbox子元素就太简单了。</p>
+<pre><code class="css">.flex-center-vertically {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    height: 400px;
+}</code></pre>
+<p>记住只有父级元素有固定的高度，这样写才有意义。</p>
+<p><strong>3、</strong>如果前面两种方法都不起作用，可以使用<code>ghost element</code>方法。在包含块里放置一个高度为100%的伪元素，这样，文本就居中了。</p>
+<pre><code class="css">.ghost-center {
+    position: relative;
+}
+.ghost-center::before {
+    content: " ";
+    display: inline-block;
+    height: 100%;
+    width: 1%;
+    vertical-align: middle;
+}
+.ghost-center p {
+    display: inline-block;
+    vertical-align: middle;
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/ofwgD">代码链接</a></p>
+<h4>块级元素</h4>
+<h5>明确元素的高度</h5>
+<p>不知道网页布局的高度简直是太习以为常的事情了。各种情况都会出现：</p>
+<ul>
+<li><p>宽度改变，文字重排，高度会改变</p></li>
+<li><p>不同的文字样式的高度也不一样</p></li>
+<li><p>不同文本的数量的高度也不一样</p></li>
+<li><p>固定比例的元素，比如图片啥的，在改变尺寸的时候也会改变高度等等</p></li>
+</ul>
+<p>但是如果你知道元素的高度就好办了：</p>
+<pre><code class="css">.parent {
+    position: relative;
+}
+.child {
+    position: absolute;
+    top: 50%;
+    height: 100px;
+    margin-top: -50px; 
+    /* 如果没有使用border-box的话就只需要关心padding和border了 */
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/HiydJ">代码链接</a></p>
+<h5>不确定元素的高度</h5>
+<p>不知道元素高度的情况下，通过先将他往下移动50%，然后再向上移动他的高度的一半来居中也还是有可能的。</p>
+<pre><code class="css">.parent {
+    position: relative;
+}
+.child {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/lpema">代码链接</a></p>
+<h5>是否考虑flexbox？</h5>
+<p>别太惊讶，使用flexbox就太简单了</p>
+<pre><code class="css">.parent {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/FqDyi">代码链接</a></p>
+<hr>
+<h3>横竖都居中</h3>
+<p>你完全可以用各种方式将上面的技术结合起来达到完美居中的效果。但我觉得可以把这些情况分为下面三种：</p>
+<h4>元素是否是固定的宽高</h4>
+<p>在使用绝对定位分别设置上下50％和左右50％之后，使用分别等于宽高一半的负边距就能够跨浏览器实现完全居中了：</p>
+<pre><code class="css">.parent {
+    position: relative;
+}
+
+.child {
+    width: 300px;
+    height: 100px;
+    padding: 20px;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    margin: -70px 0 0 -170px;
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/JGofm">代码链接</a></p>
+<h4>不确定元素的宽高？</h4>
+<p>如果不知道元素的宽高，那么可以使用<code>transform</code>属性在两个不同的方向上设置<code>-50%</code>(基于当前元素的宽高)来居中：</p>
+<pre><code class="css">.parent {
+    position: relative;
+}
+.child {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/lgFiq">代码链接</a></p>
+<h4>flexbox</h4>
+<p>要在flexbox中居中，需要用到两个居中属性：</p>
+<pre><code class="css">.parent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}</code></pre>
+<p><a href="http://codepen.io/chriscoyier/pen/msItD">代码链接</a></p>
+<hr>
+<h3>总结</h3>
+<p>经过上面这些方法，我们完全可以使用CS

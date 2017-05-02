@@ -1,0 +1,188 @@
+<p>TLDR;<br>这篇文章的风格是在致敬 Jim 老师；致敬，致敬，懂吗，不是抄袭，程序员的事怎么能叫抄袭。<br>当然我对 Node.js 的 stream 也是现学现卖，有使用不当的地方，敬请指出。<br><a href="https://github.com/zwhu/blog/issues/34">原文链接</a> 欢迎 star。</p></blockquote>
+<p>写这篇文章的初衷是年前看 SICP 的时候，第二章介绍构造数据抽象的时候有提到 Lisp 对序列的处理采用类似『信号流』的方式。所以很自然的就想到了 Node.js 中的 pipe 方式，于是就一直想用 pipe 的方式尝试一下。</p>
+<p>同 Jim 老师的这篇 <a href="http://jimliu.net/2017/02/04/a-failed-attemption-to-js-linq/">文章</a> 中描述的一样， 我也是懒癌发作，从年尾拖到今年年初，然后在年初又看到了 Jim 老师 的博客，深受启发，终于下定决心要开始码了...... 然后，嗯，又拖到昨天。促使我下定决心要写的主要原因是昨天部门的年会！反正年会跟我这种死肥宅也没多大关系，在大家 happy 的时候构思了下代码实现，回家用了一晚上的时候补上了代码。</p>
+<p>Jim 老师在他的文章里面也说了，JS 的那些数组操作 (<code>map</code>/ <code>reduce</code>/<code>filter</code>) 啥的，每次调用的时候都会进行一次完整的遍历。试想一下如果有一个第一个数是1，长度是 1亿 的递增为 1 的数组，需要把所有的数组都乘 3，再排除其中的奇数，如果用 (<code>map</code>/<code>filter</code>) 的方法，只要也需要循环 一亿五千万次；那么如果有其他办法能只循环一亿次，是不是节省了大量的内存资源和循环消耗的时间。</p>
+<p>废话不多说，直接上代码吧。</p>
+<h3>pipe</h3>
+<blockquote><p>在编写代码时，我们应该有一些方法将程序像连接水管一样连接起来 -- 当我们需要获取一些数据时，可以去通过"拧"其他的部分来达到目的。这也应该是IO应有的方式。 -- Doug McIlroy. October 11, 1964</p></blockquote>
+<p>关于 node 的 stream 可以看看这篇 <a href="https://github.com/jabez128/stream-handbook">文章</a>。</p>
+<p>下面是代码部分，整个代码我是在边学 pipe 边用一晚上的时间仓促写就的，懒癌发作，也不想再重构了，各位相公讲究看吧，求别喷代码。</p>
+<h3>入口</h3>
+<pre><code class="javascript">
+const stream = require('stream')
+
+const last = Symbol()
+
+// 在 selfArray 中接收一个真正的数组
+// 返回一个可读流
+// 如果再做的精细点，可以做成可读可写流，这样就能通过控制流的大小，来控制内存的大小，别几亿条数据直接撑爆内存了
+// 不过对后面 reduce 的处理就比较麻烦
+function selfArray(a) {
+  const rs = new stream.Readable({
+    objectMode: true
+  })
+
+  a.forEach((v, index) =&gt; {
+    rs.push(v)
+  })
+  rs.push(last)
+  rs.push(null)
+  return rs
+}
+</code></pre>
+<p>上面的 selfArray 在流的最后面 push 了一个 Symbol 对象来标志整个流的输入结束，留待为之后 reduce 的使用。</p>
+<h3>
+<code>Map</code>/<code>Filter</code>/<code>Reduce</code> 的实现</h3>
+<pre><code class="javascript">
+function forEach(callback) {
+  const ws = new stream.Writable({
+    objectMode: true
+  })
+  let index = 0
+
+  ws._write = function (chunk, enc, next) {
+    if (chunk !== last) {
+      callback(chunk, index++)
+      next()
+    }
+  }
+
+  return ws
+}
+
+function filter(callback) {
+  const trans = new stream.Transform({
+    readableObjectMode: true,
+    writableObjectMode: true
+  })
+
+  let index = 0
+
+  trans._transform = function (chunk, enc, next) {
+    if (chunk === last) {
+      next(null, last)
+    } else {
+      let condition = callback(chunk, index++)
+      if (condition) {
+        this.push(chunk)
+      }
+      next()
+    }
+  }
+  return trans
+}
+
+function map(callback) {
+  const trans = new stream.Transform({
+    readableObjectMode: true,
+    writableObjectMode: true
+  })
+  let index = 0
+  trans._transform = function (chunk, enc, next) {
+    if (chunk === last) {
+      next(null, last)
+    } else {
+      next(null, callback(chunk, index++))
+    }
+  }
+  return trans
+}
+
+function reduce(callback, initial) {
+  const trans = new stream.Transform({
+    readableObjectMode: true,
+    writableObjectMode: true
+  })
+
+  let index = 0,
+    current = initial,
+    prev = initial
+
+
+  trans._transform = function (chunk, enc, next) {
+
+    if (chunk === last) {
+      if (index &gt; 1) {
+        prev = callback(prev, current, index - 1)
+      }
+      this.push(prev)
+      this.push(last)
+      return next(null, last)
+    }
+
+    if (initial === void 0 &amp;&amp; index === 0) {
+      prev = chunk
+    }
+
+    if (index &gt; 0) {
+      prev = callback(prev, current, index - 1)
+    }
+
+    current = chunk
+    index++
+    next()
+  }
+
+  return trans
+}
+</code></pre>
+<p>上面的代码在 reduce 的实现稍微麻烦了一些，reduce 对没有初始值，原始数组为空的条件下有各种不同的处理情况，翻看了下 MDN 的解释又自己实现了下。</p>
+<h3>使用</h3>
+<pre><code class="javascript">selfArray([9, 2, 6, 3, 5, 6, 7, 1, 4, 4])
+  .pipe(map(v =&gt; v * 3))
+  .pipe(filter(v =&gt; v % 2))
+  .pipe(reduce((p, c) =&gt; p + c, 0))
+  .pipe(forEach(v =&gt; {
+    console.log('pipe 计算最后的结果是:', v)
+  }))</code></pre>
+<p>为了好看我故意把各种括号都删掉了。嗯，看起来还挺完美，我们来测试下</p>
+<pre><code>selfArray([9, 2, 6, 3, 5, 6, 7, 1, 4, 4])
+  .pipe(map(v =&gt; {
+    console.log('map:', v)
+    return v * 3
+  }))
+  .pipe(filter(v =&gt; {
+    console.log('filter:', v)
+    return v % 2
+  }))
+  .pipe(reduce((p, c) =&gt; {
+    console.log('reduce:', p, c)
+    return p + c
+  }, 0))
+  .pipe(forEach(v =&gt; {
+    console.log('pipe 计算最后的结果是:', v)
+  }))
+  
+  
+加上 log 之后可以看到结算结果是:
+  
+map: 9
+filter: 27
+map: 2
+filter: 6
+map: 6
+filter: 18
+map: 3
+filter: 9
+reduce: 0 27
+map: 5
+filter: 15
+reduce: 27 9
+map: 6
+filter: 18
+map: 7
+filter: 21
+reduce: 36 15
+map: 1
+filter: 3
+reduce: 51 21
+map: 4
+filter: 12
+map: 4
+filter: 12
+reduce: 72 3
+pipe 计算最后的结果是: 75
+</code></pre>
+<p>从上面的 log 可以看到， 第一个数 9 先执行了 <code>map</code>，然后在 <em> 3 之后就直接进入了 <code>filter</code>，此时第 2 个数 2 也开始被 <code>map</code> 处理，然后被 <code>filter</code> 处理，但是由于 </em> 3 之后是偶数不会被 <code>reduce</code> 接收， <code>reduce</code> 会一直等到第二个奇数，也就是 3 进入之后才会被处理... 嗯，直到最终的计算结果是 75， 被 <code>forEach</code> 消耗。</p>
+<h3>总结</h3>
+<p>虽然我没有像 Jim 老师一样进行性能测试，但是猜测也知道 pipe 的方式在数量比较小的时候肯定要弱于正常方式，pipe 的好处在于数据量比较大的时候，可以使用比较小的内存，尽快的处

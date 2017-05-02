@@ -1,0 +1,159 @@
+<h3><strong>前言</strong></h3>
+<p>HTML5的权限越来越大了，浏览器可以直接调用摄像头、麦克风了，好激动啊。我们要用纯洁的HTML代码造出自己的天地。</p>
+<h3><strong>视频采集</strong></h3>
+<p><em>本篇介绍的栗子 都是在chrome 47 版本以上的，低版本的可能会出现白屏和错误。</em></p>
+<h4><strong>1.安全环境</strong></h4>
+<p>随着Chrome版本的升高，安全性问题也越来越被重视，较新版本的Chrome浏览器在调用一些API时需要页面处在安全环境中。<strong>本篇文章所介绍的API函数，都需要在安全环境中执行。</strong>如果处在非安全环境下 ( http页面 ) 这些API就会有意想不到的问题。</p>
+<p>比如 <code>getUserMedia()</code>就会报出警告，并执行出错。而在设备枚举<code>enumerateDevices()</code>时，虽然不会报错，但是他隐藏了设备label。</p>
+<blockquote><p>getUserMedia() no longer works on insecure origins. To use this feature, you should consider switching your application to a secure origin, such as HTTPS. See <a href="https://goo.gl/rStTGz">https://goo.gl/rStTGz</a> for more details.</p></blockquote>
+<p>根据谷歌的意思，常用的安全环境有如下</p>
+<ul>
+<li><p><a href="http://localhost">http://localhost</a></p></li>
+<li><p><a href="http://127.0.0.1">http://127.0.0.1</a></p></li>
+<li><p>https 开头的地址页面</p></li>
+</ul>
+<p>如果你做了一个视频测试的页面，想嘚瑟给局域网的其他人，但是又没有域名证书怎么办？<br>这时候只能通过修改其他人的hosts文件了<br>比如你的测试服务器IP地址是192.168.2.18，那么其他人的hosts文件修改如下：</p>
+<pre><code class="nginx">#localhost 127.0.0.1
+localhost 192.168.2.18</code></pre>
+<p>当使用别人的Chrome浏览器访问 <a href="http://localhost/%5BgetUserMediaTestPage%5D">http://localhost/[getUserMedi...</a>时，就会顺利的执行这些API了。</p>
+<p>但是移动端的浏览器并不认localhost，就算你修改了hosts ，移动端的浏览器根本不理你，解析都不解析。<br>所以想在手机上测试，只能老老实实申请个证书了。</p>
+<h4><strong>2.设备枚举</strong></h4>
+<p>在开启摄像头之前，先要把可以使用的麦克风和摄像头 ( 输入设备 ) 列出来，如果没有这两样设备也就无法继续。</p>
+<p>代码如下:</p>
+<pre><code class="html5">&lt;label for="audioDevice"&gt; 录音设备: &lt;/label&gt;
+&lt;select id="audioDevice"&gt;
+  
+&lt;/select&gt;
+&lt;br&gt;
+&lt;label for="videoDevice"&gt; 录影设备: &lt;/label&gt;
+&lt;select id="videoDevice"&gt;
+  
+&lt;/select&gt;
+
+&lt;script&gt;
+navigator.mediaDevices.enumerateDevices().then(function (data) {
+  data.forEach(function (item) {
+    if(item.kind=="audioinput"){ //麦克风
+     document.getElementById("audioDevice").innerHTML +=  "&lt;option value='"+ item.deviceId +"'&gt;" + item.label + " &lt;/option&gt; "
+    }else if(item.kind=="videoinput"){ //摄像头
+     document.getElementById("videoDevice").innerHTML +=  "&lt;option value='"+ item.deviceId +"'&gt;" + item.label + " &lt;/option&gt; "
+    }
+  })
+},function (error) {
+  console.log(error);
+})
+&lt;/script&gt;</code></pre>
+<p>效果如下图，和浏览器自己获取的一模一样。</p>
+<p><img data-src="/img/remote/1460000007153232?w=960&amp;h=446" src="/img/remote/1460000007153232?w=960&amp;h=446.png"></p>
+<p>注意：上图的实例中，浏览器地址栏最右边的摄像头标识是需要使用 <code>getUserMedia()</code>函数时才会出现。</p>
+<pre><code class="html5">&lt;script&gt;
+    var getUserMedia = navigator.webkitGetUserMedia; //Chrome浏览器的方法
+    getUserMedia.call(navigator, {
+      video:true, // 开启音频
+      audio:true  // 开启视频
+    }, function(stream){
+        console.log(stream); // 成功获取媒体流
+    }, function(error){
+        //处理媒体流创建失败错误
+    });
+&lt;/script&gt;
+</code></pre>
+<p>这时候可以通过浏览器给出的菜单下拉选择设备。</p>
+<h4><strong>3.设置参数，预览</strong></h4>
+<p>我们可以通过代码来指定使用哪个摄像头和麦克风设备。<br>也可以通过代码设置视频的宽、高和帧率。</p>
+<p>代码如下：</p>
+<pre><code class="html5">
+&lt;video id="video" autoplay&gt;&lt;/video&gt; &lt;!-- 一定要有 autoplay --&gt;
+
+&lt;script&gt;
+var getUserMedia = navigator.webkitGetUserMedia ;
+
+getUserMedia.call(navigator, {
+  "audio":{
+        "mandatory":{
+            "sourceId":"" // 指定设备的 deviceId
+        }
+    },
+  "video":{
+        "optional":[ 
+            {"minWidth":400},
+            {"maxWidth":400},  // 数字类型，固定宽度
+            {"minHeight":220}， 
+            {"maxHeight":220},  // 数字类型，固定高度
+            {"frameRate":"12"}  // 帧率
+        ],"mandatory":{
+        "sourceId":"" // 指定设备的 deviceId
+        }
+      }
+}, function(stream){
+    //绑定本地媒体流到video标签用于输出
+    document.getElementById("video").src = URL.createObjectURL(stream);
+}, function(error){
+    //处理媒体流创建失败错误
+});
+
+&lt;/script&gt;</code></pre>
+<p>输出的视频流通过blob对象链接绑定到video标签输出。</p>
+<p>这个<code>deviceId</code>就是从上文设备枚举 <code>enumerateDevices()</code> 获取到的。<br>两种设备，如果有一个<code>deviceId</code>填写不正确，就会报出一个<code>DevicesNotFoundError</code>的错误。而且一旦指定了设备后，浏览器自己的设备选择就会变成灰色不可选。</p>
+<p>视频的宽高，并不会因为填写的数值比例不合法而失真。<br>比如你设定了宽度30，高度100，那么他会从视频中心截取 30x100 的画面，而不是把原画面挤压到这个30x100的尺寸。</p>
+<p>效果如下：</p>
+<p><img data-src="/img/remote/1460000007153233?w=908&amp;h=433" src="/img/remote/1460000007153233?w=908&amp;h=433.png"></p>
+<p>如果您的预览一片漆黑，或者只有一个小黑点，那么说明您的摄像头正在被占用...</p>
+<p>吐槽：这个<code>getUserMedia()</code>函数的参数，w3的官方文档链接如下：<br><a href="https://www.w3.org/TR/mediacapture-streams/">https://www.w3.org/TR/mediaca...</a><br>可是Chrome并没有遵循它，而且差距还挺大...</p>
+<h3><strong>视频保存</strong></h3>
+<h4><strong>1. 格式支持</strong></h4>
+<p>Chrome浏览器是大力推广webm的视频格式的。可以用<code>MediaRecorder.isTypeSupported("video/webm")</code>来测试是否支持这种类型的编码。如果返回true，那么我们录制的视频就可以被保存为这种指定的格式。如果不指定，那么将会使用浏览器自动指定的文件格式。文档原话如下</p>
+<blockquote><p>If this paramater is not specified, the UA will use a platform-specific default format.</p></blockquote>
+<p>但是这个默认值却无法直接获取，全靠猜...</p>
+<h4><strong>2. 视频录制 MediaRecorder</strong></h4>
+<p>我们使用 <code>MediaRecorder</code>来录制视频，参数是通过<code>getUserMedia()</code>获取的媒体流。</p>
+<ul>
+<li><p>通过绑定<code>ondataavailable</code>事件，来获取视频片段数据，并在内存中累积。</p></li>
+<li><p>录制的开始和结束分别使用 <code>start</code>和<code>stop</code> 函数。</p></li>
+<li><p>执行<code>start</code>之后会周期性触发<code>ondataavailable</code>事件。</p></li>
+<li><p>执行<code>stop</code>之后会停止触发<code>ondataavailable</code>事件。</p></li>
+<li><p>录制结束后，把累计的片段数据保存为blob对象，并从浏览器下载存为视频文件。</p></li>
+</ul>
+<p>代码如下：</p>
+<pre><code class="html5">&lt;script&gt;
+
+var getUserMedia = navigator.webkitGetUserMedia ;
+var g_stream = null, g_recorder = null;
+function startPreview(){
+  getUserMedia.call(navigator, {
+    video:true,
+    audio:true
+  }, function(stream){
+      g_stream = stream;
+  }, function(error){
+  
+  });
+}
+
+function stopRecording(){
+  g_recorder.stop();
+}
+
+function startRecording(){
+  var chunks = [];
+  g_recorder = new MediaRecorder(g_stream,{mimeType:"video/webm"});
+  g_recorder.ondataavailable = function(e) {
+    chunks.push(e.data);
+  }
+  g_recorder.onstop = function(e) {
+    var blob = new Blob(chunks, { 'type' : 'video/webm' });
+    var audioURL = URL.createObjectURL(blob);
+    window.open(audioURL);
+  }
+  g_recorder.start();
+}
+&lt;/script&gt;</code></pre>
+<p><em>注意：本例并没有填写视频文件头，所以保存出来的视频文件没有时间轨，无法快进和跳跃。可以用格式工厂转</em></p>
+<p>“莫基了”上面有一个录制音频的例子 <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder_API/Using_the_MediaRecorder_API">传送门</a></p>
+<p>这篇文章的DEMO请戳 <a href="https://cscdn.maxleap.cn/2.0/download/NTZhMjM5MmZhNWZmN2YwMDAxOGY4YTcz/zcf-8dbc1277-318f-491c-a0fb-8fb5b22b6206.html">这里</a></p>
+<hr>
+<p><strong>相关阅读</strong></p>
+<p><a href="https://blog.maxleap.cn/archives/985">多屏互动——H5中级进阶</a><br><a href="https://blog.maxleap.cn/archives/1188">前端，想说爱你不容易！</a><br><a href="https://blog.maxleap.cn/archives/705">无需Flash实现图片裁剪——HTML5中级进阶</a></p>
+<p><strong>作者信息</strong><br>作者来自力谱宿云 LeapCloud 团队_UX成员：王诗诗 【原创】<br>力谱宿云 LeapCloud 团队首发：<a href="https://blog.maxleap.cn/archives/1197">https://blog.maxleap.cn/archi...</a></p>
+<p>欢迎关注微信订阅号：MaxLeap_yidongyanfa</p>
+<p><img data-src="/img/bVzKxI?w=500&amp;h=500" src="/img/bVzKxI?w=500&amp;h=500.png"></p>

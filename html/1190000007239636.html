@@ -1,0 +1,235 @@
+href="https://github.com/ReactTraining/react-router">react-router</a> 和 <a href="http://www.ruanyifeng.com/blog/2016/05/react_router.html">React Router 使用教程</a> 学习编写而成，可能会有描述不够清楚的地方，大家可自行参考原文，</p>
+<p><a href="https://github.com/ReactTraining/react-router">React Router</a> 为 <a href="https://facebook.github.io/react/">React</a> 提供了一个完整的路由库，它允许你通过 <code>URl</code> 的变化来控制组件的切换与变化</p>
+<p>有关 React 全家桶的其余相关文章，可以查看以下链接，会持续更新</p>
+<ul><li><p><a href="https://segmentfault.com/a/1190000007337318">别眨眼看 React</a></p></li></ul>
+<h2>安装</h2>
+<p>使用 <a href="https://www.npmjs.com/">npm</a> 进行安装：</p>
+<pre><code>npm install --save react-router
+</code></pre>
+<p>之后在需要用到的地方进行引用，</p>
+<pre><code class="js">// 需要用到 ES6 编译器，比如 babel
+import { Router, Route, Link } from 'react-router'
+
+// 不需要使用编译器
+var Router = require('react-router').Router
+var Route = require('react-router').Route
+var Link = require('react-router').Link</code></pre>
+<p>当然也可以使用 <code>script</code> 标签进行引用：</p>
+<pre><code>&lt;script src="https://unpkg.com/react-router/umd/ReactRouter.min.js"&gt;&lt;/script&gt;
+</code></pre>
+<p>之后可以通过 <code>window.ReactRouter</code> 进行调用</p>
+<h2>概述</h2>
+<h4>样例概述</h4>
+<p>当我们想要实现类似信息系统的界面，进入到收件箱选择查看具体信息 <code>1234</code> 的时候，界面路由如下：</p>
+<pre><code>path: /inbox/messages/1234
+
++---------+------------+------------------------+
+| About   |    Inbox   |                        |
++---------+            +------------------------+
+| Compose    Reply    Reply All    Archive      |
++-----------------------------------------------+
+|Movie tomorrow|                                |
++--------------+   Subject: TPS Report          |
+|TPS Report        From:    boss@big.co         |
++--------------+                                |
+|New Pull Reque|   So ...                       |
++--------------+                                |
+|...           |                                |
++--------------+--------------------------------+</code></pre>
+<p>应该实现以下几种路由：</p>
+<table>
+<thead><tr>
+<th align="center">URL</th>
+<th align="center">Components</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="center"><code>/</code></td>
+<td align="center"><code>App -&gt; Home</code></td>
+</tr>
+<tr>
+<td align="center"><code>/about</code></td>
+<td align="center"><code>App -&gt; About</code></td>
+</tr>
+<tr>
+<td align="center"><code>/inbox</code></td>
+<td align="center"><code>App -&gt; Indox</code></td>
+</tr>
+<tr>
+<td align="center"><code>/inbox/messages/:id</code></td>
+<td align="center"><code>App -&gt; Inbox -&gt; Message</code></td>
+</tr>
+</tbody>
+</table>
+<h4>使用 <code>react-router</code> 进行实现</h4>
+<pre><code>
+// 省略部分组件定义
+const App = React.createClass({
+  render() {
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;App&lt;/h1&gt;
+        {/* 使用 `&lt;Link&gt;` 标签进行路由跳转 */}
+        &lt;ul&gt;
+          &lt;li&gt;&lt;Link to="/about"&gt;About&lt;/Link&gt;&lt;/li&gt;
+          &lt;li&gt;&lt;Link to="/inbox"&gt;Inbox&lt;/Link&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+        {this.props.children}
+      &lt;/div&gt;
+    )
+  }
+})
+
+const About = ...;
+const Home = ...;
+
+const Inbox = (props) =&gt; {
+  return (
+    &lt;div&gt;
+       &lt;h2&gt;Inbox&lt;/h2&gt;
+       {props.children}
+     &lt;/div&gt;
+  )
+}
+const IndexStatus = ...;
+const Message = ...;
+
+// &lt;Router&gt; 是一个 React 组件
+// &lt;Router&gt; 同时也是 &lt;Route&gt; 的一个容器，路由规则使用 &lt;Route&gt; 进行定义
+render((
+  &lt;Router history={hasHistory}&gt;
+    &lt;Route path="/" component={App}&gt;
+      {/*
+        当我们访问 `/` 的时候不会有加载任何子组件，组件 `&lt;App&gt;` 的 `this.props.children`为 `undefined`，
+        所以我们使用 `&lt;IndexRoute&gt;`  来指定默认加载的子组件
+      */}
+      &lt;IndexRoute compoent={Home} /&gt;
+      &lt;Route path="about" component={About} /&gt;
+      &lt;Route path="inbox" component={Inbox}&gt;
+        &lt;IndexRoute component={IndexStatus} /&gt;
+        { /* 匹配 `/index/messages/123` 路由*/ }
+        &lt;Route path="messages/:id" component={Message} /&gt;
+        { /* 当然我们可以直接匹配 `messages/123`，但不破坏路由组件结构 */}
+        &lt;Route component={Inbox}&gt;
+          &lt;Route path="messages/:id" component={Message} /&gt;
+        &lt;/Route&gt;
+      &lt;/Route&gt;
+    &lt;/Route&gt;
+  &lt;/Router&gt;
+), document.body)
+</code></pre>
+<h2>Route 详解</h2>
+<p>一个路由由三个属性来决定它是否能匹配上 <code>URL</code>:</p>
+<ul>
+<li><p>嵌套结构</p></li>
+<li><p><code>Path</code> 属性</p></li>
+<li><p>优先级</p></li>
+</ul>
+<h4>嵌套</h4>
+<p>当一个 <code>URL</code> 被调用，React Router 允许你通过嵌套路由 (Nested routes) 的方式来声明将要被渲染的一系列嵌套组件，嵌套路由是类树状结构 (tree-like structure)，React Router 通过 <code>route config</code> 的顺序去匹配 <code>URL</code></p>
+<blockquote><p><a href="https://github.com/ReactTraining/react-router/blob/master/docs/Glossary.md#routeconfig">RouteConfig</a> 是 React Router 内部用来指定 router 顺序的数组</p></blockquote>
+<pre><code>&lt;Router history={hashHistory}&gt;
+  &lt;Route path="/" component={App}&gt;
+    &lt;Route path="/repos" component={Repos}/&gt;
+    &lt;Route path="/about" component={About}/&gt;
+  &lt;/Route&gt;
+&lt;/Router&gt;</code></pre>
+<h4>
+<code>Path</code> 语法</h4>
+<ul>
+<li><p><code>:paramName</code>，匹配 <code>URL</code> 的一个部分，直到遇到下一个/、?、#</p></li>
+<li><p><code>()</code>，表示URL的这个部分是可选的</p></li>
+<li><p><code>*</code>，匹配任意字符(非贪婪模式)，直到模式里面的下一个字符为</p></li>
+<li><p><code>**</code>，匹配任意字符(贪婪模式)，直到下一个/、?、#为止</p></li>
+</ul>
+<blockquote><p>贪婪模式：在整个表达式匹配成功的前提下，尽可能少的匹配<br>非贪婪模式：在整个表达式匹配成功的前提下，尽可能多的匹配</p></blockquote>
+<pre><code>&lt;Route path="/hello/:name"&gt;         // 匹配 /hello/michael 和 /hello/ryan
+&lt;Route path="/hello(/:name)"&gt;       // 匹配 /hello, /hello/michael, 和 /hello/ryan
+&lt;Route path="/files/*.*"&gt;           // 匹配 /files/hello.jpg 和 /files/hello.html
+&lt;Route path="/**/*.jpg"&gt;            // 匹配 /files/hello.jpg 和 /files/path/to/file.jpg</code></pre>
+<h4>优先级</h4>
+<p>React Router 是通过从上到下的顺序匹配路由的，所以应该尽量保证同级路由的第一个路由不会匹配上所有可能的 <code>Path</code>，例如：</p>
+<pre><code>&lt;Route path="/comments" ... /&gt;  
+&lt;Redirect from="/comments" ... /&gt; // 这一条路由规则是不会执行的，以为上一条路由已经匹配了所有路径为 `/comments`</code></pre>
+<h2>Histories</h2>
+<p>React Router 构建于 <a href="https://github.com/mjackson/history">history</a>，简而言之，React Router <code>history</code> 属性用于监听浏览器地址栏的变化，<br>并将 <code>URL</code> 解析后放入进 <code>location</code> 对象中，给 React Router 提供匹配，</p>
+<p>我们使用如下方式从 React Router Package 中引用，</p>
+<pre><code>import { browserHistory } from 'react-router'
+</code></pre>
+<p>然后在 <code>&lt;Router&gt;</code> 中使用，</p>
+<pre><code>render(
+  &lt;Router history={browserHistory} routes={routes} /&gt;,
+  document.getElementById('app')
+)</code></pre>
+<p>有三种 <code>history</code> 属性类型：</p>
+<p><strong><code>browserHistory</code></strong></p>
+<p>Browser history 是通过 <code>URL</code> 变化来改变路由的，它是背后调用的是浏览器的 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/History">History</a>，</p>
+<p>但是，使用 Browser history 是需要<a href="https://github.com/ReactTraining/react-router/blob/master/docs/guides/Histories.md#configuring-your-server">配置你的服务器</a></p>
+<p><strong><code>hashHistory</code></strong></p>
+<p>Hash history 使用哈希符 (<code>#</code>) 作为 <code>URL</code> 的一部分，路由通过哈希符的部分进行切换，<code>URL</code> 的形式类似于，<code>example.com/#/some/path</code>，</p>
+<p><em>我该使用 <code>hashHistory</code> 么？</em></p>
+<p>Hash history 不需要你配置服务器即可使用，当你刚刚开始使用 React Router 的时候，就是用它吧，但是一般来说，生产环境下的 web 应用应该使用 <code>browserHistory</code> 来保持 <code>URLs</code> 的整洁度，并且 <code>hashHistory</code> 是不支持服务端渲染的</p>
+<p>实际使用当中，我们会发现具体的 <code>URL</code> 可能为 <code>example.com/#/some/path?_k=ckuvup</code>，</p>
+<p>所以 <em><code>?_k=ckuvup</code> 是垃圾代码什么</em> ？</p>
+<p>当我们使用 web 应用的时候，浏览器记录 (history) 通过 <code>push</code> 或者 <code>replace</code> 来产生变换，浏览器记录会存储一个地址状态 (location state)，但并不会体现在 <code>URL</code> 中，</p>
+<blockquote><p>相关的 API 可以参考 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/History">History</a></p></blockquote>
+<p>而在 DOM API 中，改变 Hash history 的方式仅仅是通过 <code>window.location.hash = newHash</code>，这并没有办法保存地址状态，但是我们希望所有的历史记录都能够使用地址状态，所以我们为每一个地址产生一个独一无二的键值用以表示地址状态，当我们在浏览器中点击后退或者前进的时候，我们就有办法来之前的地址状态了</p>
+<p><strong><code>createMemoryHistory</code></strong></p>
+<p>Memory history 并不会从地址栏中操作或是读取，它能够帮助我们完成服务器端的渲染，或者用于测试以及其他渲染环境 (比如 React Native)，和其他两种方式不一样的是，我们需要在内存中创建 <code>history</code> 对象来使用，</p>
+<pre><code>const history = createMemoryHistory(loaction)
+</code></pre>
+<h2>Index Routes and Index Links</h2>
+<h4>Index Routes</h4>
+<p>考虑以下代码，</p>
+<pre><code>&lt;Router&gt;
+  &lt;Route path="/" component={App}&gt;
+    &lt;Route path="accounts" component={Accounts}/&gt;
+    &lt;Route path="statements" component={Statements}/&gt;
+  &lt;/Route&gt;
+&lt;/Router&gt;</code></pre>
+<p>当我们访问 <code>/</code> 的时候不会有加载任何子组件，组件 <code>&lt;App&gt;</code> 的<code>this.props.children</code> 为 <code>undefined</code>，</p>
+<p>当然你可以使用 <code>{this.props.children || &lt;Home /&gt;}</code> 来定义渲染默认组件，</p>
+<p>但 <code>Home</code> 并没有出现在路由当中，所以这样写并不是非常直观，因此可以使用 <code>&lt;IndexRoute&gt;</code> 来指定当指定子组件不存在时加载默认的子组件，</p>
+<pre><code>&lt;Router&gt;
+  &lt;Route path="/" component={App}&gt;
+    &lt;IndexRoute component={Home}/&gt;
+    &lt;Route path="accounts" component={Accounts}/&gt;
+    &lt;Route path="statements" component={Statements}/&gt;
+  &lt;/Route&gt;
+&lt;/Router&gt;</code></pre>
+<h4>Redirect and Index Redirects</h4>
+<p>我们可以使用 <code>&lt;Redirect&gt;</code> 组件来定义从一个路由自动跳转至另一个路由，</p>
+<pre><code>&lt;Route path="inbox" component={Inbox}&gt;
+  {/* 从 /inbox/messages/:id 跳转到 /messages/:id */}
+  ＜Redirect from="messages/:id" to="/messages/:id" /&gt;
+&lt;/Route&gt;</code></pre>
+<p>考虑以下代码，</p>
+<pre><code>&lt;Route path="/" component={App}&gt;
+  &lt;Route path="welcome" component={Welcome} /&gt;
+  &lt;Route path="about" component={About} /&gt;
+&lt;/Route&gt;</code></pre>
+<p>当我们希望访问 <code>/</code> 的时候自动跳转至 <code>welcome</code> ，即当我们访问跟路由 <code>/</code> 的时候从定向为其他组件，我们可以使用 <code>&lt;IndexRedirect&gt;</code> 组件，</p>
+<pre><code>&lt;Route path="/" component={App}&gt;
+  &lt;IndexRedirect to="/welcome" /&gt;
+  &lt;Route path="welcome" component={Welcome} /&gt;
+  &lt;Route path="about" component={About} /&gt;
+&lt;/Route&gt;</code></pre>
+<h4>Index Links</h4>
+<p>当我们想点击一个链接跳转至根路由 <code>/</code> ， 也许我们会这么写</p>
+<pre><code>&lt;Link to="/"&gt;Home&lt;/Link&gt;
+</code></pre>
+<p>实际上它会匹配任何以 <code>/</code> 开始的子路由， </p>
+<p>当我们只希望渲染  <code>Home</code>  相关的组件， 我们应该这么写</p>
+<pre><code>&lt;IndexLink to="/"&gt;Home&lt;/IndexLink&gt;
+</code></pre>
+<h2>Enter and Leave Hooks</h2>
+<p>路由组件 (Route) 都拥有 <code>onEnter</code> 和 <code>onLeave</code> 钩子，当一个路由被触发时，进入该路由时触发 <code>onEnter</code> ，离开该路由时触发 <code>onLeave</code>，这两个钩子非常的有用，比如当进入一个路由时，需要先判断时候授权，就会可以使用 <code>onEnter</code>，</p>
+<p>在路由跳转过程中，<code>onLeave</code> hook 会在所有将离开的路由中触发，从最下层的子路由开始直到最外层父路由结束，然后 <code>onEnter</code> hook会从最外层的父路由开始直到最下层子路由结束，</p>
+<p>回到概述中的例子，如果我们的路由从 <code>/messages/5</code> 跳转到 <code>/about</code>，下面是这些 hook 的执行顺序：</p>
+<ul>
+<li><p><code>/messages/:id</code> 的 <code>onLeave</code></p></li>
+<li><p><code>/inbox</code> 的 <code>onLeave</code></p></li>
+<li><p><code>/about</code> 的 <code>onEnter</code></p></li>
+</ul>
+<p>至此基础篇完结，之后我会给大家带来进阶篇，欢迎大家持续关注，</p>
+<p>同时如果文章中有任何错误，欢迎大家指出，好的文

@@ -1,0 +1,274 @@
+<p>在正文之前，我想问大家一个问题:<br>问:亲，你有基础吗？<br>答: 有啊，你说前端吗？ 不就是HTML,JS,CSS 吗? so easy~<br>问: oh-my-zsh... 好吧，那问题来了，挖掘机技术哪家强... 开玩笑。 <br>现在才是问题的正内容。</p>
+<ul>
+<li><p>你知道TCP的基本内容吗？(母鸡啊~)</p></li>
+<li><p>好吧，那你知道TCP的3次握手，4次挥手吗？(知道一点点)</p></li>
+<li><p>恩，好，那什么是进程呢？什么是线程呢？(母鸡啊。。)</p></li>
+<li><p>那并发和并行又是什么呢？(母鸡啊)</p></li>
+<li><p>OMG, 那nodeJS多进程实现你会吗？（不会呀~~~ md ...这都是些shenmegui）</p></li>
+</ul>
+<p>其实，说多了都是泪，这些都是程序员的基本素质呀。。。 面tencent的时候，被一个总监，骂的阿弥陀佛么么哒. 今天在这里和大家分享一下，我的血泪史。</p>
+<h2>TCP内容</h2>
+<blockquote><p>工欲善其事,必先利其器</p></blockquote>
+<p>一个程序员境界的提升，并不在于你写的一首好代码，更在于你能说出代码背后的故事。ok~ 鸡汤灌完了。我们开始说方法了。<br>首先这幅图大家必须记得非常清楚才行。<br><br>对了还有,<br>OSI七层模型大家应该烂熟于心的。<br><br>其中TCP处理transport层，主要是用来建立可靠的连接。 而建立连接的基础，是他丰富的报文内容(md~超级多).我们先来解释一下。 首先，我们TCP3次握手用的报文就是绿色的"TCP Flags"内容。 通过发送ACK，SYN包实现。具体涉及的Tag详见:</p>
+<hr>
+<ul>
+<li><p>Source Port / Destination Port:这个就是客户端口(源端口)和服务器端口（目的端口）. 端口就是用来区别主机中的不同进程，通过结合源IP和目的IP结合，得出唯一的TCP连接。</p></li>
+<li><p>Sequence Number(seqNumber): 一般由 客户端发送，用来表示报文段中第一个数据字节在数据流中的序号，主要用来解决网络包乱序的问题。</p></li>
+<li><p>Acknowledgment Number(ACK): 即就是用来存放客户端发来的seqNumber的下一个信号(seqNumber+1). 只有当 TCP flags中的ACK为1时才有效. 主要是用来解决不丢包的问题。</p></li>
+<li>
+<p>TCP flags: TCP中有6个首部，用来控制TCP连接的状态.取值为0,1.这6个有:URG，ACK，PSH，RST，SYN，FIN.</p>
+<ul>
+<li><p><strong>URG</strong> 当为1时，用来保证TCP连接不被中断, 并且将该次TCP内容数据的紧急程度提升(就是告诉电脑，你丫赶快把这个给resolve了)</p></li>
+<li><p><strong>ACK</strong> 通常是服务器端返回的。 用来表示应答是否有效。 1为有效，0为无效</p></li>
+<li><p><strong>PSH</strong> 表示，当数据包得到后，立马给应用程序使用(PUSH到最顶端)</p></li>
+<li><p><strong>RST</strong> 用来确保TCP连接的安全。 该flag用来表示 一个连接复位的请求。 如果发生错误连接，则reset一次，重新连。当然也可以用来拒绝非法数据包。</p></li>
+<li><p><strong>SYN</strong> 同步的意思,通常是由客户端发送，用来建立连接的。第一次握手时: SYN:1 , ACK:0. 第二次握手时: SYN:1 ACK:1</p></li>
+<li><p><strong>FIN</strong> 用来表示是否结束该次TCP连接。 通常当你的数据发送完后，会自动带上FIN 然后断开连接</p></li>
+</ul>
+</li>
+</ul>
+<p>恩，基本的TCP内容，大家应该掌握了吧。OK, go on.</p>
+<h2>What's TCP 3次握手</h2>
+<p>还是一样， 先上张图，让大家先看一下。 上面大家已经基本了解了TCP里面相应的字段，现在看看图里面的是不是觉得有些亲切嘞？</p>
+<p></p>
+<p>其实，大家看上面的图，差不多都已经能够摸清楚，每次发送请求的内容。其实，TCP3次握手是为了建立 稳定可靠的连接。所以也就不存在神马 2次连接等的怪癖。<br>(图中flag说明:SYN包表示标志位syn=1,ACK包表示标志位ack=1,SYN+ACK包表示标志位syn=1,ack=1)<br><strong>现在，我们来正式进入3次握手环节。</strong></p>
+<ul>
+<li><p>第一次握手. 客户端向服务器发送一个SYN包，并且添加上seqNumber(假设为x),然后进入SYN_SEND状态，并且等待服务器的确认。</p></li>
+<li><p>第二次握手: 服务器接受SYN包，并且进行确认，如果该请求有效，则将TCP flags中的ACK 标志位置1， 然后将AckNumber置为(seqNumber+1)，并且再添加上自己的seqNumber(y), 完成后，返回给客户端.服务器进入SYN_RECV状态.(这里服务端是发送SYN+ACK包)</p></li>
+<li><p>第三次握手 客户端接受ACK+SYN报文后，获取到服务器发送seqNumber(y), 并且 将新头部的AckNumber变为(y+1).然后发送给服务器，完成TCP3次连接。此时服务器和客户端都进入ESTABLISHED状态.</p></li>
+</ul>
+<p><strong>回答一下这个比较尴尬的问题，为什么只有3次握手，而不是4次，或者2次？</strong><br>很简单呀，因为3次就够了,干嘛用4次。23333. 举个例子吧，假如是2次的话， 可能会出现这样一个情况。</p>
+<ul><li><p>当客户端发送一次请求A后，但是A在网络延迟了很久， 接着客户端又发送了一次B，但是此时A已经无效了。 接着服务器相应了B，并返回TCP连接头，建立连接(这里就2次哈)。 然后，A 历经千山万水终于到服务器了， 服务器一看有请求来了，则接受，由于一开始A带着的TCP格式都是正确的，那么服务器，理所应当的也返回成功连接的flag，但是，此时客户端已经判断该次请求无效，废弃了。 然后服务器，就这么一直挂着(浪费资源)，造成的一个问题是，md, 这个锅是谁的？ 所以，为了保险起见，再补充一次连接就可以了。所以3次是最合适的。在Chinese中，以3为起称为<strong>多</strong>，如果你用4，5，6，7，8...次的话，这不更浪费吗？</p></li></ul>
+<h2>TCP4次挥手</h2>
+<p>TCP4次挥手，是比较简单的。大家对照上面那个图，我们一步一步进行一下讲解。<br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-3-9/41929240.jpg&amp;objectId=1190000004569460&amp;token=3e7ad8610f927a512168fe28ca70d956" src="/img/41929240.jpg&amp;objectId=1190000004569460&amp;token=3e7ad8610f927a512168fe28ca70d956"></p>
+<ul>
+<li><p>第一次挥手: A机感觉此时如果keep-alive比较浪费资源，则他提出了分手的请求。设置<strong>SeqNumber</strong>和<strong>AckNumber</strong>之后，向B机发送FIN包, 表示我这已经没有数据给你了。然后A机进入FIN_WAIT_1状态</p></li>
+<li><p>第二次挥手:B机收到了A机的FIN包，已经知道了A机没有数据再发送了。此时B机会给A机发送一个ACK包，并且将<strong>AckNumber</strong> 变为 A机传输来的<strong>SeqNumber</strong>+1. 当A机接受到之后，则变为FIN_WAIT_2状态。表示已经得到B机的许可，可以进行关闭操作。不过此时，B机还是可以向A机发送请求的。</p></li>
+<li><p>第三次挥手 B机向A机发送FIN包，请求关闭，相当于告诉A机，我这里也没有你要的数据了。然后B机进入CLOSE_WAIT状态.（这里还需要带上<strong>SeqNumber</strong>，大家看图说话就可以了）</p></li>
+<li><p>第四次挥手 A机接收到B机的FIN包之后，然后同样，发送一个ACK包给B机。 B机接受到之后，就断开了。 而A机 会等待2MSL之后，如果没有回复，确保服务器端确实是关闭了。然后A机也可以关闭连接。A,B都进入了CLOSE状态.</p></li>
+</ul>
+<p>明白了吗？<br>大哥~ 等等，什么是2MSL呀~ <br>哦，对哦。 这个还么说...<br>2MSL=2*MSL. 而MSL其实就是<code>Maximum Segment Lifetime</code>，中文意思就是报文最大生存时间。RFC 793中规定MSL为2分钟，实际应用中常用的是30秒，1分钟和2分钟等。 同样上面的TIME_WAT状态其实也就是2MSL状态。 如果超过改时间，则会将该报文废弃，然后直接进入CLOSED状态.</p>
+<h2>进程？线程？</h2>
+<p><strong>亲，请问php是一门什么语言? (提示，关于进程)</strong><br>官方回答: php是一门基于多线程的语言<br><strong>亲，请问nodeJS是一门什么语言？（提示，关于线程）</strong><br>官方回答: Node.js是单线程!异步!非阻塞!(不过早已可以实现多进程交互了)<br>那php和nodeJS区别在哪呢？具体可以见图:<br><strong>PHP</strong><br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-3-5/50528053.jpg&amp;objectId=1190000004569460&amp;token=a352db27b5b506666a0a044546e466d2" src="/img/50528053.jpg&amp;objectId=1190000004569460&amp;token=a352db27b5b506666a0a044546e466d2"><br><strong>NodeJS</strong><br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-3-5/94619752.jpg&amp;objectId=1190000004569460&amp;token=3aee6d4666c9099d70db6288db4dd773" src="/img/94619752.jpg&amp;objectId=1190000004569460&amp;token=3aee6d4666c9099d70db6288db4dd773"><br>ok~ 简单吧。 <br><strong>亲，那进程和线程区别是什么嘞？</strong><br>go die /(ㄒoㄒ)/~~<br>这算是计算机的基本知识吧。 首先我们需要记住的是，进程包括线程。这非常重要。</p>
+<p>进程就是系统分配资源的基本单位(比如CPU,内存等)<br>线程就是程序执行的最小单位</p>
+<p>进程有自己的空间，如果一个进程崩溃不会引起其它进程的崩溃。<br>线程，没有自己独立的空间，多个线程共享的是进程的地址空间，当然处理一些基本的如程序计数器,一组寄存器和栈等。<br>如果一个线程崩溃，它所在的进程就崩溃了。 虽然说，多进程很稳定，但是进程切换时，耗费的资源也是很大的。 所以对于大并发的nodeJS来说，使用多线程的效果要远远比多进程快，稳定。</p>
+<h2>线程的优势</h2>
+<p>1.系统在启动一个进程的时候，会首先在资源中独立一块出来，在后台建立一些列表进行维护。 而，线程是比进程低一个level的，所以创建线程所耗费的资源要远远比，创建进程的资源少。</p>
+<ol>
+<li><p>由于进程本身就比较复杂，所以如果进行进程切换的话，造成的性能损耗也是不言而喻的(因为多个进程独立，在切换的时候还需要保证各自的独立性)。 而线程切换就不同了，因为在处在同一进程下面，对于其他的进程都是透明化的(内存共享)，所以在进行进程切换时，所耗费的资源远远比进程切换的小。</p></li>
+<li>
+<p>在Linux和window下，CPU的分配是根据线程数来的，如果</p>
+<pre><code>总线程数&lt;= CPU数量：并行运行
+总线程数&gt; CPU数量：并发运行</code></pre>
+<p>并行指的是，当你的CPU核数比线程数多的话，则会将每个线程都分在一个CPU核里进行处理。</p>
+</li>
+</ol>
+<p>并发指的是，当你的CPU核数比线程数少的话，则会利用“时间片轮转进程调度算法”，对每个线程进行同等的运行。</p>
+<p>4.细化进程的处理，通常一个进程可以拆分为多个线程进行处理，就和模块化处理是类似的，使用模块化书写的效果要远远比使用单main入口方式书写 清晰，稳定。</p>
+<h2>并发,并行原理</h2>
+<p>亲， 并发和并行有什么共同点吗？<br>恩~ 有的， 他们都有个‘并’子，字面上看起来都是同时执行的意思。<br>没错，当然只是字面上而已。<br>实际上，并发和并行是完全不同的概念。 这里主要和CPU核数有关。这里为了理解，拿线程来作为参考吧。<br>当你的</p>
+<pre><code>总线程数&lt;= CPU数量：并行运行
+总线程数&gt; CPU数量：并发运行
+</code></pre>
+<p>很明显，并行其实是真正意义上的同时执行。 当线程数&lt; CPU核数时，每个线程会独立分配到一个CPU里进行处理。<br><strong>大家看过火影忍者吗？</strong><br>没错，就是鸣人 出关 口遁九尾之后。 他使用影分身，跑去各地支援同伴，对抗斑。 这里类比来说，就可以理解为， 每个CPU 都是鸣人的一个影分身，他们执行这各自不同的工作，但是，在同一时间上，他们都在运行。 这就是<strong>并行</strong>。<br><strong>那并发嘞？</strong><br>其实，并发有点难以理解，他做的工作其实，就是利用一系列算法实现，并行做的事。一个比较容易理解的就是“时间片轮转进程调度算法”。<br>即: 在系统控制下，每个线程轮流使用CPU，而且，每个线程使用时间必须很短(比如10ms), 所以这样切换下来。我们(愚蠢的人类，哈哈哈), 天真的以为任务，真的是在"并行"执行.</p>
+<h2>nodeJS的进程实现</h2>
+<p>一开始nodeJS最令人诟病的就是他的单线程特性。既是绝招也是死穴，不过nodeJS发展很快，在v0.8版本就已经添加了cluster作为内置模块，实现多核的利用。<br>关于nodeJS的进程模块，最主要的当然还是cluster. 通过调用child_process.fork()函数来开启进程。 先看一个具体的demo(from 官网)</p>
+<pre><code>var cluster = require('cluster');
+var http = require('http');
+var numCPUs = require('os').cpus().length;
+
+if (cluster.isMaster) {
+    console.log("master start...");
+
+    // Fork workers.
+    for (var i = 0; i &lt; numCPUs; i++) {
+        cluster.fork();
+    }
+    //用来监听子worker创建监听服务
+    cluster.on('listening',function(worker,address){
+        console.log('listening: worker ' + worker.process.pid +', Address: '+address.address+":"+address.port);
+    });
+
+    cluster.on('exit', function(worker, code, signal) {
+        console.log('worker ' + worker.process.pid + ' died');
+    });
+} else {
+    http.createServer(function(req, res) {
+        res.writeHead(200);
+        res.end("hello world\n");
+    }).listen(0);
+}</code></pre>
+<p>存放为app.js 然后运行<code>node app.js</code>就可以实现一个简单的多进程效果。<br>结果可能为下:</p>
+<pre><code>master start...
+listening: worker 1559, Address: null:57803
+listening: worker 1556, Address: null:57803
+listening: worker 1558, Address: null:57803
+listening: worker 1557, Address: null:57803</code></pre>
+<p>可以从上面的demo中看出，通过cluster.isMaster来区分master和worker. 而master和worker之间使用listen(0)进行通信.</p>
+<ul><li><p>server.listen(0):在master和worker通信过程，集群中的worker会打开一个随机端口共用，通过socket通信像上例中的57803</p></li></ul>
+<p>当然你也可以手动打开一个端口共享监听。像这样.</p>
+<pre><code> http.createServer(function(req, res) {
+        res.writeHead(200);
+        res.end("hello world\n");
+    }).listen(3000);</code></pre>
+<h3>cluster对应API</h3>
+<p>cluster对象的属性和函数</p>
+<ul>
+<li><p>cluster.setttings:配置集群参数对象</p></li>
+<li><p>cluster.isMaster:判断是不是master节点*</p></li>
+<li><p>cluster.isWorker:判断是不是worker节点*</p></li>
+<li><p>Event: 'fork': 监听创建worker进程事件</p></li>
+<li><p>Event: 'online': 监听worker创建成功事件</p></li>
+<li><p>Event: 'listening': 监听worker开启的http.listen</p></li>
+<li><p>Event: 'disconnect': 监听worker断线事件</p></li>
+<li><p>Event: 'exit': 监听worker退出事件</p></li>
+<li><p>Event: 'setup': 监听setupMaster事件</p></li>
+<li><p>cluster.setupMaster([settings]): 设置集群参数</p></li>
+<li><p>cluster.fork([env]): 创建worker进程</p></li>
+<li><p>cluster.disconnect([callback]): 关闭worket进程*</p></li>
+<li><p>cluster.worker: 获得当前的worker对象*</p></li>
+<li><p>cluster.workers: 获得集群中所有存活的worker对象*</p></li>
+</ul>
+<p>通过cluster.worker获得的worker对象和相应的参数</p>
+<ul>
+<li><p>worker.id: 进程ID号</p></li>
+<li><p>worker.process: ChildProcess对象*</p></li>
+<li><p>worker.suicide: 在disconnect()后，判断worker是否自杀*</p></li>
+<li><p>worker.send(message, [sendHandle]):* master给worker发送消息。注：worker给发master发送消息要用process.send(message)</p></li>
+<li><p>worker.kill([signal='SIGTERM']): 杀死指定的worker，别名destory()*</p></li>
+<li><p>worker.disconnect(): 断开worker连接，让worker自杀</p></li>
+<li><p>Event: 'message': 监听master和worker的message事件</p></li>
+<li><p>Event: 'online': 监听指定的worker创建成功事件</p></li>
+<li><p>Event: 'listening': 监听master向worker状态事件</p></li>
+<li><p>Event: 'disconnect': 监听worker断线事件</p></li>
+<li><p>Event: 'exit': 监听worker退出事件</p></li>
+</ul>
+<p>这些就是cluster的全部内容。不过这仅仅只是内容而已，如果使用cluster，这便是我们程序员要做的事了。</p>
+<h3>进程通信</h3>
+<p>由于nodeJS 只能实现单进程的效果，所以他的进程数只能为一个，但是通过引用cluster模块，可以开启多个子进程实现CPU的利用。<br><a href="https://jsfiddle.net/jimmyTHR/Lkz41fw9/">简单进程交互</a><br>运行后的结果为:</p>
+<pre><code>[master] start master...
+[master] fork: worker1
+[master] fork: worker2
+[master] fork: worker3
+[master] fork: worker4
+[master] online: worker1
+[master] online: worker4
+[master] online: worker2
+[master] online: worker3
+[worker] start worker ...1
+[worker] start worker ...4
+[worker] start worker ...2
+[master] listening: worker4,pid:990, Address:null:3000
+[master] listening: worker1,pid:987, Address:null:3000
+[master] listening: worker2,pid:988, Address:null:3000
+[worker] start worker ...3
+[master] listening: worker3,pid:989, Address:null:3000</code></pre>
+<p>参照注释代码和上述的结果，我们可以很容易的得到一个触发逻辑。<br>运行过程是:</p>
+<ul>
+<li><p>首先fork子进程</p></li>
+<li><p>触发fork事件</p></li>
+<li><p>创建成功，触发online事件</p></li>
+<li><p>然后重新执行一遍app.js,通过isWorker判断子进程</p></li>
+<li><p>创建子进程服务-&gt;触发master上的listening</p></li>
+</ul>
+<pre><code class="flow">st=&gt;start: 首先fork子进程
+op1=&gt;operation: 触发fork事件
+op2=&gt;operation: 创建成功，触发online事件
+op3=&gt;operation: 然后重新执行一遍app.js,通过isWorker判断子进程
+op4=&gt;operation: 创建子进程服务-&gt;触发master上的listening
+e=&gt;end
+
+st-&gt;op1-&gt;op2-&gt;op3-&gt;op4-&gt;e</code></pre>
+<p>上面只是创建满负载子进程的流程。 但怎样实现进程间的交互呢？ 很简单，master和worker监听message事件，通过传递参数，进行交互。</p>
+<ul>
+<li><p>cluster.worker.send(message[,handleFn]) master向worker发送信息</p></li>
+<li><p>process.send(message[,handleFn]); worker向master发送信息</p></li>
+</ul>
+<p>这个是多进程之间的通信<br><a href="https://jsfiddle.net/jimmyTHR/jcc8ezo3/">communication</a><br>我们来分解一下代码块:</p>
+<pre><code>//开启master监听worker的通信
+cluster.workers[id].on('message', function(msg){
+          //...
+        });
+        
+//开启worker监听master的通信
+process.on('message', function(msg) {
+       //...
+    });</code></pre>
+<p>运行上面的demo. 这里就不细说，整个流程，只看一下信息通信这一块了。</p>
+<ul>
+<li><p>创建子进程,触发listening事件</p></li>
+<li><p>使用process.on监听message</p></li>
+<li><p>接受master发送过来的消息</p></li>
+<li><p>再向master返回消息</p></li>
+</ul>
+<pre><code class="flow">st=&gt;start: 创建子进程,触发listening事件
+op1=&gt;operation: 使用process.on监听message
+op2=&gt;operation: 接受master发送过来的消息
+op3=&gt;operation: 再向master返回消息
+op4=&gt;operation: others
+e=&gt;others
+
+st-&gt;op1-&gt;op2-&gt;op3-&gt;op4</code></pre>
+<h3>nodeJS负载均衡</h3>
+<p>现在，nodeJS负载均衡应该是最容易实现的，其内部已经帮我们封装好了，我们直接调用就over了。<br>其中，实现负载均衡的模块就是cluster。以前cluster确实很累赘。负载均衡的算法实现的不是很好，导致的下场就是npm2的兴起。不过现在已经实现了负载均衡，官方说法就是用round-robin,来进行请求分配。 round-robin其实就是一个队列的循环，灰常容易理解。先看一下，cluster封装好实现的负载均衡.</p>
+<pre><code>var cluster = require('cluster');
+var http = require('http');
+var numCPUs = require('os').cpus().length;
+
+if (cluster.isMaster) {
+    console.log('[master] ' + "start master...");
+
+    for (var i = 0; i &lt; numCPUs; i++) {
+         cluster.fork();
+    }
+
+    cluster.on('listening', function (worker, address) {
+        console.log('[master] ' + 'listening: worker' + worker.id + ',pid:' + worker.process.pid + ', Address:' + address.address + ":" + address.port);
+    });
+
+} else if (cluster.isWorker) {
+     console.log('[worker] ' + "start worker ..." + cluster.worker.id);
+    var num = 0;
+    http.createServer(function (req, res) {
+        num++;
+        console.log('worker'+cluster.worker.id+":"+num);
+        res.end('worker'+cluster.worker.id+',PID:'+process.pid);
+    }).listen(3000);
+}</code></pre>
+<p>（哥哥，你骗人，这哪里实现了负载均衡，这不就是上面的算法么？)<br>是呀，，， 我又没说负载均衡不是这个。<br>负载均衡就是帮你解决请求的分配问题。ok~ 为了证明，我没有骗你，我们来进行测试一下。<br>使用brew安装siege测试,当然你也可以使用其他测试工具，不过在MAC 上面最好使用siege和webbench或者ab，我这里使用siege</p>
+<pre><code>brew install siege</code></pre>
+<p>使用的测试语法就是</p>
+<pre><code>siege -c 并发数 -t 运行测试时间 URL</code></pre>
+<p>测试的时间后面需要带上单位，比如s,m,h,d等。默认单位是m(分钟). 举个例子吧.</p>
+<pre><code>siege -c 100 -t 10s http://girls.hustonline.net</code></pre>
+<p>对女生节网页进行 100次并发测试，持续时间是10s.<br>当然siege里还有其他的参数.</p>
+<ul>
+<li><p>-c NUM 设置并发的数量.eg: -c 100; //设置100次并发</p></li>
+<li><p>-r NUM 设置发送几轮的请求，即，总的请求数为: <code>-cNum*-rNum</code>但是, -r不能和-t一起使用(为什么呢？你猜).eg: -r 20</p></li>
+<li><p>-t NUM 测试持续时间，指你运行一次测试需要的时间，在timeout后，结束测试.</p></li>
+<li><p>-f file. 用来测试file里面的url路径.file的尾缀需要为.url. eg: <code>-f girls.url</code>.</p></li>
+<li><p>-b . 就是询问开不开启基准测试(benchmark)。 这个参数不太重要，有兴趣的同学，可以下去学习一下。</p></li>
+</ul>
+<p>siege常用的就是这几个. 通常我们是搭配 <code>-c + -r</code> 或者<code>-c + -t</code>.<br>OK，现在我们开始我们的测试 procedure.<br>首先开启多进程NodeJS. <code>node app.js</code><br>使用<code>siege -c 100 -t 10s 127.0.0.1:3000</code>. (Ps: 当然也可以使用<a href="http://localhost:3000">http://localhost:3000</a>进行代替)<br>得到的结果为</p>
+<pre><code>Transactions:                 600 hits
+Availability:              100.00 %
+Elapsed time:                6.08 secs
+Data transferred:            0.01 MB
+Response time:                0.01 secs
+Transaction rate:           98.68 trans/sec
+Throughput:                0.00 MB/sec
+Concurrency:                0.88
+Successful transactions:         600
+Failed transactions:               0
+Longest transaction:            0.04
+Shortest transaction:            0.00
+</code></pre>
+<p>在10s内，发起了600次请求，最大的峰值是98.68 trans/sec。 通过统计分析，得到每个worker的分发量.</p>
+<pre><code>worker1:162
+worker2:161
+worker3:167
+worker4:170
+</code></pre>
+<p>可以看出，基本上每个负载上分配的请求的数目都差不多。这就已经达到了负载均衡的效果。<br>下一篇会对nodeJS已经相关的测试工具做一些介绍哦。<br>尽请期待。<br>ending~</p>
+<p>大家如果感兴趣，给我一杯咖啡喝喝吧~ <br><img data-src="https://segmentfault.com/image?src=http://7xpsmd.com1.z0.glb.clouddn.com/16-3-15/69326879.jpg&amp;objectId=1190000004569460&amp;token=2e7d5554e82d5f3b94d2ccaacf96cce1" src="/img/69326879.jpg&amp;objectId=1190000004569460&amp;token=2e7d5554e82d5f3b94d2ccaacf96cce1"></p>
+<p>转载请注明出处和作者<br>原文连接:<a href="https://segmentfault.com/a/1190000004569460">https://segmentfault.com/a/1190000004569460</a></p>

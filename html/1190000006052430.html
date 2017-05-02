@@ -1,0 +1,142 @@
+<p>移动端开发在某些场景中有着特殊需求，如为了提高用户体验和加快响应速度，常常在部分工程采用SPA架构。传统的单页应用基于url的hash值进行路由，这种实现不存在兼容性问题，但是缺点也有--针对不支持onhashchange属性的IE6-7需要设置定时器不断检查hash值改变，性能上并不是很友好。</p>
+<p>而如今，在移动端开发中HTML5规范给我们提供了一个History接口，使用该接口可以自由操纵历史记录。本文并不详细介绍History接口，而是探究History接口如何影响浏览器历史堆栈，并且利用这个<strong>规律</strong>应用到具体的实际业务中，提出两种历史记录保存策略，使路由逻辑更清晰，让SPA更容易。</p>
+<h2>History API回顾</h2>
+<p>HTML5 History API包括2个方法：history.pushState()和history.replaceState()，和1个事件：window.onpopstate。</p>
+<h3>pushState</h3>
+<p>history.pushState(stateObject, title, url)，包括三个参数。</p>
+<p>第一个参数用于存储该url对应的状态对象，该对象可在onpopstate事件中获取，也可在history对象中获取。</p>
+<p>第二个参数是标题，目前浏览器并未实现。</p>
+<p>第三个参数则是设定的url。一般设置为相对路径，如果设置为绝对路径时需要保证同源。</p>
+<p>pushState函数向浏览器的历史堆栈压入一个url为设定值的记录，并改变历史堆栈的当前指针至栈顶。</p>
+<blockquote><p>在这里笔者使用历史堆栈和当前指针，用以说明浏览器对历史记录的管理策略。文档中并没有使用这样的词汇，笔者为了更形象的介绍接口对浏览器历史记录的影响，使用这样的描述，如有不当之处请及时指出（不过目前以这套模型为基础的逻辑实现中并未出现悖论）。</p></blockquote>
+<h3>replaceState</h3>
+<p>该接口与pushState参数相同，含义也相同。唯一的区别在于replaceState是替换浏览器历史堆栈的当前历史记录为设定的url。需要注意的是，replaceState不会改动浏览器历史堆栈的当前指针。</p>
+<h3>onpopstate</h3>
+<p>该事件是window的属性。该事件会在调用浏览器的前进、后退以及执行history.forward、history.back、和history.go触发，因为这些操作有一个共性，即修改了历史堆栈的当前指针。在不改变document的前提下，一旦当前指针改变则会触发onpopstate事件。</p>
+<h2>History API与业务实践</h2>
+<p>最常见的单页应用场景：列表页、商品详情页以及其内部的其他链接入口如图片页、评论页及其推荐其他商品详情页。以上提到的已经涉及到了4个单独业务逻辑页面（推荐的商品可复用商品详情页逻辑），分别是：列表、详情、图片详情和评论。将这4个页面合并到一个页面中，这就是最简单的SPA。为了用户的良好体验，必须设计合理的交互逻辑，最直观的就是浏览器（或手机app、微信公众号）的<strong>后退</strong>和<strong>前进</strong>必须合乎业务逻辑特点。因此，这就涉及到了History API的使用，也牵扯到浏览器的历史记录管理。</p>
+<p><img data-src="/img/remote/1460000006774896" src="/img/remote/1460000006774896.png"></p>
+<p>上图为具体的逻辑示意图。在列表页，点击其中一个商品，这里是商品1，进入详情页。详情页包括了该商品的轮播图、商品的图片详情入口、评论入口和推荐的其他商品入口。接下来进行如下操作：进入图片详情页，后退至详情页再进入评论页；<strong>后退</strong>至商品1详情页再由推荐商品入口进入商品9详情页，同样在商品9详情页进入图片详情页和评论页，再<strong>后退</strong>至商品9详情页；由推荐商品入口进入商品34详情页，再进行类似操作。最后保证在商品34图片详情页或评论页可以顺利<strong>后退</strong>至最初的商品列表页。</p>
+<blockquote><p>上文中加粗的“后退”，意味着使用浏览器后退按钮，或者使用手机自带的返回，再或者使用页面上提供的后退按钮。</p></blockquote>
+<p>这样一个很细小的需求，但是一旦真正放手去做却不是那么容易。仅仅根据History API的2个函数和1个事件去盲目的尝试实现，这属于盲人摸象，鲁棒性不高。不清楚浏览器的历史记录管理策略，不了解当前页面的历史记录数量，此种情况若要实现上述场景就有些麻烦。所以在具体动手写业务代码之前，需要搞懂History的pushState和replaceState具体如何影响历史记录栈。</p>
+<h3>探究浏览器历史记录策略与History API的关系</h3>
+<p>由于浏览器并未针对每个页面的历史记录提供具体访问的接口，因此所有的测试都是黑盒。但是在移动端的中，大都是webkit内核，其webcore的具体实现也都相近，因此该节得出的结论完全可以在移动端使用。</p>
+<p>尽管无法访问当前页的历史记录栈，但是浏览器却提供了history.length属性，它标明了当前历史记录栈的个数。该值会帮助我们更好地分析History API对历史记录栈的影响。</p>
+<p><img data-src="/img/remote/1460000006052433" src="/img/remote/1460000006052433.jpeg"><br>上图为测试实例。其中白色箭头意味着<strong>点击该链接并执行pushState操作（即操作1）</strong>，黑色箭头则执行浏览器后退，红色的圆点为历史记录栈中的当前指针，而每个项则为历史记录栈，历史记录的个数则为其子项的数量。</p>
+<p>初始在第一个搜索列表页，执行操作1后历史堆栈数量增加，当前指针上移一位至26788.html；<br>同理在执行3次操作1，历史堆栈递增3个，当前指针仍在栈顶，即78099.html；<br>此后进行浏览器后退，历史堆栈数量不变，当前指针下移一位至8819.html；<br>在此处再执行操作1，栈顶元素改变，当前指针移至栈顶，历史堆栈数量不变；<br>继续执行操作1，栈顶元素改变，指针移至栈顶，历史堆栈数量加一；<br>执行浏览器后退，栈顶元素不变，指针下移一位至8128.html，历史堆栈数量不变；<br>执行浏览器后退，栈顶元素不变，指针下移一位至8819.html，历史堆栈数量不变；<br>执行浏览器后退，栈顶元素不变，指针下移一位至8128.html，历史堆栈数量不变；<br>执行浏览器后退，栈顶元素不变，指针下移一位至26788.html，历史堆栈数量不变；<br>执行操作1，栈顶元素变为9721.html，指针上移至栈顶，历史堆栈数量变为3；<br>执行操作1，栈顶元素变为8387.html，指针上移至栈顶，历史堆栈数量变为4；<br>执行浏览器后退，栈顶元素不变，指针下移一位至9721.html，历史堆栈数量不变；<br>执行浏览器后退，栈顶元素不变，指针下移一位至26788.html，历史堆栈数量不变；<br>执行浏览器后退，栈顶元素不变，指针下移一位至search.html，历史堆栈数量不变；<br>执行操作1，栈顶元素变为xxx.html，指针上移至栈顶，历史堆栈数量变为2；<br>...</p>
+<p>至此，实验结束。虽然这里仅仅列出了这一个测试用例，但是其实笔者做了更多更复杂的测试，并且平台涉及了pc和移动端的浏览器、微信和原生webview，结果都一样。这一系列测试说明了很多问题，总结之一句话则是：</p>
+<p>**浏览器针对每个页面维护一个History栈。执行pushState函数可压入设定的url至栈顶，同时修改当前指针；<br>当执行back操作时，history栈大小并不会改变（history.length不变），仅仅移动当前指针的位置；<br>若当前指针在history栈的中间位置（非栈顶），此时执行pushState会改变history栈的大小。<br>总结pushState的规律，可发现当前指针在history栈顶部时执行pushState，会增加history栈大小；若current指针不在栈顶则会在当前指针所在位置添加项。执行back操作并不修改history栈大小，因此可以通过back和forward在当前大小的history栈中自由移动。**</p>
+<p>掌握这个规律，就知道如何维护历史记录，就知道在什么状态下需要pushState。回到最初的需求，产品经理规定从商品34的评论页，按后退按钮可以到达最初的列表页，但是他并没有详细规定如何后退。在这里就会有2中实现方式：</p>
+<ul>
+<li><p>每一次后退，会回到上次的访问地方。如，在商品34的评论页，会后退至商品34的详情页，再后退则会回到商品9的详情页，直至回到列表页。</p></li>
+<li><p>总共维护三层历史记录，第一层（栈底）为列表页，第二层为详情页，第三层（栈顶）为评论页或图片详情页。在该种实现下，由商品34的评论页第一次后退至商品34的详情页，第二次后退至列表页。</p></li>
+</ul>
+<p>针对第一种，其实实现最为简单，因为这完全是由浏览器默认控制历史记录堆栈，而我们只需在合适的时机调用pushState将url插入到堆栈，然后在onpopstate处理函数中监听对应的时间即可：</p>
+<pre><code>window.addEventListener('popstate', function (e) {
+    
+    console.log('popstate')
+    // 后退（前进）至商品详情页，异步加载数据并渲染
+    if(e.state &amp;&amp; e.state.indexOf('/shop/sku/') !== -1){
+      ajaxDetail(e.state,true);   
+    }else
+    // 后退（前进）至评论页，异步加载数据渲染
+    if(e.state &amp;&amp; e.state.indexOf('/shop/comment/commentList.html') !== -1){
+      ajaxComment(e.state,true);
+    }else 
+    // 后退（前进）至图片详情页，异步加载数据渲染
+    if(e.state &amp;&amp; e.state.indexOf('/shop/item/pictext/') !== -1){
+      ajaxPic(e.state,true);
+    }else
+    // 后退（前进）至列表页，隐藏浮层
+    if(e.state &amp;&amp; e.state.indexOf('/search/') !== -1){
+      // 隐藏spa的浮层
+      $('.spa-container').css('zIndex','-1');
+    }
+    
+  });</code></pre>
+<p>针对第二种实现，则是本文的重点。毕竟，由浏览器默认维护的历史堆栈在某些业务场景中并不匹配，因此需要开发者自己维护一个历史记录栈。在本次实现中，由于总共涉及4张页面的显示，因此我们设定了3层历史堆栈，这很好理解。</p>
+<p>为了构建这样的历史记录栈，在主页面（即列表页）中需要额外添加两条历史记录。这是由于默认打开列表页时，当前页面的url已加入历史记录栈中，</p>
+<pre><code>function push(state){
+    history.pushState(state, null, location.pathname + location.search);
+  }
+  // 'abc'用于标示初始列表页
+  history.replaceState('abc',null,location.pathname + location.search)
+  
+  // 压入两条历史记录
+  push();
+  push();</code></pre>
+<p>这样，打开列表页后就会创建3个历史记录，并且这3个历史记录的url都为列表页的url，这与后面的操作并无影响。</p>
+<p>在列表页中打开详情页，需要做额外的处理。由于按照我们设计的历史记录栈，第二层应该为详情页，而此时在初始化后，历史记录栈的当前指针已指向栈顶元素，因此需要将当前指针下移一位。这里就需要history.back来完成。</p>
+<pre><code>$('.item-list').on('click','a',handler);
+
+// 异步加载详情数据
+var handler = function(e,isScrollXClick){
+    var a = this;
+    ajaxDetail($(a).attr('href'),isScrollXClick);
+    return false;
+};
+
+var isScrollXClick;
+  /**
+   * @params: url 请求路径 isScrollXClick: 是否点击推荐商品
+   *
+   */ 
+  var ajaxDetail = function(url,isScrollXClick){
+
+     $.ajax({
+      url: '/api' + url,
+      success: function(data){
+        ...
+        ...
+        if(!isScrollXClick){
+          console.log('I am back!')
+
+          // 在代码中进行back or forward并不会立即出发popstate事件，以v8引擎为例，在执行back之后
+          // 的大概18us之后会触发事件，而此时如果立即通过replaceState修改url则会造成失败，修改的是
+          // history stack栈顶的url.
+          
+          // 这里通过异步执行replaceState兼容
+          history.back();       
+          
+        }
+          
+        // 异步触发
+        setTimeout(function(){
+          history.replaceState(url, null, url);
+        })
+
+        // 针对推荐栏的商品，循环绑定事件，此处用事件代理优化
+        $('#J_PDSlider').on('click','a',function(e){
+          isScrollXClick = 1;
+          handler.call(this,e,isScrollXClick);
+          return false;
+        });
+      },
+      error: function(xhr, type){
+        alert('Ajax error!')
+      }
+     })
+  };</code></pre>
+<p>在此处实现，通过isScrollXClick变量判断是否点击的是推荐商品，如果不是则需要执行back操作，下移指针。此时指针是指在第二层，但是浏览器和第二层历史记录的url仍为初始化设定的url，因此需要修改，在这里异步修改当前url。</p>
+<p><em>之所以异步执行replaceState，是由于webkit触发popState事件决定的。在代码中执行history.back 或者history.forward，并不会立即返回，也不会立即触发popState事件。由于没有阅读webkit的源码，因此无从推测执行back或者forward后具体需要额外做什么操作，它们之间有着10us级别的间隔，因此此处必须使用setTimeout实现异步改变url。</em></p>
+<p>在具体开发过程中，这个问题困扰着笔者好几天，终于在一次调试过程中发现浏览器url的变动，才联想到可能是由事件触发的时间差导致。</p>
+<p>对于图片详情和评论的逻辑处理，则和上文类似，无需多言。</p>
+<p>最后一次后退需要回到列表页，而在初始化阶段我们给列表页设置了state为“abc”，特殊的标示该路由，因此在popState事件处理中，我们就可以根据该项回到初始页：</p>
+<pre><code>window.addEventListener('popstate', function (e) {
+
+    if(e.state &amp;&amp; e.state.indexOf('/shop/sku/') !== -1){
+      ajaxDetail(e.state,true);   
+    }else if(e.state &amp;&amp; e.state.indexOf('abc') !== -1){
+      // 隐藏spa的浮层
+      $('.spa-container').css('zIndex','-1');
+      
+      
+      push();
+      push();
+    }
+    
+    
+  });</code></pre>
+<p>如果回到初始页，隐藏浮层，同时在执行2次push操作。根据上节发现的规律，在初始页执行2次push操作，会在当前指针位置重新添加2个历史记录，当前指针指向栈顶元素，历史记录栈的数量不变，仍为3。这样就完成了简单的由开发者自定义维护历史堆栈的spa系统。</p>
+<h2>回顾</h2>
+<p>之所以会写这篇文章完全是出于偶然，由于实际项目的各种需求我们不应该仅仅将眼光停留在使用API的层面上。另外，在开发过程中遇到难以解决的问题，需要提出各种合理的设想并用详实的实验证明，在得到相对应的结论后需要利用该结论去例证其他场景，这样才能确保解决方案的可靠性。目前网络上或者书籍中并未提供任何手动维护历史记录堆栈的方法，也未明确指出History API与浏览器历史记录之间如何影响，因此本文对于旨在利用History API实现spa的开发者而言还是有些指导意义的。</p>

@@ -1,0 +1,104 @@
+<h1>前言</h1>
+<p>较早的Nodejs开发者为了实现程序的同步都会使用几个“工具”，<code>回调</code>，<code>promise</code>，<code>co</code>，或者是<code>generator</code>。记得写过一个递归删除目录下文件和文件夹的需求，用以上方法都是各种不爽（关键我就是想简单的写个递归啊）。</p>
+<p><img data-src="/img/remote/1460000008603684?w=96&amp;h=96" src="/img/remote/1460000008603684?w=96&amp;h=96.png"></p>
+<p>就在前几天Nodejs发布了<code>v7.6.0</code>版本。Nodejs开发者终于不用使用第三方模块就可以使用<code>async</code>和<code>await</code>让自己的程序在不需要异步的地方保持同步的特性了。</p>
+<p>就在Nodejs <code>v7.6.0</code>刚发布不久，<strong>koa</strong>的作者也正式的发布的<strong>koa2</strong>。</p>
+<p><img data-src="/img/remote/1460000008603685?w=1216&amp;h=276" src="/img/remote/1460000008603685?w=1216&amp;h=276.jpeg"></p>
+<p>一句话总结：使用<code>async</code>和<code>await</code>是极大的解放生产力，减少脑细胞的消耗。</p>
+<p>因为之前使用koa做了一个小项目，想着就把它给升级一下，及做一下网络请求方面的优化。</p>
+<h2>1.升级koa2.x及相关koa依赖</h2>
+<p>因为koa1.x和koa2.x区别还是挺大的。大部分的中间件目前已经做了针对koa2.x的兼容。没有做兼容的中间件，koa2.x本身也提供了方法进行兼容（后面会提到用法）。</p>
+<p>升级的方法也很简单就是针对每一个中间件执行：<code>yarn add koa-xxxxx@next </code> 就可以升级到最新版本；</p>
+<p>以下就是项目所依赖所有的中间件，都已经升级了最新的支持koa2。</p>
+<pre><code class="javascript">"koa-bodyparser": "^3.2.0",
+"koa-compress": "^2.0.0",
+"koa-convert": "^1.2.0",
+"koa-router": "^7.0.1",
+"koa-static": "^3.0.0",
+"koa-static-cache": "^4.0.0",
+"koa-views": "^5.2.1",</code></pre>
+<h2>2.针对koa2.x的特点对项目进行重构</h2>
+<p>koa1.x的特点就是使用<code>genetator</code>来控制项目的同步，而koa2.x最大的特点就是使用<code>async</code>和<code>await</code></p>
+<p><code>generator</code>的写法：</p>
+<pre><code class="javascript">myRouter.get('/', function *(){
+    let body ;
+    let peopleList =configParams.onDutyPeople();
+
+    body = yield render('index', {'peopleList':peopleList});
+    this.body = body;
+    this.type='text/html; charset=utf-8';
+});</code></pre>
+<p><code>await</code>的写法</p>
+<pre><code class="javascript">router
+    .get('/', async(ctx, next) =&gt; {
+        let peopleList = configParams.onDutyPeople();
+
+        await ctx.render('index.jade', { 'peopleList': peopleList });
+        ctx.type = 'text/html; charset=utf-8';
+    })</code></pre>
+<h2>3.不兼容koa2.x的中间件怎么办</h2>
+<p>在做网络优化的时候用到一个中间件<code>koa-static-cache</code>。这个中间件目前是不兼容koa2.x的，那么怎么在Koa2.x中使用呢？</p>
+<p><strong>运行的时候报错信息如下：</strong></p>
+<p><img data-src="/img/remote/1460000008632312?w=1894&amp;h=122" src="/img/remote/1460000008632312?w=1894&amp;h=122.jpeg"></p>
+<p><strong>通过网络查询得出原因如下：</strong></p>
+<p><img data-src="/img/remote/1460000008603686?w=1654&amp;h=480" src="/img/remote/1460000008603686?w=1654&amp;h=480.png"></p>
+<p>解决方法如下，使用<code>koa-convert</code>中间件把<code>generator</code>转化一下，使用方法如下：</p>
+<pre><code class="javascript">const convert = require('koa-convert');
+const staticCache = require('koa-static-cache');
+
+//静态文件服务
+app.use(convert(staticCache(path.join(__dirname, 'public'), {
+    maxAge: 365 * 24 * 60 * 60
+})));</code></pre>
+<p>对于代码的重构就是这样子，在需要使用<code>promise</code>来控制异步的地方，可以换写成<code>async</code>和<code>await</code>降低了代码的复杂度。第二就是对不支持koa2.x的中间件使用<code>koa-convert</code>来做兼容。</p>
+<h2>4.网络请求的优化</h2>
+<p><strong>通过下面的图片可以发现，页面在加载过程中请求了多个静态文件。这无疑会影响页面的加载速度。从打开页面到页面加载完成总共花费了<code>2.59s</code></strong></p>
+<p><img data-src="/img/remote/1460000008603687?w=2060&amp;h=976" src="/img/remote/1460000008603687?w=2060&amp;h=976.jpeg"></p>
+<p><strong>那么怎么优化呢？其实就是借用了请打的fis对静态文件进行了压缩和合并。使页面在加载过程需要多个静态文件，变成只请求两个静态文件。最后优化的结果是页面加载只需要<code>1.76s</code>比之前快了将近<code>1s</code>。效果还是很明显的。</strong></p>
+<p><img data-src="/img/remote/1460000008603688?w=1982&amp;h=970" src="/img/remote/1460000008603688?w=1982&amp;h=970.jpeg"></p>
+<p><strong>当我在观察这些网络请求的时候发现一个问题。每次我刷新页面或者是关闭浏览器重新打开页面的时候，浏览器都没有使用本地的缓存文件，而是重新向服务器发送请求，下载需要的静态文件。看下面的截图：</strong></p>
+<p><img data-src="/img/remote/1460000008603689?w=2060&amp;h=538" src="/img/remote/1460000008603689?w=2060&amp;h=538.jpeg"></p>
+<h2>5.使浏览器使用本地缓存文件</h2>
+<p>做法也很简单，就是使用koa中间件<code>koa-static-cache</code>控制服务端的静态文件在客户单进行缓存。</p>
+<pre><code class="javascript">
+//静态文件服务
+app.use(convert(staticCache(path.join(__dirname, 'public'), {
+    maxAge: 365 * 24 * 60 * 60
+})));</code></pre>
+<p>我们来看看这样做到底有没有什么效果？看下面的截图（我多刷了几次页面）：</p>
+<p><img data-src="/img/remote/1460000008603690?w=2044&amp;h=978" src="/img/remote/1460000008603690?w=2044&amp;h=978.jpeg"></p>
+<p>与前面的那张截图做对比可以明显的发现，静态文件的下载时间变短了。页面加载时间变为了<strong>1.44s</strong>。比之前还是有所缩短的。而且在size那一栏会看到<strong>from memorycache</strong>和<strong>from disk cache</strong>这样的字段。而不再是显示具体的文件大小。关于这里的区别可以看文章最后的参考文章。</p>
+<h2>6.对“文件”资源进行压缩</h2>
+<p>大多数情况下，我们的网站不仅仅就是存文字的还要包含一些其他类型的文件，比如：图片，mp3等。我们知道浏览器是支持加载gzip压缩过的网页的，所以以nginx为代表的静态文件服务器默认都会开启gzip压缩。那么我们Nodejs服务能不能对资源文件进行压缩呢？</p>
+<p>答案是肯定的。Koa的作者写了一个中间件<code>compress</code>,支持对请求的<code>response</code>进行压缩，具体的使用如下：</p>
+<pre><code class="javascript">var compress = require('koa-compress')
+var Koa = require('koa')
+
+var app = new Koa()
+app.use(compress({
+  filter: function (content_type) {  //配置过滤的压缩文件的类型
+    return /text/i.test(content_type)
+  },
+  threshold: 2048,   //要压缩的最小响应字节
+  flush: require('zlib').Z_SYNC_FLUSH  //同步的刷新缓冲区数据；
+}))</code></pre>
+<p>因为当前项目中并没有提价较大的文件，所以该中间件并没有在项目中使用。这里仅仅介绍koa有中间件提供这样的能力供开发者使用。</p>
+<h2>7.怎么维护一个稳定nodejs服务</h2>
+<p>像这样<code>node app.js</code>来维护线上的服务肯定是不行。因为端口可能会不知不觉让linux给kill掉。目前在业界普遍使用的都是pm2来维护nodejs服务。提供了日志，端口被Kill后自动重启，性能监控等强大的功能。</p>
+<h3>7.1收集系统日志</h3>
+<p>使用pm2启动Nodejs进程后，会默认吧代码运行异常的错误和标准输出日志（比如：console.log）打到以下的目录下面。</p>
+<p><img data-src="/img/remote/1460000008603691?w=1390&amp;h=188" src="/img/remote/1460000008603691?w=1390&amp;h=188.jpeg"></p>
+<h3>7.2进程信息</h3>
+<p>提供了进行运行时相关信息；</p>
+<p><img data-src="/img/remote/1460000008603692?w=1498&amp;h=190" src="/img/remote/1460000008603692?w=1498&amp;h=190.jpeg"></p>
+<h3>7.3性能监控</h3>
+<p>提供了内存监控和cpu监控的命令。</p>
+<p><img data-src="/img/remote/1460000008603693?w=1410&amp;h=260" src="/img/remote/1460000008603693?w=1410&amp;h=260.jpeg"></p>
+<h2>总结：</h2>
+<p>FE到现在在大多数的后端工程师眼中都是切切页面，用js写写“特效”的角色。所以被大家戏称为“页面仔”。这也是为什么说FE是一个很容易遇到职业瓶颈的行业。</p>
+<p>自从基于Nodejs的前后端开发模式在业界得到越来越多的实践后，前端工程师在其中扮演着重要的角色。由以上内容可以看出，在使用Nodejs以后，虽然前端技术栈得到了机房，但对FE的个人素质要求也会有所提高，<strong>性能优化</strong>，<strong>网络请求优化</strong>都是前端工程师需要去面临的问题。因为我们会成为用户发起的网络请求在服务端的第一层接收者，我们也会面临着<strong>web安全</strong>的问题。</p>
+<h2>参考资料：</h2>
+<p><a href="http://koajs.com/">Koa文档</a></p>
+<p><a href="https://cnodejs.org/topic/5709959abc564eaf3c6a48c8">Koa2入门</a></p>
+<p><a href="http://div.io/topic/854">配置错误产生的差距：200 OK (FROM CACHE) 与 304 NOT MODIFIED</a></p>
+<p><a href="https://www.oschina.net/question/1395553_175941">HTTP缓存技术，304(Not Modified)和200(from cache)有何区别？</a></p>

@@ -1,0 +1,35 @@
+<h1>web缓存之浏览器缓存浅析</h1>
+<h2>什么是web缓存</h2>
+<p>所谓缓存就是再copy一份数据的副本（可能是html页面，图片，文件），根据副本的存放位置不同，又可分为不同的缓存策略，比如浏览器缓存，就是将文件存储再客户端，再访问相同的URL时首先检查副本是否时最新的，如果足够新的话，直接使用副本，不会再请求服务器，这样可以减少服务器请求数量，使用户获得更好的体验。</p>
+<h2>浏览器缓存</h2>
+<p>浏览器缓存，主要是HTTP协议定义的缓存，当然也有非HTTP协议的，比如html的meta标签。<br>meta标签提供了很多的属性用来定义文档信息，同时也提供了修改HTTP传输的属性。</p>
+<pre><code>    
+    &lt;meta http-equiv='cache-control' content='no-cache'&gt;
+</code></pre>
+<p>当然这不是今天的重点，今天主要说的是HTTP协议定义的缓存机制。</p>
+<h3>expires</h3>
+<p>expires用来设置缓存的过期时间，是web服务器响应消息头字段，在响应HTTP请求时可以通知浏览器在过期时间以前，可以直接从浏览器的缓存中获取数据。</p>
+<h3>cache-control</h3>
+<p>相比于expires,cache-control的作用几乎和它是一样的，虽然都是指明资源的有限期，控制浏览器是否从浏览器缓存中拉取数据，但是在两者一起设置了的情况下，cache-control的优先级更高，同时选择性也更多。<br>cache-control的值可以是</p>
+<ol>
+<li><p>max-age(单位S)<br>设置缓存的最长有效时间，使用的是时间长短，例如说我设置max-age=60,也就是说在请求发出后的60秒内，浏览器再次请求时不会再请求服务器，而是从浏览器缓存中读取数据。</p></li>
+<li><p>s-maxage<br>与max-age的唯一区别是,s-maxage仅仅应用于共享缓存。而不引用于用户代理的本地缓存,等针对单用户的缓存. 另外,s-maxage的优先级要高于max-age。</p></li>
+<li><p>public<br>告知任何途径的缓存者,可以无条件的缓存该响应，该响应可以在被多用户共享。</p></li>
+<li><p>private<br>只针对单个用户缓存响应。且可以具体指定某个字段，如private –“username”,则响应头中，名为username的标头内容，不会被共享缓存。</p></li>
+<li>
+<p>no-cache<br>这个貌似不是很好解释，那么先来列一下浏览器从服务端请求数据的基本步骤</p>
+<pre><code>1.如果请求命中本地缓存则从本地缓存中获取一个对应资源的副本 
+2.检查这个副本是否是最新的,是则直接返回,否则继续向服务器转发请求。 
+3.服务器接收到请求，然后判断资源是否变更，是则返回新内容，否则返回304，未变更。 
+4.客户端更新本地缓存。 
+</code></pre>
+<p>no-cache会强制跳过步骤2，也就是告诉浏览器，要原原本本的转发请求到服务器，等服务器确认最新了才可以使用。这样的话no-cache其实是允许浏览器缓存副本，但是总是会校验缓存是否最新，一旦确认最新，则可以使用缓存作为响应。</p>
+</li>
+<li><p>no-store<br>绝对被禁止缓存，每一次请求都要被发送到服务器然后重新来获取数据。</p></li>
+<li><p>only-if-cached<br>告知浏览器,我希望内容来自缓存,我并不关心被缓存响应,是否是新鲜的。</p></li>
+</ol>
+<h3>Last-modified</h3>
+<p>在浏览器第一次请求某一个URL时，服务器端的返回状态会是200，内容是你请求的资源，同时有一个Last-Modified的属性标记此文件在服务期端最后被修改的时间。<br>　　客户端第二次请求此URL时，根据 HTTP 协议的规定，浏览器会向服务器传送 If-Modified-Since 报头，询问该时间之后文件是否有被修改过。<br>　　如果服务器端的资源没有变化，则自动返回 HTTP 304 （Not Changed.）状态码,使用缓存数据。当服务器端代码发生改变或者重启服务器时，则重新发出资源，返回和第一次请求时类似。从而保证不向客户端重复发出资源，也保证当服务器有变化时，客户端能够得到最新的资源。</p>
+<h3>ETag</h3>
+<p>浏览器第一次发送请求时，服务器端会生成一段hash字符串，用来表示本次请求，下一次发送请求时会回传这个hash字符串到服务器端，服务器会进行校验，如果发现ETag没有变化，则会返回304。<br>OK，虾面copy别人的两张图，很清晰的讲解了HTTP浏览器的缓存机制。<br>第一次请求：<br><img data-src="/img/bVtRVC" src="/img/bVtRVC.png"><br>再次请求：<br><img data-src="/img/bVtRVE" src="/img/bVtRVE.png"></p>
+<p>参考文章： <a href="http://mp.weixin.qq.com/s?__biz=MzAxODE2MjM1MA==&amp;mid=402653154&amp;idx=1&amp;sn=dc0d70e0329887a0a6be0e8d1468ac99&amp;scene=0#wechat_redirect">http://mp.weixin.qq.com/s?__biz=MzAxODE2MjM1MA==&amp;mid=402653154&amp;idx=1&amp;sn=dc0d70e0329887a0a6be0e8d1468ac99&amp;scene=0#wechat_redirect</a></p>

@@ -1,0 +1,106 @@
+<p><span class="img-wrap"><img data-src="/img/remote/1460000009182482?w=208&amp;h=213" src="/img/remote/1460000009182482?w=208&amp;h=213.png"></span></p>
+<p>  突然有需求要做一个圆环的音频播放进度条（上图效果），自己琢磨尝试了半天，也没有实现。最后度娘一下，才知道css还有一个clip属性，完美实现需求。分享一下，说不定能帮其它小伙伴。至于有没有用，那就不知道了，who care！OK，费话打住，Let's go!</p>
+<h3>CSS clip 属性</h3>
+<p>  先简单了解一下css clip属性</p>
+<blockquote>
+<h4>说明</h4>
+<p>clip 属性剪裁绝对定位元素。这个属性用于定义一个剪裁矩形。对于一个<strong>绝对定义元素</strong>，在这个矩形内的内容才可见。出了这个剪裁区域的内容会根据 overflow 的值来处理。</p>
+<h4>可能值</h4>
+<table>
+<thead><tr>
+<th>值</th>
+<th>描述</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>shape</td>
+<td>设置元素的形状。唯一合法的形状值是：rect (top, right, bottom, left)</td>
+</tr>
+<tr>
+<td>auto</td>
+<td>默认值。不应用任何剪裁。</td>
+</tr>
+<tr>
+<td>inherit</td>
+<td>规定应该从父元素继承 clip 属性的值。</td>
+</tr>
+</tbody>
+</table>
+<p><a href="http://www.w3school.com.cn/cssref/pr_pos_clip.asp">来源 w3school</a></p>
+</blockquote>
+<h3>使用</h3>
+<p>  其实原理就是：通过剪裁使一个正方形div只显示右半部分，再通过剪裁在这个div里做一个带边框（边框大小就是进度条的大小）的左半圆，因为div只显示右半部分，正好将这个半圆剪裁掉了也就看不到了。然后结合rotate让这个半圆旋转，就实现了50%内的进度条，当超过50%时，取消对div的剪裁，再使用一个半圆来保存50%的进条，就实现一个100%的进度条效果。贴上代码，然后再对关键代码用注释解释。</p>
+<pre><code class="Css">/*Css部分*/
+.circleProgress_wrapper{/*设置圆环的大小*/
+    margin: auto;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    cursor: pointer;
+
+}
+.slice{ /*这是一个裁去了左半部分，只显示右半部分的div*/
+    position: absolute; /*必须是绝对定位元素，clip属性才会有效*/
+    width: 100%;
+    height: 100%;
+    clip:rect(0,200px,200px,100px);/*top:0,right:200,bottom:200,left:100裁剪出右半部*/
+}
+.slice.gt50{/*当进度超过50%时，取消剪裁*/
+    clip:rect(auto,auto,auto,auto);
+}
+.bar,.fill{ /*两个只显示左半部分的半圆*/
+    position: absolute;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    border: 4px rgba(255, 249, 0, 0.77) solid;/*设置进度条大小和颜色值*/
+    border-radius: 50%;
+    clip: rect(0,100px,200px,0);/*top:0,right:100,bottom:200,left:0裁剪出左半部*/
+}
+.slice.gt50 .fill{/*当进度超过50%时，让fill旋转180度填充50%*/
+    transform: rotate(180deg);
+}</code></pre>
+<pre><code class="html">&lt;!--html 部分 --&gt;
+&lt;div class="circleProgress_wrapper"&gt;
+    &lt;div id="slice_wrapper" class="slice"&gt;    
+        &lt;div class="bar pre50"&gt;&lt;/div&gt;
+        &lt;div class="fill"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<pre><code class="JavaScript">//javscript部分
+&lt;script type="text/javascript" src="src/audioPlayPlugin.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+var bar=document.querySelector(".slice&gt;.bar"),
+    process=0,
+    circleProgress=document.querySelector(".circleProgress_wrapper"),
+    slice=document.getElementById("slice_wrapper");
+var audio=new audioController({ //创建一个音频对象
+        src:"file/test1.mp3",
+        "timeupdate":function(){//监听timeupdate事件，也就是音频当前播放进度发生改变响应的事件
+            /*
+            *audio.getAttr("currentTime" 获取当前播放的时间 s
+            *audio.getAttr("duration") 获取音频时长
+            *它们的比正好就是当前播放进度
+            *再乘以360转换为进度条应该旋转的角度
+            */
+            process=audio.getAttr("currentTime")/audio.getAttr("duration")*360;
+             parseInt(process)===180&amp;&amp;addClass(slice,"gt50");//当等于50%时，使用fill占满50%的进度条
+              bar.style="transform:rotate("+(process)+"deg)";//根据播放进度设置更新进度条
+            }
+        }
+    });
+circleProgress.addEventListener("click",function(){ //点击播放
+     if(audio.getAttr("paused")){                             
+         audio.play()
+     }else{
+         audio.pause()
+     }
+ });
+ function addClass(element,className){/*添加类名，完整代码已省略*/
+    ...
+ }
+
+&lt;/script&gt;
+</code></pre>
+<p>  完整的<a href="https://fatty-shu.github.io/audioPlayPlugin/">Demo</a>,这里用了我写一个audioPlayPlugin.js,对audio标签的常用操作进行了一些简单的封装。<a href="https://github.com/Fatty-Shu/audioPlayPlugin">github地址</a>,<a href="https://coding.net/u/Fat-Man/p/audioPlayPlugin/git">coding地址</a>      </p>
+<p>  最后，有啥我没说清楚或者说错了的，欢迎大家留言，大家一起学习，共同进步么。</p>

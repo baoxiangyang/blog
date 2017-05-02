@@ -1,0 +1,194 @@
+<ul>
+<li><p>原文链接 : <a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools">Debugging Node.js in Chrome DevTools</a></p></li>
+<li><p>原文作者 : <a href="http://mattdesl.svbtle.com/">MATT DESLAURIERS</a></p></li>
+<li><p>译文出自 : <a href="https://github.com/xitu/gold-miner">掘金翻译计划</a></p></li>
+<li><p>译文链接 : <a href="https://github.com/sqrthree/sqrthree.github.io/issues/8"></a><a href="https://github.com/sqrthree/sqrthree.github.io/issues/8">https://github.com/sqrthree/sqrthree.github.io/issues/8</a></p></li>
+<li><p>译者 : <a href="https://github.com/sqrthree">sqrthree (根号三)</a></p></li>
+<li><p>校对者: <a href="https://github.com/shenxn">shenxn</a>、<a href="https://github.com/CoderBOBO">CoderBOBO</a></p></li>
+</ul>
+<p>这篇文章介绍了一种在 Chrome 开发者工具里面开发、调试和分析 Node.js 应用程序的新方法。</p>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#devtool"> </a>devtool</h2>
+<p>最近我一直在开发一个命令行工具 <a href="https://github.com/Jam3/devtool">devtool</a>，它可以在 Chrome 的开发者工具中运行 Node.js 程序。</p>
+<p>下面的记录显示了在一个 HTTP 服务器中设置断点的情况。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/V4RQSZ2.gif&amp;objectId=1190000004509016&amp;token=692d3a21889038342f74517c51ed21d5" src="/img/V4RQSZ2.gif&amp;objectId=1190000004509016&amp;token=692d3a21889038342f74517c51ed21d5"></p>
+<p>该工具基于 <a href="https://github.com/atom/electron/">Electron</a> 将 Node.js 和 Chromium 的功能融合在了一起。它的目的在于为调试、分析和开发 Node.js 应用程序提供一个简单的界面。</p>
+<p>你可以使用 <a href="http://npmjs.com/">npm</a> 来安装它:</p>
+<pre><code>npm install -g devtool
+</code></pre>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#repl"> </a>REPL</h2>
+<p>在某种程度上，我们可以用它来作为 <code>node</code> shell 命令的替代品。例如，我们可以这样打开一个 REPL (译者注: REPL 全称为"Read-Eval-Print Loop"，是一个简单的、交互式的编程环境)。</p>
+<pre><code>devtool
+</code></pre>
+<p>这将启动一个带有 Node.js 特性支持的 Chrome 开发者工具实例。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/bnInBHA.png&amp;objectId=1190000004509016&amp;token=71459868bc9aff4537bd645c5e976294" src="/img/bnInBHA.png&amp;objectId=1190000004509016&amp;token=71459868bc9aff4537bd645c5e976294"></p>
+<p>我们可以引用 Node 模块、本地 npm 模块和像 <code>process.cwd()</code> 这样的内置模块。也可以获取像 <code>copy()</code> 和 <code>table()</code> 这样的 Chrome 开发者工具中的函数。</p>
+<p>其他的例子就一目了然了:</p>
+<pre><code># run a Node script
+devtool app.js
+
+# pipe in content to process.stdin
+devtool &lt; audio.mp3
+
+# pipe in JavaScript to eval it
+browserify index.js | devtool
+</code></pre>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#development"> </a> 开发</h2>
+<p>我们可以在通用模块和应用程序的开发中使用 <code>devtool</code>，来代替像 <a href="https://www.npmjs.com/package/nodemon">nodemon</a> 这样目前已经存在的工具。</p>
+<pre><code>devtool app.js --watch
+</code></pre>
+<p>这行命令将会在 Chrome 开发者工具中的控制台中启动我们的 <code>app.js</code>， 通过 <code>--watch</code> 参数，我们保存的文件将(自动)重新载入到控制台。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/NuoYkJK.png&amp;objectId=1190000004509016&amp;token=5a64fd0f7c98e1040f6315d016f5aecd" src="/img/NuoYkJK.png&amp;objectId=1190000004509016&amp;token=5a64fd0f7c98e1040f6315d016f5aecd"></p>
+<p>点击 <a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools"><code>app.js:1</code></a> 链接，程序将会在 <code>Sources</code> 标签中把我们带到与之相关的那一行。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/mH5jWT9.png&amp;objectId=1190000004509016&amp;token=ecc00c83c711c857cfe26866eccffad6" src="/img/mH5jWT9.png&amp;objectId=1190000004509016&amp;token=ecc00c83c711c857cfe26866eccffad6"></p>
+<p>在 <code>Sources</code> 标签中，你也可以敲击 <code>Cmd/Ctrl + P</code> 按键在所有依赖的模块中进行快速搜索。你甚至可以审查和调试内置模块，比如 Node.js 中的那些。你也可以使用左手边的面板来浏览模块。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/jn3RmnV.png&amp;objectId=1190000004509016&amp;token=bb3164879c90493f70d6d28e4ed5b781" src="/img/jn3RmnV.png&amp;objectId=1190000004509016&amp;token=bb3164879c90493f70d6d28e4ed5b781"></p>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#debugging"> </a> 调试</h2>
+<p>因为我们能够访问 <code>Sources</code> 标签，所以我们可以用它来调试我们的应用程序。你可以设置一个断点，然后重新加载调试器(<code>Cmd/Ctrl + R</code>)，或者你也可以通过 <code>--break</code> 标记来设置一个初始断点。</p>
+<pre><code>devtool app.js --break
+</code></pre>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/hJ2pLW1.png&amp;objectId=1190000004509016&amp;token=e4ebd9d4bb150a740af5143eec727bdc" src="/img/hJ2pLW1.png&amp;objectId=1190000004509016&amp;token=e4ebd9d4bb150a740af5143eec727bdc"></p>
+<p>下面是一些对于那些学习 Chrome 开发者工具的人来说可能不是特别常用的功能:</p>
+<ul>
+<li><p><a href="http://blittle.github.io/chrome-dev-tools/sources/conditional-breakpoints.html">条件断点</a></p></li>
+<li><p><a href="http://blittle.github.io/chrome-dev-tools/sources/uncaught-exceptions.html">有未捕获的异常时暂停</a></p></li>
+<li><p><a href="http://blittle.github.io/chrome-dev-tools/sources/restart-frame.html">重启帧</a></p></li>
+<li><p><a href="http://albertlee.azurewebsites.net/using-watch-tools-in-chrome-dev-tools-to-improve-your-debugging/">监听表达式</a></p></li>
+</ul>
+<blockquote><p>提示 - 当调试器暂停时，你可以敲击 <code>Escape</code> 按键打开一个执行在当前作用域内的控制台。你可以修改一些变量然后继续执行。</p></blockquote>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/nG9ellE.gif&amp;objectId=1190000004509016&amp;token=fcc6ce0347dd3c8bf8121f29e8bcc046" src="/img/nG9ellE.gif&amp;objectId=1190000004509016&amp;token=fcc6ce0347dd3c8bf8121f29e8bcc046"></p>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#profiling"> </a> 分析</h2>
+<p><code>devtool</code> 的另一个功能是分析像 <a href="https://github.com/substack/node-browserify">browserify</a>, <a href="https://github.com/gulpjs/gulp">gulp</a> 和 <a href="https://github.com/babel/babel">babel</a> 这样的程序。</p>
+<p>这里我们使用 <a href="https://developer.chrome.com/devtools/docs/console-api"><code>console.profile()</code></a> (Chrome 的一个功能)来分析一个打包工具的 CPU 使用情况。</p>
+<pre><code>var browserify = require('browserify');
+
+// Start DevTools profiling...
+console.profile('build');
+
+// Bundle some browser application
+browserify('client.js').bundle(function (err, src) {
+  if (err) throw err;
+
+  // Finish DevTools profiling...
+  console.profileEnd('build');
+});
+</code></pre>
+<p>现在我们在这个文件上运行 <code>devtool</code> :</p>
+<pre><code>devtool app.js
+</code></pre>
+<p>执行之后，我们可以在 <code>Profiles</code> 标签中看到结果。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/vSu7Lcz.png&amp;objectId=1190000004509016&amp;token=a39f5186bfbc28379b5c1aadf7c72e32" src="/img/vSu7Lcz.png&amp;objectId=1190000004509016&amp;token=a39f5186bfbc28379b5c1aadf7c72e32"></p>
+<p>我们可以使用右边的链接来查看和调试执行频率较高的代码路径。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/O4DZHyv.png&amp;objectId=1190000004509016&amp;token=096410e7a58ebbc4c372db173a82afb5" src="/img/O4DZHyv.png&amp;objectId=1190000004509016&amp;token=096410e7a58ebbc4c372db173a82afb5"></p>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#advanced-options"> </a> 高级选项</h2>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#experiments"> </a> 实验</h4>
+<p>Chrome 会不断的向他们的开发者工具中推送新功能和实验，例如 <strong>Promise Inspector</strong>。你可以通过点击右上角的三个点，然后选择 <code>Settings -&gt; Experiments</code> 来开启他们。</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/dNuIMw0.png&amp;objectId=1190000004509016&amp;token=bec582c9c81e33cffca86ee5de7b2b95" src="/img/dNuIMw0.png&amp;objectId=1190000004509016&amp;token=bec582c9c81e33cffca86ee5de7b2b95"></p>
+<p>一旦启用，你就可以通过敲击 <code>Escape</code> 按键来调出一个带有 <em>Promises</em> 监视器的面板。</p>
+<p><img data-src="https://segmentfault.com/image?src=https://i.imgur.com/xKkTEeg.png&amp;objectId=1190000004509016&amp;token=fab59fb2c7040b860b8b3f1c169c720b" src="/img/xKkTEeg.png&amp;objectId=1190000004509016&amp;token=fab59fb2c7040b860b8b3f1c169c720b"></p>
+<blockquote><p>提示: 在 <em>Experiments</em> 界面，如果你敲击 <code>Shift</code> 键 6 次，你会接触到一些甚至更多的实验性（不稳定）的功能。</p></blockquote>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#codeconsolecode"> </a><code>--console</code>
+</h4>
+<p>你可以重定向控制台输出到终端中(<code>process.stdout</code> 和 <code>process.stderr</code>)。也允许你通过使用管道将它导入到其他进程中，例如 TAP prettifiers。</p>
+<pre><code>devtool test.js --console | tap-spec
+</code></pre>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#codecode-and-codeprocessargvcode"> </a><code>--</code> 和 <code>process.argv</code>
+</h4>
+<p>你的脚本可以像一个普通的 Node.js 应用那样解析 <code>process.argv</code>。如果你在 <code>devtool</code> 命令中传递一个句号(<code>--</code>)，它后面的所有内容都会被当做一个新的 <code>process.argv</code> 。例如:</p>
+<pre><code>devtool script.js --console -- input.txt
+</code></pre>
+<p>现在，你的脚本看起来像这样:</p>
+<pre><code>var file = process.argv[2];
+console.log('File: %s', file);
+</code></pre>
+<p>输出:</p>
+<pre><code>File: input.txt
+</code></pre>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#codequitcode-and-codeheadlesscode"> </a><code>--quit</code> 和 <code>--headless</code>
+</h4>
+<p>使用 <code>--quit</code>，当遇到了一个错误(如语法错误或者未捕获的异常)时，进程将会安静的退出，并返回结束码<code>1</code> 。</p>
+<p>使用 <code>--headless</code>，开发工具将不会被打开。</p>
+<p>这可以用于命令行脚本：</p>
+<pre><code>devtool render.js --quit --headless &gt; result.png
+</code></pre>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#codebrowserfieldcode"> </a><code>--browser-field</code>
+</h4>
+<p>一些模块为了更好的在浏览器中运行或许会提供一个入口点。当你需要这些模块时，你可以使用 <code>--browser-field</code> 来支持 <a href="https://github.com/defunctzombie/package-browser-field-spec">package.json flag</a></p>
+<p>例如，我们可以使用 <a href="https://github.com/Jam3/xhr-request">xhr-request</a> ，当带有 <code>"browser"</code> 字段被引用时，这个模块会使用 XHR。</p>
+<pre><code>const request = require('xhr-request');
+
+request('https://api.github.com/users/mattdesl/repos', {
+  json: true
+}, (err, data) =&gt; {
+  if (err) throw err;
+  console.log(data);
+});
+</code></pre>
+<p>在 shell 中执行:</p>
+<pre><code>npm install xhr-request --save
+devtool app.js --browser-field
+</code></pre>
+<p>现在，我们可以在 <code>Network</code> 选项卡中审查请求:</p>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/BWciXuh.png&amp;objectId=1190000004509016&amp;token=08285da7d7eaad3cd09ad0a53bcd7cb9" src="/img/BWciXuh.png&amp;objectId=1190000004509016&amp;token=08285da7d7eaad3cd09ad0a53bcd7cb9"></p>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#codenonodetimerscode"> </a><code>--no-node-timers</code>
+</h4>
+<p>默认情况下，我们提供全局的 <code>setTimeout</code> and <code>setInterval</code>，因此他们表现的像 Node.js 一样(返回一个带有 <code>unref()</code> and <code>ref()</code> 函数的对象)。</p>
+<p>但是，你可以禁用这个方法来改善对异步堆栈跟踪的支持。</p>
+<pre><code>devtool app.js --no-node-timers
+</code></pre>
+<p><img data-src="https://segmentfault.com/image?src=http://i.imgur.com/dmfOfMx.png&amp;objectId=1190000004509016&amp;token=02388a1803ca2c02f56137cfb0a5d943" src="/img/dmfOfMx.png&amp;objectId=1190000004509016&amp;token=02388a1803ca2c02f56137cfb0a5d943"></p>
+<h4>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#v8-flags"> </a>V8 Flags</h4>
+<p>在当前目录，你可以创建一个 <code>.devtoolrc</code> 文件来进行诸如 V8 flags 这样的高级设置。</p>
+<pre><code>{
+  "v8": {
+    "flags": [
+      "--harmony-destructuring"
+    ]
+  }
+}
+</code></pre>
+<p>访问<a href="https://github.com/Jam3/devtool/blob/master/docs/rc-config.md">这里</a>获取更多细节</p>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#gotchas"> </a>陷阱</h2>
+<p>由于程序是在一个 Browser/Electron 环境中运行，而不是在一个真正的 Node.js 环境中。因此这里有<a href="https://github.com/Jam3/devtool#gotchas">一些陷阱</a>你需要注意。</p>
+<h2>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#comparisons"> </a>对比</h2>
+<p>目前已经存在了一些 Node.js 调试器，所以你或许想知道他们之间的区别在哪。</p>
+<h3>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#webstorm-debugger"> </a>WebStorm 调试器</h3>
+<p><a href="https://www.jetbrains.com/webstorm/">WebStorm</a> 编辑器里面包含了一个非常强大的 Node.js 调试器。如果你已经使用 WebStorm 作为你的代码编辑器，那对你来说很棒。</p>
+<blockquote><p><img data-src="https://segmentfault.com/image?src=https://i.imgur.com/cfwG6qY.png&amp;objectId=1190000004509016&amp;token=af09a03d2dc6bdb6d594cdc1dfd2827e" src="/img/cfwG6qY.png&amp;objectId=1190000004509016&amp;token=af09a03d2dc6bdb6d594cdc1dfd2827e"></p></blockquote>
+<p>但是，它缺少一些 Chrome 开发者工具中的功能，例如:</p>
+<ul>
+<li><p>一个丰富的互动的控制台</p></li>
+<li><p>异常时暂停</p></li>
+<li><p>异步堆栈跟踪</p></li>
+<li><p>Promise 检查</p></li>
+<li><p>分析</p></li>
+</ul>
+<p>但因为你和你的 WebStorm 工作空间集成，所以你可以在调试时修改和编辑你的文件。它也是运行在一个真正的 Node/V8 环境中，而不像 <code>devtool</code> 一样。因此对于大部分的 Node.js 应用程序来说它更稳健。</p>
+<h3>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#ironnode"> </a>iron-node</h3>
+<p><img data-src="https://segmentfault.com/image?src=https://i.imgur.com/fkbLvoS.png&amp;objectId=1190000004509016&amp;token=b713cbb0ff9ee613f099851ae2a808e3" src="/img/fkbLvoS.png&amp;objectId=1190000004509016&amp;token=b713cbb0ff9ee613f099851ae2a808e3"></p>
+<p>一个同样基于 Electron 的调试器是<a href="https://github.com/s-a/iron-node">iron-node</a>。<code>iron-node</code> 包含了一个内置的命令来重新编译原生插件，还有一个复杂的图形界面显示您的<code>package.json</code> 和 <code>README.md</code>。</p>
+<p>而 <code>devtool</code> 更侧重于把命令行、Unix 风格的管道和重定向和 Electron/Browser 的 API 当作有趣的用例。</p>
+<p><code>devtool</code> 提供各种各样的功能来表现的更像 Node.js (例如 <code>require.main</code>, <code>setTimeout</code> 和 <code>process.exit</code>)，并且覆盖了内部的 <code>require</code> 机制作为 source maps，还有改进过的错误处理、断点注入、以及 <code>"browser"</code> 字段的解决方案。</p>
+<h3>
+<a href="http://mattdesl.svbtle.com/debugging-nodejs-in-chrome-devtools#nodeinspector"> </a>node-inspector</h3>
+<p><img data-src="https://segmentfault.com/image?src=https://i.imgur.com/T4fpxjU.png&amp;objectId=1190000004509016&amp;token=456d14e44f6fda18bb440b855b003158" src="/img/T4fpxjU.png&amp;objectId=1190000004509016&amp;token=456d14e44f6fda18bb440b855b003158"></p>
+<p>你或许也喜欢 <a href="https://github.com/node-inspector/node-inspector">node-inspector</a>，一个使用远程调试而不是构建在 Electron 之上的工具。</p>
+<p>这意味着你的代码将运行在一个真正的 Node 环境中，没有任何 <code>window</code> 或其他的 Browser/Electron API 来污染作用域并导致某些模块出现问题。对于大型 Node.js 应用(即本地插件)来说它有一个强有力的支持，并且在开发者工具实例中拥有更多的控制权(即可以注入断点和支持网络请求)。</p>
+<p>然而，由于它重新实现了大量的调试技巧，因此对于开发来说感觉可能比最新版的 Chrome 开发者工具要慢、笨拙和脆弱。它经常会崩溃，往往导致 Node.js 开发人员很无奈。</p>
+<p>而 <code>devtool</code> 的目的是让那些从 Chrome 开发者工具中转过来的人觉得比较亲切，而且也增加了像 Browser/Electron APIs 这样的功能。</p>

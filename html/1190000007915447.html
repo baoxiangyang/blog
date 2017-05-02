@@ -1,0 +1,88 @@
+<blockquote><p>注：本篇不是入门教程，入门请直接查看<a href="http://webpack.github.io/docs/">官方文档</a>。本篇的主要目标是通过实际问题来介绍 webpack 中容易被人忽略的细节, 以及源码分析(<strong>以最新发布的 release 版本1.14.0的源码为例</strong>), 并且提供几种解决方案。</p></blockquote>
+<p><img data-src="/img/remote/1460000007915450?w=1669&amp;h=811" src="/img/remote/1460000007915450?w=1669&amp;h=811.png"></p>
+<p>随着前端技术的火热发展，工程化，模块化和组件化的思想已逐步成为主流，与之相应的，就需要有一整套工具流可以支撑起它。</p>
+<p>现在比较热门的前端资源模块化管理和打包工具应该非 <a href="https://github.com/webpack/webpack">Webpack</a> 莫属了。</p>
+<h1>Webpack 是什么</h1>
+<blockquote><p>它可以将许多松散的模块按照依赖和规则打包成符合生产环境部署的前端资源。还可以将按需加载的模块进行代码分隔，等到实际需要的时候再异步加载。通过 loader 的转换，任何形式的资源都可以视作模块，比如 CommonJs 模块、 AMD 模块、 ES6 模块、CSS、图片、 JSON、Coffeescript、 LESS 等。<br>--引自 Webpack 中文指南</p></blockquote>
+<h1>使用举例</h1>
+<p>我们来看一下官方文档中的最小用例，新建并写入以下内容到这两个文件：</p>
+<p><strong>cats.js</strong></p>
+<pre><code class="javascript">var cats = ['dave', 'henry', 'martha'];
+module.exports = cats;</code></pre>
+<p><strong>app.js (Entry Point)</strong></p>
+<pre><code class="javascript">cats = require('./cats.js');
+console.log(cats);</code></pre>
+<p>这个时候，就可以使用 <code>webpack</code> 进行打包了：</p>
+<pre><code class="bash">webpack ./app.js app.bundle.js</code></pre>
+<p>我们来看一下发生了什么， 目录下生成了一个打包后的文件 <code>app.bundle.js</code> ，这就是最基础的打包过程。</p>
+<h1>提出问题</h1>
+<p><strong>如何判断打包是否成功？</strong></p>
+<h2>通用方案</h2>
+<p>下面是我们常用的两种判断任务是否执行成功的方案</p>
+<h4>通过 return code</h4>
+<p>通过命令执行后的 <code>return code</code> 来判断（在 <code>shell</code> 中使用 <code>$?</code> 获得）。 并且通常情况下 <code>0</code> 是执行成功， 非 0 是未成功。 我们以上面的例子来测试一下：</p>
+<p><img data-src="/img/remote/1460000007915451?w=1316&amp;h=804" src="/img/remote/1460000007915451?w=1316&amp;h=804.png"></p>
+<p>可以看到 <code>$?</code> 的值为 <code>0</code> , 且打包后的文件运行正常。</p>
+<p>那么我们来修改一下 <code>app.js</code> 文件的内容， 将 <code>require</code> 引入的模块路径故意写错，来测试一下：</p>
+<p><img data-src="/img/remote/1460000007915452?w=1548&amp;h=1319" src="/img/remote/1460000007915452?w=1548&amp;h=1319.png"></p>
+<p><strong>注意：箭头处 <code>$?</code> 的值仍然为 <code>0</code>, 且生成的打包后的文件运行出错。</strong></p>
+<p>这就说明，根据 <code>return code</code> 的值判断任务是否执行成功， 不可行！</p>
+<h4>通过标准错误输出</h4>
+<p>我们也会通过<strong>标准错误输出</strong>（<code>stderr</code>）来判断一个任务执行过程中是否有错误输出。还是使用上面的例子做示范：</p>
+<p><img data-src="/img/remote/1460000007915453?w=1338&amp;h=1189" src="/img/remote/1460000007915453?w=1338&amp;h=1189.png"></p>
+<p>根据这个例子，可以看到 webpack 并没有标准错误输出！所以这个方法也不可行。</p>
+<h1>探究原因及源码分析</h1>
+<p>这里以最新发布的 release 版本 1.14.0 的源码作为分析。 在 <a href="https://github.com/webpack/webpack/blob/v1.14.0/lib/Compilation.js#L194-L204">lib/Compilation.js</a> 中我们可以看到这样一段代码：</p>
+<pre><code class="javascript">var errorAndCallback = function errorAndCallback(err) {
+  err.dependencies = dependencies;
+  err.origin = module;
+  module.dependenciesErrors.push(err);
+  _this.errors.push(err);
+  if(bail) {
+    callback(err);
+  } else {
+    callback();
+  }
+};</code></pre>
+<p>在源码中可以看到这个函数其实被调用的还比较多， 例如：在模块为可选的时候， 会判断只是抛出警告还是处理错误， 而上面这段代码自然也不必多数， 关键点在于 <code>bail</code> 的值， 而我们继续找， 可以看到在 <code>bin/config-optimist.js</code> 中有对 <code>bail</code> 参数的解析， 这是一个布尔值。而因为没有太多描述， 所以这个参数就经常容易被忽略。</p>
+<h1>解决方案</h1>
+<h3>1. 加 <strong>bail</strong> 参数</h3>
+<p>基于上面简要的分析， 我们来尝试下 <code>bail</code> 参数的作用。 仍然使用上面的例子：</p>
+<p>我们使用  <code>webpack --bail true app.js app.bundle.js</code> 进行测试</p>
+<p><img data-src="/img/remote/1460000007915454?w=1627&amp;h=1350" src="/img/remote/1460000007915454?w=1627&amp;h=1350.png"></p>
+<p>可以看到， 使用 <code>bail</code> 参数并传递 <code>true</code> 进去， 在遇到错误的时候，打包过程将会退出， <code>return code</code> 为 <code>1</code> 且把错误信息打印到 <code>stderr</code> .</p>
+<h3>2. 使用 webpack-fail-plugin</h3>
+<p><a href="https://www.npmjs.com/package/webpack-fail-plugin">webpack-fail-plugin</a> 是专为解决这个问题而生的，它会在错误发生的时候 <code>return 1</code>. 使用方法也很简单：</p>
+<p>安装：</p>
+<pre><code class="bash">npm install webpack-fail-plugin</code></pre>
+<p>使用：</p>
+<pre><code class="javascript">var failPlugin = require('webpack-fail-plugin');
+ 
+module.exports = {
+    //config 
+    plugins: [
+        failPlugin
+    ]
+}</code></pre>
+<h3>3.使用 done plugin</h3>
+<p>具体用法如下：</p>
+<pre><code class="javascript">// ...
+plugins: [ 
+  // ... 
+  function() { 
+    this.plugin("done", function(stats) {
+      if (stats.compilation.errors &amp;&amp; stats.compilation.errors.length) {
+        console.log(stats.compilation.errors); 
+        process.exit(1); 
+      }
+      // ... 
+    }); 
+  }
+// ...
+],
+// ...</code></pre>
+<h3>4. 使用 webpack 2</h3>
+<p>不过 webpack 2 现在还在 beta 阶段，可以期待下。 （webpack 2 也仍然是使用 bail 参数）</p>
+<hr>
+<p>可以通过下面二维码订阅我的文章<br>公众号【MoeLove】</p>
+<p><img data-src="/img/remote/1460000007716897" src="/img/remote/1460000007716897.jpg"></p>

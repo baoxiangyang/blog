@@ -1,0 +1,154 @@
+关于页面怎么查询用户安装了什么软件，并且调用它，我有可能说的也不是很正确，希望读者多多指教。</p>
+<p>如下是我自己在项目中的解决方案和思路。</p>
+<blockquote>
+<h4>ios无法用这段判断，至于原因，还没有查明，安卓可以用。（查找到一种解决ios无法调开客户端的方案，但是有点治标不治本，希望大牛可以指导一下。我已经在最下面追加上了。）</h4>
+<p>标注：感谢<code>王铁手</code>童靴帮忙指出问题。</p>
+</blockquote>
+<h2>双方协议</h2>
+<p>这个需要提前跟客户端开发人员商定协议名称，用<code>URI Scheme</code>作为页面与客户端的通讯协议（这个很重要）。这里的<code>URI Scheme</code>前缀不是一般的<code>http://</code>，而是由客户端开发者定义的，一般在写程序的时候就会设置的了。然后剩下的部分就像普通的 URL 地址一样，需要大家来约定 URI Scheme 具体如何，例如参数是什么等等。</p>
+<p>好比微信客户端的是以 weixin:// 为前缀：<code>&lt;a href="weixin://"&gt;打开微信客户端&lt;/a&gt;</code>。<strong>用手机浏览器，就可以打开微信客户端，前提是你需要安装微信客户端。</strong></p>
+<p>现在已经可以调用到客户端了，但是咱们好像拉了一个问题，如果用户没有需要调开的客户端怎么办，总不能让用户傻傻的在当前页面等待，那么咱们就需要做一个判断，来判断用户是否有此软件。</p>
+<h2>判断客户端</h2>
+<p>现在大体的思路有了，咱们现在需要明确的是，怎么做到判断是否有软件并且怎么下载。</p>
+<p>这里我是通过一个隐藏的<code>iframe</code>做到的。因为<code>iframe</code>既可以判断用户是否安装客户端，也可以停留在当前页面。<br>具体代码如下：</p>
+<pre><code>document.getElementById('openApp').onclick = function(e) {
+        // 通过iframe的方式试图打开APP，如果能正常打开，会直接切换到APP，并自动阻止a标签的默认行为
+        // 否则打开a标签的href链接
+        var ifrSrc = 'weixin://';
+        if (!ifrSrc) {
+            return;
+        }
+        var ifr = document.createElement('iframe');
+        ifr.src = ifrSrc;
+        ifr.style.display = 'none';
+        document.body.appendChild(ifr);
+        setTimeout(function() {
+            document.body.removeChild(ifr);
+        }, 1000);
+
+    };
+    if (document.all) {
+        document.getElementById('openApp').click();
+    }
+    // 其它浏览器
+    else {
+        var e = document.createEvent("MouseEvents");
+        e.initEvent("click", true, true);
+        document.getElementById("openApp").dispatchEvent(e);
+    }
+</code></pre>
+<p>现在就大功告成啦！~</p>
+<p>不对还有一个问题，如果是在微信端打开的页面怎么办呢？微信禁止除应用宝以外的下载链接，如果是这样的话咱们还需要一个引导图，来引导用户怎么在微信端打开浏览器，并且针对这个问题又延伸出另外一个问题，就是安卓版和苹果版界面不一样，真坑，这样又要区分系统，好吧，接着搞。</p>
+<h2>区分手机系统</h2>
+<p>获取浏览器的报文，查看<code>navigator.userAgent</code>里面的参数。比较详细的判断如下：（这个是我在网上查找的，大家觉得少可以补充）</p>
+<pre><code>原文链接：http://caibaojian.com/browser-ios-or-android.html
+trident: u.indexOf('Trident') &gt; -1, //IE内核 
+presto: u.indexOf('Presto') &gt; -1, //opera内核 
+webKit: u.indexOf('AppleWebKit') &gt; -1, //苹果、谷歌内核 
+gecko: u.indexOf('Gecko') &gt; -1 &amp;&amp; u.indexOf('KHTML') == -1,//火狐内核 
+mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端 
+ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端 
+android: u.indexOf('Android') &gt; -1 || u.indexOf('Adr') &gt; -1, //android终端 
+iPhone: u.indexOf('iPhone') &gt; -1 , //是否为iPhone或者QQHD浏览器 
+iPad: u.indexOf('iPad') &gt; -1, //是否iPad 
+webApp: u.indexOf('Safari') == -1, //是否web应该程序，没有头部与底部 
+weixin: u.indexOf('MicroMessenger') &gt; -1, //是否微信 （2015-01-22新增） 
+qq: u.match(/\sQQ/i) == " qq" //是否QQ
+</code></pre>
+<p>如下是我自己的判断：</p>
+<pre><code>var pattern = new RegExp(/iPad|iPod|iPhone/i);
+var iosUserAgent = pattern.test(navigator.userAgent);
+if(iosUserAgent){
+    var ua = navigator.userAgent.toLowerCase();
+    if(ua.match(/MicroMessenger/i)=="micromessenger"){
+        //你用的是IOS的微信客户端
+    }else{
+        //你用的是IOS客户端
+    }
+}else if(navigator.userAgent.match(/Android/i)) {
+    var ua = navigator.userAgent.toLowerCase();
+    if(ua.match(/MicroMessenger/i)=="micromessenger"){
+        //你用的是安卓的微信客户端
+    }else{    
+        //你用的是安卓客户端
+    }
+}
+else {
+    //其他、widows phone、pc等以外的任何系统，我比较喜欢简单粗暴。
+}
+</code></pre>
+<p>这个判断也搞定了，现在需要的就是把代码整合在一起。</p>
+<h2>代码整合</h2>
+<pre><code>&lt;script&gt;
+$(document).ready(function(){
+    var pattern = new RegExp(/iPad|iPod|iPhone/i);
+    var iosUserAgent = pattern.test(navigator.userAgent);
+    if(iosUserAgent){
+        var ua = navigator.userAgent.toLowerCase();
+        if(ua.match(/MicroMessenger/i)=="micromessenger"){
+            //你用的是IOS的微信客户端
+            $("#ioshfImg").css("display","block");
+        }else{
+            //调开客户端方法封装
+            openAapp();
+        }
+    }else if(navigator.userAgent.match(/Android/i)) {
+        var ua = navigator.userAgent.toLowerCase();
+        if(ua.match(/MicroMessenger/i)=="micromessenger"){
+            //你用的是安卓的微信客户端
+            $("#andhfImg").css("display","block");
+        }else{
+            //调开客户端方法封装
+            openAapp();
+        }
+    }
+    else {
+        //document.location.href = "http://m.30mifi.com/apk/llm.apk";    
+    }
+    function openAapp(){
+        document.getElementById('openApp').onclick = function(e) {
+            // 通过iframe的方式试图打开APP，如果能正常打开，会直接切换到APP，并自动阻止a标签的默认行为
+            // 否则打开a标签的href链接
+            var ifrSrc = 'weixin://';
+            var ifr = document.createElement('iframe');
+            ifr.src = ifrSrc;
+            ifr.style.display = 'none';
+            document.body.appendChild(ifr);
+            setTimeout(function() {
+                document.body.removeChild(ifr);
+            }, 1000);
+
+        };
+        if (document.all) {
+            document.getElementById('openApp').click();
+        }
+        // 其它浏览器
+        else {
+            var e = document.createEvent("MouseEvents");
+            e.initEvent("click", true, true);
+            document.getElementById("openApp").dispatchEvent(e);
+        }
+    }
+});
+&lt;/script&gt;
+</code></pre>
+<h2>总结</h2>
+<p>忘了补充一点，也可以做一个判断，判断当前页是否在客户端调开，<code>navigator.userAgent.toLowerCase()</code>判断里面是否有跟客户端开发人员拟定的协议和参数。</p>
+<p>我的代码如下：</p>
+<pre><code>// 判断是不是客户端  
+// weixin只是做一个代表，自己开发的时候，需要把它变成你和客户端开发人员拟定的参数。
+function isClient() {
+    var isClient = false;
+    var ua = navigator.userAgent.toLowerCase();
+    if ((ua.indexOf('weixin')) != -1) {
+        isClient = true;
+    }
+    return isClient;
+}
+</code></pre>
+<p>最后，希望读者指教，我自己说的也不见得全对，有可能有更加优化的方案，思维的碰撞才能让技术提成。</p>
+<h2>追加</h2>
+<p>针对ios不起作用我进行了如下修改。<br>我修改了html中a标签的链接，从原来的空链接直接修改为客户端在AppStore中的链接地址。<br>拿百度贴吧举例：<a href="https://itunes.apple.com/cn/app/id477927812">https://itunes.apple.com/cn/a...</a></p>
+<pre><code>&lt;a href="https://itunes.apple.com/cn/app/id477927812" id="openApp" style="display: none"&gt;&lt;/a&gt;
+</code></pre>
+<p>原来的方法不改变，这样就可以在io

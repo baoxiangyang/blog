@@ -1,0 +1,192 @@
+<h1>Node命令行工具开发【看段子】</h1>
+<blockquote><p>你有没有上班想看笑话却又怕领导发现的经历？现在我们就用几十行代码写一个命令行看笑话段子的小程序，从此无需担心领导的视察。这篇文章和上一篇差不多都是命令行小工具开发，不过本篇更偏向于小爬虫的开发</p></blockquote>
+<h2>总览：命令行看段子小程序</h2>
+<p>我们先来看看我们今天的小目标：</p>
+<ul>
+<li><p>先为它起个命吧：<code>joke-cli</code></p></li>
+<li><p>爬取并提取 <a href="http://www.qiushibaike.com/">糗事百科的笑话</a></p></li>
+<li><p>输出到命令行<em>按下回车显示一条段子</em></p></li>
+</ul>
+<h2>初识[新手村]</h2>
+<p>下面我们将介绍今天用到的主要模块</p>
+<h3>cheerio</h3>
+<blockquote><p><strong><code>cheerio</code></strong>可理解为服务器端的jQuery，基本用法与jQuery一样。有了它，我们在写小爬虫时就可抛开那可爱又可恨的正则表达式了。从此拥抱幸福生活。</p></blockquote>
+<p>用法如下：</p>
+<pre><code class="javascript">let cheerio = require('cheerio')
+
+// 将html文本转化成可用jQuery操作的dom,,然后你就可以把它当成jQuery了
+let $ = cheerio.load('&lt;h2 class="title"&gt;Hello world&lt;/h2&gt;')
+ 
+$('h2.title').text('Hello there!')
+$('h2').addClass('welcome')
+ 
+$.html()
+//=&gt; &lt;h2 class="title welcome"&gt;Hello there!&lt;/h2&gt; </code></pre>
+<p><em>更多请参考<a href="https://cheerio.js.org/">cheerio</a></em></p>
+<h3>superagent</h3>
+<p><code>superagent</code>专注于处理服务端/客户端的http请求，用法如下：</p>
+<pre><code class="javascript"> request
+   .get(url)
+   .end(function(err, res){
+
+   });</code></pre>
+<p>就是这么简答，你已经学会使用它了，别懵逼，这三行代码，已经完全够我们本次示例的使用了。<em>额，当然了，更多的请移步官方文档</em></p>
+<ul>
+<li><p><a href="http://visionmedia.github.io/superagent/">superagent</a></p></li>
+<li><p>[[译] SuperAgent中文使用文档](<a href="https://cnodejs.org/topic/5378720ed6e2d16149fa16bd)">https://cnodejs.org/topic/537...</a></p></li>
+</ul>
+<h3>初出茅庐【先拿百度练练手】</h3>
+<p>我们已经介绍了今天的两大主角，那就先来练练手，就用百度吧</p>
+<pre><code class="javascript">const superAgent = require('superagent')
+const cheerio = require('cheerio')
+const URL = 'http://www.baidu.com/'
+
+// 发起GET请求
+superAgent
+  .get(URL) 
+  .end((err, res)=&gt;{
+      if(err) console.error(err)
+    // 用cheerio处理返回的html
+      const $ = cheerio.load(res.text)
+    // 找到并打印出按钮#su的值
+    console.log($('#su').val())  // 百度一下
+  })   </code></pre>
+<p>ok,现在已经了解并能使用这两个模块，更多的探索在自己，我们应当再用写时间去阅读其文档，对其有深入的了解。接下来就是用刚学的这些知识为你涨姿势了。</p>
+<h2>开始开发<code>joke-cli</code>
+</h2>
+<h3>初始化项目</h3>
+<pre><code class="bash">$ mkdir joke-cli
+$ cd joke-cli
+$ npm init
+$ npm install cheerio superagent colors --save //colors 输出美化</code></pre>
+<p>新建好bin/index.js文件，并加入package.json文件中</p>
+<pre><code class="json">"bin": {
+    "joke-cli": "./bin/index.js"
+ }</code></pre>
+<p>现在执行<code>npm link</code>。我们的小项目就初始化成功了，就可以认真思考代码了</p>
+<h3>首先分析糗事百科url</h3>
+<p>我们打开糗事百科会发现它的URL还是很简单，由于我们只是爬取段子所以url如下<code>http://www.qiushibaike.com/text/page/2/4965899</code>，2就是页数。</p>
+<p><img data-src="/img/remote/1460000008740490?w=1330&amp;h=246" src="/img/remote/1460000008740490?w=1330&amp;h=246.png"></p>
+<h3>开始编写index.js</h3>
+<pre><code>#!/usr/bin/env node
+
+const superAgent = require('superagent')
+const cheerio = require('cheerio')
+
+let url = 'http://www.qiushibaike.com/text/page/'
+let page = 1
+
+superAgent
+    .get(url+page) 
+    .end((err, res)=&gt;{
+          if(err) console.error(err)
+        console.log(res.text)
+    })</code></pre>
+<p><code>f12</code>查看糗事百科的HTML结构，可以发先每条笑话都在一个<code>div.article</code>中，笑话的内容则在<code>div.content</code>中</p>
+<p><img data-src="/img/remote/1460000008740491?w=882&amp;h=286" src="/img/remote/1460000008740491?w=882&amp;h=286.png"></p>
+<p>在分析完html结够后，现在可以用我们用cheerio很容易就可以取出笑话</p>
+<pre><code class="javascript">···
+.end((err, res)=&gt;{
+  if(err) console.error(err)
+  const $ = cheerio.load(res.text)
+  const jokeList = $('.article .content span')
+  jokeList.each(function(i, item){
+    console.log($(this).text()) //将打印出每条笑话
+  })    
+})    
+···</code></pre>
+<h3>实现命令行交互</h3>
+<p>这里我们需要用到readlinem模块</p>
+<h4>Readline(逐行读取)</h4>
+<blockquote><p><code>require('readline')</code> 模块提供了一个接口，用于从<a href="http://nodejs.cn/api/stream.html">可读流</a>（如 <a href="http://nodejs.cn/api/process.html#process_process_stdin"><code>process.stdin</code></a>）读取数据，每次读取一行。 基本用法如下：</p></blockquote>
+<p><em>使用 <code>readline.Interface</code> 类实现一个简单的命令行界面：</em></p>
+<pre><code class="javascript">const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  prompt: '请输入&gt; '
+});
+
+//rl.prompt() 方法会在 output 流中新的一行写入 readline.Interface 实例配置后的 prompt，用于为用户提供一个可供输入的新的位置
+rl.prompt();
+
+rl.on('line', (line) =&gt; {
+  switch(line.trim()) {
+    case 'hello':
+      console.log('world!');
+      break;
+    default:
+      console.log(`你输入的是：'${line.trim()}'`);
+      break;
+  }
+  rl.prompt();
+}).on('close', () =&gt; {
+  console.log('再见!');
+  process.exit(0);
+});</code></pre>
+<p><em>更多参考<a href="http://nodejs.cn/api/readline.html">Node.js中文网</a></em></p>
+<h3>改写index.js实现命令行交互功能</h3>
+<pre><code class="javascript">#!/usr/bin/env node
+
+const superAgent = require('superagent')
+const cheerio = require('cheerio')
+const readline = require('readline')
+const colors = require('colors')
+// 创建readlinde.Interface 实现命令行交互
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: ' 😆  您正在使用joke-cli,按下回车查看笑话 😜 &gt;&gt;&gt;'
+})
+let url = 'http://www.qiushibaike.com/text/page/'
+let page = 1
+
+// 使用数组来存放笑话
+let jokeStories = []
+// 载入笑话并存入数组中
+function loadJokes(){
+      // 数组中的笑话不足三条时就请求下一页的数据
+    if(jokeStories.length&lt;3){
+        superAgent
+        .get(url+page) 
+        .end((err, res)=&gt;{
+            if(err) console.error(err)
+            const $ = cheerio.load(res.text)
+            const jokeList = $('.article .content span')
+            jokeList.each(function(i, item){
+                jokeStories.push($(this).text()) //存入数组
+            })
+            page++            
+        })
+    }
+}
+
+rl.prompt()
+loadJokes()
+// line事件 每当 input 流接收到接收行结束符（\n、\r 或 \r\n）时触发 'line' 事件。 通常发生在用户按下 &lt;Enter&gt; 键或 &lt;Return&gt; 键。
+// 按下回车键显示一条笑话
+rl.on('line', (line) =&gt; {
+    if(jokeStories.length&gt;0){
+        console.log('======================')
+        console.log(jokeStories.shift().bgCyan.black) //用colors模块改变输出颜色
+        loadJokes()
+    }else{
+        console.log('正在加载中~~~'.green)
+    }
+    rl.prompt()
+}).on('close', () =&gt; {
+    console.log('Bye!')
+    process.exit(0)
+})</code></pre>
+<p>这里我们用了一个数组存放笑话，每按下回车，就显示一条(<code>shift()</code>删除并返回数组第一个元素)，当数组中不足三条时就请求新的一页</p>
+<h2>总结</h2>
+<p>到此，我们的joke-cli就开发完成。此时我们应该了解了superagent, cheerio， readline等模块的使用。这会儿应该趁热打铁，快去好好看看这些模块吧</p>
+<h2>相关链接</h2>
+<ul>
+<li><p><a href="http://xingxin.me">原文链接xingxin.me</a></p></li>
+<li><p><a href="https://cheerio.js.org/">cheerio</a></p></li>
+<li><p><a href="http://visionmedia.github.io/superagent/">superagent</a></p></li>
+<li><p><a href="https://cnodejs.org/topic/5378720ed6e2d16149fa16bd">译)SuperAgent中文使用文档</a></p></li>
+<li><p><a href="http://nodejs.cn/api/readline.html">Node.js中文网</a></p></li>
+<li><p><a href="https://github.com/marak/colors.js/">colors.js</a></p></li>
+</ul>

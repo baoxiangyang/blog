@@ -1,0 +1,44 @@
+<blockquote>
+<p>这篇文章是从原博客转载过来的，是2013年写的，有些不对的地方请指出。</p>
+<p><a href="https://github.com/riskers/blog/issues/2">原文地址</a></p>
+<p><a href="https://github.com/riskers/blog/issues">博客地址</a> , 欢迎订阅</p>
+</blockquote>
+<hr>
+<p>这是一篇我自己关于负margin的理解，今天因为做项目用到了负margin，几经找资料，终于搞懂了，就赶紧记下来，免得忘记了！</p>
+<ul>
+<li><p>margin为正时，top、left属性是以content上（左）或垂直上方相连元素margin的下（右）边为参考线垂直向下（右）位移。</p></li>
+<li><p>margin为负时，right、bottom属性是元素本身的border右（下）边为参考线水平向右（下）位移。</p></li>
+</ul>
+<h2>总结</h2>
+<ol>
+<li><p>盒子最后的显示大小等于盒子的<code>border</code>+<code>padding</code>+<code>正margin</code>，而<code>负margin</code>不会影响其大小。</p></li>
+<li>
+<p>margin为负且盒子static时：</p>
+<ul>
+<li><p>若属性为top、left，盒子将被拉进指定的方向;</p></li>
+<li><p>若属性为bottom、right,将后续的元素拖拉进来，覆盖本来的元素。</p></li>
+<li><p>若width没有被设置，设定负margin-left/right会将元素拖向对应的方向，并增加宽度，此时的margin的作用就像padding一样</p></li>
+</ul>
+</li>
+</ol>
+<h2>选项卡demo</h2>
+<p><img data-src="/img/bVryLa" src="/img/bVryLa.png"></p>
+<p>怎么样实现上面菜单栏的选中状态下没有下边框的效果？<br>一般的思路是每个菜单栏设置边框，选中的状态没有下边框</p>
+<p>其实还可以这样，边框不是上面菜单栏的，而是下面内容块的：</p>
+<p><img data-src="/img/bVryLb" src="/img/bVryLb.png"></p>
+<p>明白了把，所以只要给菜单栏设置<code>margin-bottom:-1px</code>就可以让下面的内容块上移1px，刚好让菜单栏的背景色盖住那个1px的边框。<br>如果选中状态没有背景色，就悲剧了：</p>
+<p><img data-src="/img/bVryLc" src="/img/bVryLc.png"></p>
+<p>请看 <a href="http://codepen.io/riskers/pen/gpVeyQ">demo</a></p>
+<p>现在看这个例子没有明显展示出负margin的能力，再看下面的</p>
+<h2>负margin加宽元素</h2>
+<p>再看一个width没有设置，通过负margin加宽的元素的布局例子，这是很常见的例子，如果不用负margin，就会很麻烦呢<br><a href="http://codepen.io/riskers/pen/GJVdRw">demo</a></p>
+<h2>圣杯布局</h2>
+<p>因为BFC有这个特性：</p>
+<blockquote><p>元素在设定<code>width</code>时，添加<code>border</code>、<code>padding</code>、<code>margin</code>会导致元素变宽；但是在没有设定<code>width</code>时，元素会自动填满父元素，添加<code>padding</code>、<code>border</code>、<code>margin</code>会使元素变窄，减少量等于他们三个之和。</p></blockquote>
+<p><a href="http://codepen.io/riskers/pen/waVjBL">demo</a></p>
+<h2>负margin实现两列等高布局</h2>
+<p><a href="http://codepen.io/riskers/pen/VLoxpE">demo</a></p>
+<h2>参考文章</h2>
+<p><a href="http://www.cnblogs.com/jscode/archive/2012/08/28/2660078.html">负值之美</a></p>
+<blockquote><p>以上是网上资料总结，我的总结就一句话：left、top不论正负自己动，right、bottom不论正负别的元素动！正的向外，负的向内！考虑问题的时候还要考虑到盒子的特性问题！！</p></blockquote>
+<p>PS:遇到问题只要先想想什么是margin，margin的作用是什么，则负margin的工作原理则迎刃而解！</p>

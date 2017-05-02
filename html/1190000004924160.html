@@ -1,0 +1,165 @@
+<blockquote><p>欢迎交换友链 <a href="http://laker.me/blog">Laker's Blog--进击的程序媛</a><br>Github：<a href="https://github.com/younglaker">https://github.com/younglaker</a><br>微博: <a href="http://weibo.com/1830309103">江小湖Laker</a></p></blockquote>
+<hr>
+<p><img data-src="/img/bVuO9f" src="/img/bVuO9f.png"></p>
+<p><a href="http://laker.me/blog/2016/03/04/16_0304_ajax_file_upload/">上篇文章讲了如何上传文件</a>。本文讲细分讲述图片上传、预览等。</p>
+<h2>关于接口</h2>
+<p><a href="http://www.w3.org/TR/file-upload/">File API</a></p>
+<ul>
+<li><p>File - 独立文件；提供只读信息，例如名称、文件大小、mimetype 和对文件句柄的引用。</p></li>
+<li><p>FileList - File 对象的类数组序列（考虑多文件上传或者从桌面拖动目录或文件）。</p></li>
+<li><p>Blob - 可将文件分割为字节范围。</p></li>
+<li><p>FileReader - 读取File或Blob</p></li>
+<li><p>URL scheme</p></li>
+</ul>
+<h2>检测浏览器是否支持</h2>
+<pre><code>// 检测是否支持File API
+if (window.File &amp;&amp; window.FileReader &amp;&amp; window.FileList &amp;&amp; window.Blob) {
+  //  支持
+} else {
+  alert('不支持');
+}</code></pre>
+<h2>基本代码</h2>
+<p>选取一张图片，并预览：<br><a href="https://codepen.io/younglaker/pen/vGmaYr">Demo1</a></p>
+<pre><code>&lt;input id="img_input" type="file" accept="image/*"/&gt;
+&lt;label for="img_input"&gt;&lt;/label&gt;
+&lt;div class="preview_box"&gt;&lt;/div&gt;
+
+.preview_box img {
+  width: 200px;
+}
+
+$("#img_input").on("change", function(e){
+
+  var file = e.target.files[0]; //获取图片资源
+
+  // 只选择图片文件
+  if (!file.type.match('image.*')) {
+    return false;
+  }
+
+  var reader = new FileReader();
+
+  reader.readAsDataURL(file); // 读取文件
+
+  // 渲染文件
+  reader.onload = function(arg) {
+
+    var img = '&lt;img class="preview" src="' + arg.target.result + '" alt="preview"/&gt;';
+    $(".preview_box").empty().append(img);
+  }
+});
+</code></pre>
+<p>上传到服务器</p>
+<pre><code>var form_data = new FormData();
+var file_data = $("#img_input").prop("files")[0];
+
+// 把上传的数据放入form_data
+form_data.append("user", "Mike");
+form_data.append("img", file_data);
+
+$.ajax({
+    type: "POST", // 上传文件要用POST
+    url: "",
+    dataType : "json",
+    crossDomain: true, // 如果用到跨域，需要后台开启CORS
+  processData: false,  // 注意：不要 process data
+  contentType: false,  // 注意：不设置 contentType
+    data: form_data
+}).success(function(msg) {
+    console.log(msg);
+}).fail(function(msg) {
+    console.log(msg);
+});
+</code></pre>
+<h2>拖拽上传</h2>
+<p>三个相关事件：</p>
+<ul>
+<li><p>dragenter</p></li>
+<li><p>dragover</p></li>
+<li><p>drop</p></li>
+</ul>
+<p>原生JavaScript：</p>
+<p><a href="https://codepen.io/younglaker/pen/vGmaYr">Demo2</a></p>
+<pre><code>&lt;div id="drop_zone"&gt;Drop files here&lt;/div&gt;
+&lt;ul id="list"&gt;&lt;/ul&gt;
+
+
+// 必须阻止dragenter和dragover事件的默认行为，这样才能触发 drop 事件
+function fileSelect(evt) {
+
+  evt.stopPropagation();
+  evt.preventDefault();
+
+  var files = evt.dataTransfer.files; // 文件对象
+  var output = [];
+
+  // 处理多文件
+  for (var i = 0, f; f = files[i]; i++) {
+    output.push('&lt;li&gt;&lt;strong&gt;', escape(f.name), '&lt;/strong&gt; (', f.type || 'n/a', ') - ',
+                f.size, ' bytes, last modified: ',
+                f.lastModifiedDate.toLocaleDateString(), '&lt;/li&gt;');
+  }
+  // 显示文件信息
+  document.getElementById('list').innerHTML = output.join('');
+}
+
+function dragOver(evt) {
+  evt.stopPropagation();
+  evt.preventDefault();
+  evt.dataTransfer.dropEffect = 'copy';
+}
+
+// 监听器
+var dropZone = document.getElementById('drop_zone');
+dropZone.addEventListener('dragover', dragOver, false);
+dropZone.addEventListener('drop', fileSelect, false);</code></pre>
+<p>jQuery：</p>
+<p>其他代码可以不变，注意监听事件的时候的，由于jQuery的封装，数据存放的字段有变，传参是<code>e.originalEvent</code>而不是<code>e</code>：</p>
+<pre><code>$("#drop_zone").on('dragover', function(e){
+  e.stopPropagation();
+  e.preventDefault();
+  handleDragOver(e.originalEvent);
+});
+
+$("#drop_zone").on('drop', function(e){
+  e.stopPropagation();
+  e.preventDefault();
+  handleFileSelect(e.originalEvent);
+});</code></pre>
+<h2>美化上传框</h2>
+<h3>方法一： 在隐藏的文件输入框上调用click()方法</h3>
+<p>隐藏掉默认的的文件输入框<code>&lt;input&gt;</code>元素，使用自定义的界面来充当打开文件选择对话框的按钮。要使用样式<code>display:none</code>把原本的文件输入框隐藏掉，然后在需要的时候调用它的click()方法就行了。</p>
+<pre><code>&lt;input type="file" id="fileElem" multiple accept="image/*" style="display：none" onchange="handleFiles(this.files)"&gt;
+&lt;a href="#" id="fileSelect"&gt;选择文件&lt;/a&gt;
+
+var fileSelect = document.getElementById("fileSelect"),
+  fileElem = document.getElementById("fileElem");
+
+fileSelect.addEventListener("click", function (e) {
+  if (fileElem) {
+    fileElem.click();  // jQuery可以使用 trigger()
+  }
+  e.preventDefault(); // prevent navigation to "#"
+}, false);</code></pre>
+<h3>方法二：用label</h3>
+<p>隐藏input，把样式写到label上，点击label就是对input进行操作。</p>
+<p><a href="https://codepen.io/younglaker/pen/vGmaYr">Demo3</a></p>
+<pre><code>&lt;input id="img_input2" type="file" accept="image/*"/&gt;
+&lt;label for="img_input2" id="img_label2"&gt;选择文件
+    &lt;i class="fa fa-plus fa-lg"&gt;&lt;/i&gt;
+&lt;/label&gt;
+&lt;div id="preview_box2"&gt;&lt;/div&gt;
+
+
+#img_input2 {
+  display: none;
+}
+#img_label2 {
+  background-color: #f2d547;
+  border-radius: 5px;
+  display: inline-block;
+  padding: 10px;
+}
+#preview_box2 img {
+  width: 200px;
+}</code></pre>

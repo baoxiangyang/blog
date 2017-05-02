@@ -1,0 +1,474 @@
+一样，在以前的开发过程中很少在乎自己编写的网页的性能。或者说一直以来我是缺乏开发高性能网页的意识的，但是想做一个好的前端开发者，是需要在当自己编写的程序慢慢复杂以后还能继续保持网页的高性能的。这需要我们对JavaScript语句，对其运行的宿主环境(浏览器等)，对它的操作对象(DOM等)有更深入的理解。</p>
+<p><strong>什么样的网页是高性能的网页？</strong><br>我想一个网页是否高性能主要体现在两个方面，一是网页中代码<strong>真实的运行速度</strong>，二是用户在使用时<strong>感受到的速度</strong>，我们一项项的来讨论。</p>
+<h2>提高代码执行的效率</h2>
+<p>想要提高代码的执行效率，我们首先得知道我们使用JS做不同的事情时，其执行效率各是如何。一般说来，web前端开发中我们常做的操作主要是<strong>数据获取和存储</strong>，<strong>操作DOM</strong>，除此之外，我们知道JS中达到同一目的可能会有多种途径，但其实各种途径执行效率并不相同，我们应该<strong>选择最合适的途径</strong>。</p>
+<h3>数据存储和访问</h3>
+<p>先说数据存储，计算机中，数据肯定是存在于内存之中，但是访问到具体内存所在的位置却有不同的方法，从这个角度看<strong>JS中有四种基本的数据存取位置</strong>：</p>
+<pre><code>- 字面量：只代表自身，不存储在特定位置
+* 本地变量：使用关键字var 存储的数据存储单元
+* 数组元素：存储在JavaScript的数组对象内部，以数字为索引
+* 对象成员：存储在JavaScript对象内部，以字符串为索引
+</code></pre>
+<p><strong>不同存储方式的访问速度</strong><br>其实很容易就可以理解，访问一个数据所经历的层级越少，其访问速度越快，这样看来访问字面量和局部变量速度最快，而访问数组元素和对象成员相对较慢；</p>
+<p>从数据存储和访问角度来看，提升效率的核心在于存储和访问<strong>要直接，不要拐弯抹角</strong>。我们以<strong>原型链</strong>和<strong>作用域</strong>为例来说明如何优化。</p>
+<p><strong>原型链</strong><br>对象的原型决定了实例的类型，原型链可以很长，实例所调用的方法在原型链层级中越深则效率越低。因此也许需要我们保证原型链不要太长，对于经常需要使用到的方法或属性，尽量保证它在原型链的浅层。</p>
+<p><strong>作用域(链)</strong><br>作用域也是JavaScript中一个重要的概念，一般说来变量在作用域中的位置越深，访问所需的时间就越长。<br>局部变量存在于作用域链的起始位置，其访问速度比访问跨作用域变量快，而全局变量处于作用域链的最末端，其访问速度也是最慢的。<br>一般说来JavaScript的词法作用域在代码编译阶段就已经确定，这种确定性带来的好处是，代码在执行过程中，能够预测如何对变量进行查找，从而提高代码运行阶段的执行效率。我们也知道JavaScript中有一些语句是会临时改变作用域的，比如说<code>with</code>，<code>eval</code>,<code>try...catch...</code>中的<code>catch</code>子句，使用它们会破坏已有的确定性，从而降低代码执行效率，因此这些语句应该小心使用。</p>
+<p>从数据的存储和访问角度，可以从以下角度进行优化：</p>
+<pre><code>- 我们应该尽量少用嵌套的对象成员，多层嵌套时会明显影响性能，如果实在要使用（尤其是多次使用）；
+- 我们可以通过把常用的对象成员，数组元素，跨域变量保存在局部变量中，再使用来改善JavaScript性能。
+</code></pre>
+<h3>DOM编程</h3>
+<p>通过DOM API，利用JavaScript我们有了操作网页上的元素的能力，这也使得我们的网页活灵活现。可是遗憾的是DOM编程是性能消耗大户，它天生就慢，究其原因，是因为在浏览器中DOM渲染和JavaScript引擎是独立实现的，不同的浏览器实现机制不同，具体可见下表。</p>
+<table>
+<thead><tr>
+<th>类别</th>
+<th align="center">IE</th>
+<th align="center">Safari</th>
+<th align="center">Chrome</th>
+<th align="center">Firefox</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>JS引擎</td>
+<td align="center">jscript.dll</td>
+<td align="center">JavaScriptCore</td>
+<td align="center">V8</td>
+<td align="center">SpiderMonkey(TraceMonkey)</td>
+</tr>
+<tr>
+<td>DOM和渲染</td>
+<td align="center">mshtml.dll (Trident)</td>
+<td align="center">Webkit中的WebCore</td>
+<td align="center">Webkit中的WebCore</td>
+<td align="center">Gecko</td>
+</tr>
+</tbody>
+</table>
+<p>DOM渲染和JavaScript引擎的独立实现意味着这两个功能好像位于一条大河的两岸，二者的每次交互都要渡过这条河，这很明显会产生不少额外的性能消耗，这也是我们常说操作DOM是非常消耗性能的原因。<br>从这个角度我们想到，想要减少DOM操作带来的性能的消耗，核心我们要做的是减少访问和修改等DOM操作。<br><strong>我们可以从以下几方面着手DOM编程的优化：</strong></p>
+<ol>
+<li><p>把运算尽量留在ECMAScript这一端处理，在实际开发过程中我们应该对DOM不做非必要的操作，在获得必要的值以后，可以把这些值存储在局部变量之中，纯使用JS对该值进行相关运算，直接用最后的结果来修改DOM元素，可能这么说来并不是很直观，但是回头看看我们的项目，我们有没有过在循环或者会多次使用的函数中，每次都重新获取某个不变的DOM相关的值；</p></li>
+<li><p>小心处理HTML集合：</p></li>
+</ol>
+<blockquote><p><strong>HTML集合</strong>是包含了 DOM节点引用的<strong>类数组对象</strong>，类似于以下方法，获取的都是这种HTML集合：<br><code>document.getElementsByName()</code>；<br><code>document.getElementByClassName()</code>;<br><code>document.getElementByTagName()</code>;<br>这种类数组对象具备普通数组的一些特点，比如拥有<code>length</code>属性，可以通过数字索引的方式访问到对应的对象，但是却并没有数组的<code>push</code>和<code>slice</code>等方法，<strong>重点在于</strong>在使用过程中这个集合实时连系着底层的文档，每次访问这种HTML集合，都会重复执行查询的过程，造成较大的性能消耗；下面是一个典型的多次访问的例子：</p></blockquote>
+<pre><code class="js">    var alldivs = document.getElementsByTagName('div');
+    for(var i = 0;i&lt;alldivs.length;i++){
+        document.body.appendChild(document.createElement('div'));
+    }    </code></pre>
+<p>上述代码是一个死循环，在每次循环的时候<code>alldivs</code>都会重新遍历DOM，获得更新，产生了不必要的性能消耗；<br>合理的使用方式应该是，把集合的长度缓存到一个变量中，在迭代中使用这个局部变量。如果需要经常操作集合元素，我们可以把这个集合拷贝到一个数组中，操作数组比操作HTML集合性能高；使用下述方法可以把一个HTML集合拷贝为普通的数组：</p>
+<pre><code class="js">// 拷贝函数
+function toArray(coll){
+    for(var i=0,a=[],len=coll.length;i&lt;len;i++){
+        a[i]=coll[i]
+    }
+    return a;
+}
+
+// 使用方法
+var coll = document.getElementByTagName('div');
+var ar = toArray(coll);</code></pre>
+<ol><li><p>JS代码的运行需要宿主环境，就web前端来说，这个环境就是我们的浏览器，一般说来浏览器会对一些常见操作进行一定的优化，使用优化后的API，性能更高，我们应该尽量使用那这些优化过的API，对现代浏览器中的DOM操作来说，有以下一些优化后的API：</p></li></ol>
+<table>
+<thead><tr>
+<th align="left">优化后</th>
+<th align="left">原始</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code>children</code></td>
+<td align="left"><code>childnodes</code></td>
+</tr>
+<tr>
+<td align="left"><code>childElementCount</code></td>
+<td align="left"><code>children.length</code></td>
+</tr>
+<tr>
+<td align="left"><code>firstElementChild</code></td>
+<td align="left"><code>firstChild</code></td>
+</tr>
+<tr>
+<td align="left"><code>lastElementChild</code></td>
+<td align="left"><code>lastChild</code></td>
+</tr>
+<tr>
+<td align="left"><code>nextElementSibling</code></td>
+<td align="left"><code>nextSibling</code></td>
+</tr>
+<tr>
+<td align="left"><code>previousElementSibling</code></td>
+<td align="left"><code>previousSibling</code></td>
+</tr>
+<tr>
+<td align="left"><code>document.querySelector()</code></td>
+<td align="left"><code>document.getElemnetByClassName…</code></td>
+</tr>
+</tbody>
+</table>
+<ol><li><p>减少重绘与重排<br>重排和重绘也是大家经常听到的概念：</p></li></ol>
+<blockquote><p>重排：DOM变化影响了元素的几何属性（比如改变边框宽度），引起其它元素的位置也因此受到影响，浏览器会使得渲染树中受到影响的部分失效，并重新构建渲染树;<br>重绘：重排完成后，浏览器会重新绘制受影响的部分到屏幕中（并不是所有的DOM变化都会影响几何属性，例如改变一个元素的背景色并不会影响它的宽和高）；</p></blockquote>
+<p>重排和重绘都是代价很高的操作，会直接导致Web应用程序的UI反应迟钝，应该尽量减少这类过程的发生。一般说来下面的操作会导致重排：</p>
+<pre><code>- 添加删除可见的DOM元素；
+* 元素位置改变；
+* 元素尺寸改变（`padding,margin,border,width,height...`）
+* 内容改变;（文本内容，或图片被另外一个不同尺寸的图片替代）;
+* 页面渲染器初始化;
+* 浏览器窗口尺寸改变;</code></pre>
+<p>每次重排都会产生计算消耗，大多数浏览器会通过队列化修改，批量执行来优化重排过程，减少性能消耗。但是也有部分操作会强制刷新队列，要求重排任务立即执行。<strong>如下：</strong></p>
+<pre><code>- `offsrtTop`,`offsetLeft`,`offsetWidth`,`offsetHeight`；
+* `scrollTop`,`scrollLeft`,`scrollWidth`,`scrollHeight`;
+* `clientTop`,`clientLeft`,`clientWidth`,`clientHeight`;
+* `getComputedStyle()`</code></pre>
+<p>上述操作都要求返回最新的布局信息，浏览器不得不执行渲染队列中待处理的任务，触发重排返回正确的值。通过缓存布局信息可以减少重排次数，这一点是我一直忽略的一点，曾经多次在循环或多次调用的函数中直接使用上述操作获取距离；</p>
+<p>总的来说<strong>最小化重绘和重排</strong>的核心是合并多次对DOM和样式的修改，然后一次处理掉，主要有以下几种方法：</p>
+<pre><code>- 使用cssText属性(适用于动态改变)</code></pre>
+<pre><code class="js">var el = document.getElementById(‘mydiv’);
+// 下面这种写法可以覆盖已存在的样式信息
+el.style.cssText = ‘border-left:1px;border-right:2px;padding:5px’;
+// 下面这种写法可以把新属性附加在cssTest字符串后面
+el.style.cssText += ‘;border-left:1px;’;</code></pre>
+<pre><code>- 对于不依赖于运行逻辑和计算的情况，直接改变CSS的`class`名称是一种比较好的选择
+- 批量修改DOM:操作如下
+    - 使元素脱离文档流；
+        * 隐藏元素，应用修改，重新显示；
+        * 使用文档片段，在当前DOM外构建一个子树，再把它拷贝到文档；
+        * 将原始元素拷贝到一个脱离文档的节点中，修改副本，完成后替换原始元素；
+    * 对其应用多重改变；
+    * 把元素带回文档中；
+在这个过程中只有第一步和第三步会触发重排，可参加下述代码。
+</code></pre>
+<pre><code class="js">var fragment = document.createDocumentFragment();//一个轻量级的document对象
+// 组装fragment...(省略)
+// 加入文档中
+document.getElementById(‘mylist’).appendChild(fragment);
+
+var old = document.getElementById(‘mylist’);
+var clone = old.cloneNode(true);
+// 对clone进行处理
+old.parentNode.replaceChild(clone,old);</code></pre>
+<pre><code>- 对动画元素可进行如下优化
+    - 对动画元素使用绝对定位，将其脱离文档流；
+    * 让元素动起来，懂的时候会临时覆盖部分页面（不会产生重排并绘制页面的大部分内容）;
+    * 当动画结束时恢复定位，从而只会下移一次文档的其它元素；
+</code></pre>
+<p>此外如果页面中对多个元素绑定事件处理器，也是会影响性能的，事件绑定会占用处理时间，浏览器也需要跟踪每个事件处理器，会占用更多的内存。针对这种情况我们可以采用<strong>使用事件委托机制</strong>：也就是说把事件绑定在顶层父元素，通过e.target获取点击的元素，判断是否是希望点击的对象，执行对应的操作，幸运的是现在的很多框架已经帮我们做了这一点（React中的事件系统就用到了事件委托机制）。</p>
+<h3>选择合适的JavaScript语句</h3>
+<p>殊途同归付出的代价却不一样，和任何编程语言一样，代码的写法和算法会影响运行时间。而我们写的最多的语句是<strong>迭代</strong>和<strong>判断</strong>。</p>
+<h4>选择合适的迭代语句</h4>
+<p>JavaScript提供了多种迭代方法：</p>
+<ol><li>
+<p><strong>四种循环类型：</strong></p>
+<ul>
+<li><p><code>for</code>;</p></li>
+<li><p><code>while</code>;</p></li>
+<li><p><code>do…while</code>循环；</p></li>
+<li><p><code>for…in…</code>循环；</p></li>
+</ul>
+</li></ol>
+<p>就四种循环类型而言，前三种循环性能相当，第四种<code>for...in...</code>用以枚举任意对象的属性名，所枚举的属性包括对象实例属性及从原型链中继承来的属性，由于涉及到了原型链，其执行效率明显慢于前三种循环。就前三种而言影响性能的主要因素不在于选择哪种循环类型，而在于<strong>每次迭代处理的事务</strong>和<strong>迭代的次数</strong>。</p>
+<p><strong>减少每次迭代的工作量</strong><br>很明显，达到同样的目的，每次迭代处理的事务越少，效率越高。举例来说</p>
+<pre><code class="js">// 普通循环体
+for(var i=0;i&lt;items.length;i++){
+    process(item[i])
+}
+
+// 优化后的循环体
+for(var i= items.length;i--;){
+    process(item[i])
+}</code></pre>
+<p>普通循环体每次循环都会有以下操作：</p>
+<pre><code>1. 在控制条件中查找一次属性（`items.length`）;
+2. 在控制条件中执行一次数值比较（`i&lt;items.length`）；
+3. 一次比较操作查看控制条件的计算结果是否为`true`(`i&lt;item.length==true`);
+4. 一次自增操作(`i++`)；
+5. 一次数组查找(`item[i]`)；
+6. 一次函数调用(`process[items[i]`);
+</code></pre>
+<p>优化后的循环体每次迭代会有以下操作：</p>
+<pre><code>1. 一次控制条件中的比较(`i==true`)；
+2. 一次减法操作(`i—`);
+3. 一次数组查找(`item[i]`);
+4. 一次函数调用(`process(item[i])`);
+</code></pre>
+<p>明显优化后的迭代操作步骤更少，如果迭代次数很多，多次这样小的优化就能节省不错的性能，如果<code>process()</code>函数本身也充满了各种小优化，性能的提升还是很可观的；</p>
+<p><strong>减少迭代次数</strong><br>每次迭代其实是需要付出额外的性能消耗的，可以使用Duff’s Device方法减少迭代次数，方法如下；</p>
+<pre><code class="js">    // credit:Jeff Greenberg
+var i = items.length%8;
+whild(i){
+    process(items[i--]);
+}
+
+i = Math.floor(items.length/8);
+
+// 如果循环次数超过1000，与常规循环结构相比，其效率会大幅度提高
+while(i){
+    process(items[i--]);
+    process(items[i--]);
+    process(items[i--]);
+    process(items[i--]);
+    process(items[i--]);
+    process(items[i--]);
+    process(items[i--]);
+    process(items[i--]);
+}</code></pre>
+<p>‘Duff’s Device’循环体展开技术，使得一次迭代实际上执行了多次迭代的操作。如果迭代次数大于1000次，与常规循环结构相比，就会有可见的性能提升。</p>
+<ol><li>
+<p><strong>基于函数的迭代</strong></p>
+<ul>
+<li><p><code>forEach()</code>;</p></li>
+<li><p><code>map()</code>;</p></li>
+<li><p><code>every()</code>;</p></li>
+<li><p>等…</p></li>
+</ul>
+</li></ol>
+<p>基于函数的迭代是一个非常便利的迭代方法，但它比基于循环的迭代要慢一些。每个数组项都需要调用外部方法所带来的开销是速度慢的主要原因。经测试基于函数的迭代比基于循环的迭代慢八倍，选择便利还是性能这就是我们自己的选择了；</p>
+<h4>选择合适的条件语句</h4>
+<p>条件表达式决定了JavaScript运行流的走向，常见的条件语句有<code>if…else...</code>，<code>switch...case...</code>两种：<br><code>switch</code>语句的实现采用了branch table(分支表)索引进行优化，这使得<code>switch...case</code>是比<code>if-else</code>快的，但是只有条件数量很大时才快的明显。这两个语句的主要性能区别是，当条件增加时，<code>if...else</code>性能负担增加的程度比<code>switch</code>大。具体选用那个，还是应该依据条件数量来判断。</p>
+<p>如果选用<code>if...else</code>,也有优化方法，一是把最可能出现的条件放在最前面，二是可以通过嵌套的<code>if...else</code>语句减少查询时间；</p>
+<p>在JavaScript中还可以通过<strong>查找表</strong>的方式来获取满足某条件的结果。当有大量离散值需要测试时，<code>if...else</code>和<code>switch</code>比使用查找表慢很多。查找表可以通过数组模拟使用方法如下：</p>
+<pre><code class="js">var results = [result0,result1,result2,result3,result4,result5,result6,result7,result8,result9];
+
+return results[value];</code></pre>
+<p>从语言本身的角度来看，做到上述各点，我们的代码性能就会有比较大的提升了，但是代码性能的提升，只是代码执行本身变快了，并不一定是用户体验到的时间变短了，一个好的web网页，还应该让用户感觉到我们的网页很快。</p>
+<h2>更好的交互体验</h2>
+<p>人类对时间的感觉其实是不准确的，考虑两种场景，</p>
+<blockquote><p>一种场景是，一段代码执行10s，10s后所有内容一下子全部显示出来；<br>另外一种场景是，总共需要执行12s，但是每秒都在页面上添加一些内容，主体内容先添加，次要内容后添加；</p></blockquote>
+<p>上述两种场景给人的感觉完全不一样。大部分人会觉得后面那个12s时间更短。</p>
+<p>用户感觉到的时间的长短取决于用户与网页交互时收到的反馈，一般说来100ms是个时间节点，如果界面没在100ms内对用户的行为作出反馈，用户就会有卡顿的感觉，开发过手机版的网页的童鞋都知道，当你触发手机端默认的onClick事件时，有些浏览器出于要确认你是否想要双击，会在单击事件触发300ms后，才执行相应的操作，用户在这时候会有明显卡顿的感觉的。为了达到更好的交互体验，我们可以从脚本加载时机，不阻塞浏览器的UI线程，高效使用Ajax，合理构建和部署JavaScript应用等方面进行优化：</p>
+<h3>加载和执行</h3>
+<p>我们都知道多数浏览器使用单一进程来处理UI刷新和JavaScript脚本执行，当执行较大的JavaScript脚本时会阻塞UI的刷新。这是一种非常不好的体验。所有在页面初始化时期，我们都会把JavaScript放在<code>&lt;/body&gt;</code>标签之前。我们也可以采用动态加载的方式，无论在何时启动，文件的下载和执行过程都不会阻塞页面其他进程，一种常见的动态加载方式如下，当然我们也可以使用AJAX进行动态加载。</p>
+<pre><code class="js">    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src="file1.js";
+    document.getElementsByTagName("head")[0].appendChild(script);
+    // 无论在何时启动下载，文件的下载和执行过程不会阻塞页面其他进程
+    // 通过检测load事件可以获得脚本加载完成时的状态</code></pre>
+<h3>构建快速响应的用户界面</h3>
+<p>我们已经知道，当JavaScript代码执行时，用户界面其实是属于锁定状态的，管理好JavaScript的运行时间对Web应用的性能至关重要。</p>
+<p>用来执行JavaScript和更新用户界面的进程通常称为“浏览器UI线程”。其工作基于一个简单的任务队列系统，具体原理是所有的前端任务会被保存在任务队列中直到进程空闲，一旦空闲，队列中的下一个任务就会被提取出来并运行。这些任务可能是一段待执行的JavaScript代码，UI更新（重排重绘等）。<br>一般浏览器有自己的JavaScript长时间运行限制，不同浏览器限制的时间不同，有的是5~10s，有的是运行超过500万行语句时提醒；达到限制时间后对页面的处理方式也不同，有的直接导致浏览器崩溃，有的会发出明显可见的警告信息。</p>
+<p>前面我们已经讨论过如果等待时间不超过100ms，一般人就会觉得操作是连贯的。这给我们提供了一个思路，我们的一段JavaScript代码的执行时间如果不超过100ms，操作起来感觉就是连贯的。</p>
+<p>通过分隔JavaScript代码的执行，我们可以让JavaScript的执行时间不超过100ms，主要途径主要有两种：<br><strong>使用定时器让出时间片段</strong>，<strong>使用web worker</strong>。</p>
+<h4>通过定时器是分割UI线程的时间片段</h4>
+<p>JavaScript中有两种不同的定时器<code>setTimeout()</code>和<code>setInterval()</code>,它们都接受两个参数，第一个参数是一个函数，第二个参数是一段时间。当定时器被调用时，它们会告诉JavaScript引擎在等待我们所定的时间后，添加一个JavaScript任务到UI线程中。<br>定时器的<strong>意义在于</strong>，每当我们创建一个定时器，UI线程就会暂停，并从一个任务切换到下一个任务，定时器也会重置所有相关的浏览器限制，包括长时间运行脚本限制，调用栈的限制。</p>
+<p>我们也应该明确，定时器的延迟时间并非总是精确的，每次相差大约几毫秒，所以定时器不太适合拿来计时（比如说在windows系统中定时器分辨率为15ms），一般建议的延迟的最小值为25ms，以确保至少有15ms的延迟。</p>
+<p>我们通过下面的代码看看如何利用定时器无阻塞的处理大数组</p>
+<pre><code class="js">var todo = items.concat();//items是原始的大数组
+
+setTimeout(function(){
+    // 取出数组的下个元素并进行处理
+    process(todo.shift());
+
+    // 如果还有需要处理的元素，创建另一个定时器，再25ms执行一次
+    if(todo.length&gt;0){
+        // arguments.callee指向当前正在运行的匿名函数
+        setTimeout(arguments.callee,25);
+    }else{
+        // 如果所有的数组都被处理了，执行callback()函数
+        callback(items);
+    }
+},25);</code></pre>
+<p>利用定时器可以按照下述方法分割运行时间过长的函数</p>
+<pre><code class="js">//原函数
+function saveDocument(id){
+    //保存文档
+    openDocument(id);
+    writeText(id);
+    closeDocument(id);
+
+    //将信息更新到界面
+    updateUI(id);
+}
+
+// 使用定时器分割任务的方法
+function saveDocument(id){
+    var tasks=[openDocument,writeText,closeDocument,updateUI];
+
+    setTimeout(function(){
+        var task = tasks.shift();
+        task(id);
+
+        if(tasks.length&gt;0){
+            setTimeout(arguments.callee,25);
+        }
+    },25);
+}</code></pre>
+<p>定时器把我们的任务分解成了一个个的不致于阻塞的片段，虽然总的执行时间可能是变长了，但是会让我们的交互体验发生翻天覆地的变化，使用得当，我们可以避免大部分完全卡住的情况了。不过定时器的使用也有一个限制，我们应该保证同一时间只有一个定时器的存在，防止因为定时器使用过度导致的性能问题。</p>
+<h4>WebWorker给Web应用带来的巨大性能潜力提升</h4>
+<p>WebWorker是HTML5新提供的一组API，它引入了一个接口，能使代码运行且不占用浏览器UI线程的时间，这里只做简单介绍，具体使用请查看相关文档：<br>一个WebWorker其实是JavaScript特性的一个子集，其运行环境由以下部分组成：</p>
+<pre><code>- 一个`navigator`对象，包含四个属性：`appName`,`appVeision`,`userAgent,platform`;
+* 一个`location`对象（与`window.location`相同，不过所有属性都是只读的）；
+* 一个`self`对象，指向全局`worker`对象；
+* 一个`importScript()`方法，用来加载`Worker`所用到的外部JavaScript文件；
+* 所有的ECMAScript对象，诸如：`Object，Array，Date`等；
+* `XMLHttpRequest`构造器；
+* `setTimeout()`和`setInterval()`方法；
+* 一个`close()`方法，它可以立即停止Worker运行；
+</code></pre>
+<p><strong>主网页与Worker相互通信的方法</strong>    <br>Worker与网页代码通过事件接口进行通信。主网页和Worker都会通过<code>postMessage()</code>传递数据给对方；使用<code>onmessage</code>事件处理器来接收来自对方的信息；</p>
+<pre><code class="js">// 主页面
+var worker = new Worker('code.js');
+worker.onmessage = function(event){
+    alert(event.data);
+};
+worker.postMessage("Nicholas");
+
+//code.js内部的代码
+self.onmessage = function(event){
+    self.postMessage("Hello,"+ event.data+"!");
+}</code></pre>
+<p>相互传递的原始值可以是字符串，数字，布尔值，<code>null</code>，<code>undefined</code>，也可以<code>Object</code>和<code>Array</code>的实例。</p>
+<p><strong>加载外部文件的方法</strong><br>在一个web worker中可以使用<code>importScript()</code>方法加载外部JavaScript文件，该方法接收一个或多个url作为参数，调用过程是阻塞式的，所有文件加载并执行完成以后，脚本才会继续运行。但并不会影响UI响应。<br>加载允许异步发送和接收数据。可以在请求中添加任何头信息和参数，并读取服务器返回的所有头信息，以及响应文本。<br><code>importScripts(‘file1.js’,’file2.js’);</code></p>
+<p><strong>WebWorker的实际应用</strong></p>
+<pre><code>- 适合处理纯数据，或者与UI无关的长时间运行脚本；
+* 编码，解码大字符串；
+* 复杂数学运算；
+* 大数组排序；
+</code></pre>
+<p>总的说来，Web应用越复杂，积极主动管理UI线程越重要，复杂的前端应用更应该合理使用定时器分割任务或使用WebWorker进行额外计算从而不影响用户体验。</p>
+<h3>使用Ajax</h3>
+<p>Ajax是高性能JavaScript的基础，它通过异步的方式在客户端和服务器端之间传输数据，避免页面资源一窝蜂的下载，从而起到防止阻塞，提高用户体验的效果，在使用时我们应该选择最合适的<strong>传输方式</strong>和最有效的<strong>数据格式</strong>。</p>
+<h4>传输方式</h4>
+<p><strong>数据请求方式</strong><br>异步从服务器端获取数据有多种方法，常用的请求有以下三种：</p>
+<ol><li><p><strong>XHR</strong><br>这是目前最常用的技术，可以在请求中添加任何头信息和参数，读取服务器返回的所有头信息以及响应文本。</p></li></ol>
+<p>这种方法的缺点在于不能使用XHR从外域请求数据，从服务器传回的数据会被当作字符串或者XML对象，处理大量数据时会很慢。经GET请求的数据会被缓存起来，如果需要多次请求同一数据的话，使用GET请求有助于提升性能，当请求的URL加上参数的长度接近或超过2048个字符时，才应该用POST获取数据。</p>
+<p>XHR的使用可见以下示例：</p>
+<pre><code class="js">var url = ‘/data.php’;
+var params = [
+    ‘id=123123’,
+    ‘limit = 20’,
+];
+
+var req = new XMLHttpRequest();
+
+req.onreadystatechange = function(){
+    if(req.readyState===4){
+        var responseHeader = req.getAllResponseHeaders(); // 获取响应头信息
+        var data = req.responseText; // 获取数据
+        // 数据处理相关程序
+    }
+}
+
+req.open(‘GET’,url+’?’+params.join(‘&amp;’),true);
+req.setRequestHeader(‘X-Requested-With’,’XMLHttpRequest’);// 设置请求头信息
+req.send(null); //发送一个请求</code></pre>
+<ol><li>
+<p><strong>动态脚本注入</strong><br>这种技术克服了XHR的最大限制，它能跨域请求数据。但是这种方法也有自己的限制，那就是提供的控制是有限的，</p>
+<ul>
+<li><p>不能设置请求的头信息；</p></li>
+<li><p>只能使用GET，不能POST；</p></li>
+<li><p>不能设置请求的超时处理和重试；</p></li>
+<li><p>不能访问请求的头信息。<br>这种请求的请求结果必须是可执行的JavaScript代码。所以无论传输来的什么数据，都必须封装在一个回调函数中。尽管限制诸多，但是这项技术的速度非常快。动态脚本注入的使用方法如下：</p></li>
+</ul>
+</li></ol>
+<pre><code class="js">var scriptElement = document.createElement('script');
+scriptElement.src = 'http://.../lib.js';
+document.getElementsByTagName('head')[0].appendChild(scriptElement);
+
+function jsonCallback(jsonString){
+    var data = eval('('+jsonString+')')
+}
+
+jsonCallback({"state":1,"colors":["#fff","#000","#ff0000"]});</code></pre>
+<ol><li><p><strong>multipart XHR</strong><br>这种方法允许客户端只用一个HTTP请求就从服务器端向客户端传送多个资源，他通过在服务器端将资源（CSS文件，HTML片段，JavaScript代码或base64编码的图片）打包为一个由双方约定的字符串分割的长字符串并发送给客户端；然后用JavaScript代码处理这个长字符串，并根据它的mime-type类型和传入的其它“头信息”解析出每个资源。</p></li></ol>
+<p>基于这种方法，我们可以通过监听readyState为3的状态来实现在每个资源收到时就立即处理，而不是等待整个响应消息完成。</p>
+<p>此技术最大的缺点是以这种方式获得的资源不能被浏览器缓存。不过在某些情况下MXHR依然能显著提升页面的整体性能：</p>
+<pre><code>- 页面中包含了大量其它地方用不到的资源比如图片；
+* 网站在每个页面中使用一个独立打包的JavaScript或CSS文件用以减少HTTP请求；
+</code></pre>
+<p>HTTP请求是Ajax中最大的瓶颈之一，因此减少HTTP请求的数量也许明显的提升整个页面的性能。</p>
+<p><strong>数据发送方式</strong><br>主要有两种数据发送方法</p>
+<pre><code>-     `XHR`
+- 信标`beacons`
+</code></pre>
+<p><code>XHR</code>我们较熟悉，使用示例如下：</p>
+<pre><code class="js">var url = ‘/data/php’;
+var parms = [
+    ‘id=934345’,
+    ‘limit=20’
+]
+
+var req = new XMLHttpRequest();
+
+req.onerror = function(){
+    //出错
+};
+
+req.onreadystatechange = function(){
+    if(req.readyState==4){
+        // 成功
+    }
+}
+
+req.open(‘POST’,url,true);
+req.setRequestHeader(‘Content-Type’,’application/x-www-form-urlencoded’);
+req.setRequestHeader(‘Content-Length’,params.length);
+req.send(params.join(‘&amp;’));</code></pre>
+<p>需要注意的是，使用XHR发送数据时，GET方式更快，对少量数据而言，一个GRT请求往服务器只发送一个数据包。而一个POST请求至少发送两个数据包，一个装载头信息，另外一个装载POST正文，POST适合发送大量数据到服务器的情况。</p>
+<p><strong>Beacons技术类似于动态脚本注入。</strong><br>Beacons技术具体做法为使用JavaScript创建一个新的Image对象，并把src属性设置为服务器上脚本的URL，该URL包含了我们要通过GET传回的键值对数据。实际上并没有创建img元素或把它传入DOM。</p>
+<pre><code class="js">var url = ‘/status_tracker.php’;
+var params = [
+    ‘step=2’,
+    ‘time=1248027314’
+];
+
+(new Image()).src = url + ‘?’ + params.join(‘&amp;’);
+
+beacon.onload = function(){
+    if(this.width==1){
+        // 成功
+    }else if(this.width==2){
+        // 失败，请重试并创建另一个信标
+    }
+}；
+
+beacon.onerror = function(){
+    // 出错，稍后重试并创建另一个信标
+}</code></pre>
+<p>这种方法最大的优势是可以发送的数据的长度被限制得非常小。Beacons技术是向服务器回传数据最快且最有效的方式。唯一的缺点是能接收到的响应类似是有限的。</p>
+<h4>数据格式</h4>
+<p>说完传输方式，我们再讨论一下传输的数据格式：<br>考虑数据格式时，唯一需要比较的标准是<strong>速度</strong>。<br>没有那种数据格式会始终比其它格式更好。优劣取决于<strong>要传输的数据</strong>以及它在页面上的<strong>用途</strong>，有的数据格式可能下载速度更快，有的数据格式可能解析更快。常见的数据格式有以下四种：</p>
+<ol><li><p><strong>XML</strong><br>优势：极佳的通用性（服务端和客户端都能完美支持），格式严格，易于验证；</p></li></ol>
+<p>缺点：极其冗长，每个单独的数据片段都依赖大量结构，有效数据比例非常低，XML语法有些模糊，解析XML要占用JavaScript程序员相当部分的精力。</p>
+<ol><li><p><strong>JSON</strong><br>优势：体积更小，在响应信息中结构所占的比例小，JSON有着极好的通用性，大多数服务器端编程语言都提供了编码和解码的类库。对于web开发而言，它是性能表现最好的数据格式；</p></li></ol>
+<p>使用注意：</p>
+<pre><code>- 使用`eval()`或尽量使用JSON.parse()方法解析字符串本身。
+- 数组JSON的解析速度最快，但是可识别性最低。
+- 使用XHR时，JSON数据被当做字符串返回，该字符串紧接着被eval()装换为原生对象；
+- JSON-P（JSON with padding）：JSON-P因为回调包装的原因略微增大了文件尺寸，但是其被当做原生js处理，解析速度快了10倍。
+</code></pre>
+<ol><li><p><strong>HTML</strong><br>优势：获取后可以直接插入到DOM中，适用于前端CPU是瓶颈而带宽非瓶颈的情况；</p></li></ol>
+<p>缺点：作为数据结构，它即缓慢又臃肿。</p>
+<ol><li><p><strong>自定义格式</strong><br>一般我们采用字符分隔的形式。并用<code>split()</code>对字符串进行分割，<code>split()</code>对字符串操作其实也是非常快的，通常它能在数毫秒内处理包含10000+个元素的‘分隔符分隔’列表。</p></li></ol>
+<p><strong>对数据格式的总结</strong></p>
+<pre><code>- 使用JSON-P数据，通过动态脚本注入使用这种数据，这种方法把数据当做可执行JavaScript而不是字符串，解析速度极快，能跨域使用，但是设计敏感数据时不应该使用它；
+* 我们也可以采用通过字符分隔的自定义格式，可以通过使用XHR或动态脚本注入获取对于数据，并用`split()`解析。这项技术解析速度比JSON-P略快，通常文件尺寸更小。
+</code></pre>
+<h4>针对Ajax的数据缓存</h4>
+<pre><code>- 在服务器端，设置HTTP头信息以确保响应会被浏览器缓存；
+- 设置头信息后，浏览器只会在文件不存在缓存时才会向服务器发送Ajax请求；
+* 在客户端，将获取到的信息存储到本地，从而避免再次请求；
+</code></pre>
+<p>总的来说，对XHR创造性的使用是一个反应迟钝且平淡无奇的页面与响应快速且高效的页面的区别所在，是一个用户痛恨的站点与用户迷恋的站点的区别所在，合理使用Ajax意义非凡。</p>
+<h3>合理构建和部署JavaScript应用</h3>
+<p>上文所述的都是在编码过程中应该注意的一些事项，除此之外，在代码上线时，我们也可以做一些相关的优化。</p>
+<pre><code>1. 合并多个JavaScript文件用以减少页面渲染所需的HTTP请求数；
+2. JavaScript压缩：通过剥离注释和不必要的空白字符等，可以将文件大小减半，有多种工具可以完成压缩：比如在线的YUI Compressor，在webpack中使用UglifyJsPlugin插件等;彻底的压缩常做以下事情：
+    * 将局部变量变为更短的形式；
+    * 尽可能用双括号表示法替换点表示法；
+    * 尽可能去掉直接量属性名的引号；
+    * 替换字符串的中的转义字符；’aaa\bbb’被替换为”aaa’bbb”
+    * 合并常量；
+3. 除了常规的JavaScript压缩，我们还可以对代码进行Gzip压缩，Gzip是目前最流行的编码方式，它通常能减少70%的下载量，其主要适用于文本包括JS文件，其它类型诸如图片或PDF文件，不应该使用Gzip；
+4. 基于不同的浏览器环境，我们应该选择发送最合适的代码，比如说目前iPhone版的微信内置浏览器是支持解压Gzip的而安卓端默认不支持，那对iPhone端就可以发送xxx.js,gz文件而对安卓端发送xxx.js文件，这样是可以提高iPhone端的webApp的加载效率的；
+5. 合并，预处理，压缩等都既可以在构建时完成，也可以在项目运行时完成，但是推荐能在构建时完成的就尽量在构建时完成；
+6. 合理缓存JavaScript文件也能提高之后打开相同网页的效率：
+    - Web服务器通过“Expires HTTP响应头”来告诉客户端一个资源应当缓存多长时间；
+    * 移动端浏览器大多有缓存限制（iPhone Safari 25k），这种情况下应该权衡HTTP组件数量和它们的可缓存性，考虑将它们分为更小的块；
+    * 合理利用HTML5 离线应用缓存
+    - 应用更新时有缓存的网页可能会来不及更新（这种情况可以通过更新版本号或开发编号来解决）；
+7. 使用内容分发网络(CDN);
+ CDN是在互联网上按地理位置分布的计算机网络，它负责传递内容给终端用户。使用CDN的主要原因是增强Web应用的可靠性，可拓展性，更重要的是提升性能；
+8. 值得注意的是，上述很多操作是可以通过自动化处理完成的，学习相关自动化处理工具可以大大提高我们的开发效率
+</code></pre>
+<h2>总结</h2>
+<p>本文从多方面叙述了web前端的优化思路，谢谢你读到这里，希望你有所收获，很多知识通过多次刻意的重复就能成为自己的潜意识，希望我们在今后都能在自己的实际开发过程中，都能以效率更高的方式写JS语句，操作DOM，我们的应用都非常流畅，UI都不会阻塞，如果你有别的关于优化的具体建议，欢迎一起讨论。</p>
+<h3>后记</h3>
+<p>本文其实算是我读Nicbolas C.Zakas的《高性能JavaScript》的读书笔记，针对某个话题系统的读书对我来说，是非常有好处的。系统的读前端方面,计算机方面的经典书籍也是我给自己安排的2017年最主要的任务之一，预计每月针对某本书或某几本书关于某一个方面，写一篇读书笔记，本文是

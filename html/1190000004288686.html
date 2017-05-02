@@ -1,0 +1,192 @@
+<blockquote><p>在用户执行粘贴操作的时候，<code>js</code>能够获得剪切板的内容，本文讨论一下这个问题。</p></blockquote>
+<p>目前只有<code>Chrome</code>支持获取剪切板中的图片数据。还好需要这个功能的产品目前只支持<code>Chrome</code>和<code>Safari</code>，一些<code>Chrome</code>的新特性是可以尽情使用了，还是能够覆盖到大部分用户的。所以本文只讨论<code>Chrome</code>如何使用和如何阻止<code>Safari</code>，原理大概了解了，再研究其他浏览器相关的问题就容易多了。</p>
+<h1>
+<code>paste</code>事件</h1>
+<p>可以用<code>js</code>给页面中的元素绑定<code>paste</code>事件的方法，当用户鼠标在该元素上或者该元素处于<code>focus</code>状态，绑定到<code>paste</code>事件的方法就运行了。</p>
+<p>绑定的元素不一定是<code>input</code>，普通的<code>div</code>也是可以绑定的，如果是给<code>document</code>绑定了，就相当于全局了，任何时候的粘贴操作都会触发。</p>
+<h1>事件对象</h1>
+<h2>获取事件对象</h2>
+<p>先写一下事件绑定的代码</p>
+<pre><code class="javascript">pasteEle.addEventListener("paste", function (e){
+    if ( !(e.clipboardData &amp;&amp; e.clipboardData.items) ) {
+        return;
+    }
+});</code></pre>
+<p>粘贴事件提供了一个<code>clipboardData</code>的属性，如果该属性有<code>items</code>属性，那么就可以查看<code>items</code>中是否有图片类型的数据了。<code>Chrome</code>有该属性，<code>Safari</code>没有。</p>
+<h2>
+<code>clipboardData</code>介绍</h2>
+<p>介绍一下<code>clipboardData</code>对象，它实际上是一个<code>DataTransfer</code>类型的对象，<code>DataTransfer </code>是拖动产生的一个对象，但实际上粘贴事件也是它。</p>
+<p><code>clipboardData</code>的属性介绍</p>
+<table>
+<thead><tr>
+<th align="left">属性</th>
+<th align="left">类型</th>
+<th align="left">说明</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">dropEffect</td>
+<td align="left">String</td>
+<td align="left">默认是 none</td>
+</tr>
+<tr>
+<td align="left">effectAllowed</td>
+<td align="left">String</td>
+<td align="left">默认是 uninitialized</td>
+</tr>
+<tr>
+<td align="left">files</td>
+<td align="left">FileList</td>
+<td align="left">粘贴操作为空List</td>
+</tr>
+<tr>
+<td align="left">items</td>
+<td align="left">DataTransferItemList</td>
+<td align="left">剪切板中的各项数据</td>
+</tr>
+<tr>
+<td align="left">types</td>
+<td align="left">Array</td>
+<td align="left">剪切板中的数据类型 该属性在Safari下比较混乱</td>
+</tr>
+</tbody>
+</table>
+<h2>
+<code>items</code>介绍</h2>
+<p><code>items</code>是一个<code>DataTransferItemList</code>对象，自然里面都是<code>DataTransferItem</code>类型的数据了。</p>
+<h3>属性</h3>
+<p><code>items</code>的<code>DataTransferItem</code>有两个属性<code>kind</code>和<code>type</code></p>
+<table>
+<thead><tr>
+<th align="left">属性</th>
+<th align="left">说明</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">kind</td>
+<td align="left">一般为<code>string</code>或者<code>file</code>
+</td>
+</tr>
+<tr>
+<td align="left">type</td>
+<td align="left">具体的数据类型，例如具体是哪种类型字符串或者哪种类型的文件，即<code>MIME-Type</code>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>方法</h3>
+<table>
+<thead><tr>
+<th align="left">方法</th>
+<th align="left">参数</th>
+<th align="left">说明</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">getAsFile</td>
+<td align="left">空</td>
+<td align="left">如果<code>kind</code>是<code>file</code>，可以用该方法获取到文件</td>
+</tr>
+<tr>
+<td align="left">getAsString</td>
+<td align="left">回调函数</td>
+<td align="left">如果<code>kind</code>是<code>string</code>，可以用该方法获取到字符串，字符串需要用回调函数得到，回调函数的第一个参数就是剪切板中的字符串</td>
+</tr>
+</tbody>
+</table>
+<p>在原型上还有一些其他方法，不过在处理剪切板操作的时候一般用不到了。</p>
+<h2>
+<code>types</code>介绍</h2>
+<p>一般<code>types</code>中常见的值有<code>text/plain</code>、<code>text/html</code>、<code>Files</code>。</p>
+<table>
+<thead><tr>
+<th align="left">值</th>
+<th align="left">说明</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left">text/plain</td>
+<td align="left">普通字符串</td>
+</tr>
+<tr>
+<td align="left">text/html</td>
+<td align="left">带有样式的html</td>
+</tr>
+<tr>
+<td align="left">Files</td>
+<td align="left">文件(例如剪切板中的数据)</td>
+</tr>
+</tbody>
+</table>
+<h2>简单demo</h2>
+<pre><code class="javascript">pasteEle.addEventListener("paste", function (e){
+    if ( !(e.clipboardData &amp;&amp; e.clipboardData.items) ) {
+        return ;
+    }
+
+    for (var i = 0, len = e.clipboardData.items.length; i &lt; len; i++) {
+        var item = e.clipboardData.items[i];
+
+        if (item.kind === "string") {
+            item.getAsString(function (str) {
+                // str 是获取到的字符串
+            })
+        } else if (item.kind === "file") {
+            var pasteFile = item.getAsFile();
+            // pasteFile就是获取到的文件
+        }
+    }
+});</code></pre>
+<p>注意如果是<code>string</code>类型的数据，可能针对具体是<code>text/plain</code>、<code>text/html</code>进行分别的处理。</p>
+<h1>问题来了</h1>
+<p>一切看似都很顺利，如果用户粘贴了图片，通过上面的方法我们是可以获取到，可以对图片进行上传等操作了。</p>
+<p>首先要说一下js通过剪切板能获取到的图片是怎么来的，它必须是用QQ截图或者系统截图功能截下来的图片，或者是网页上某个图片单击右键复制图片等。</p>
+<p>但是如果用户复制<code>Mac</code>的<code>Finder</code>中的一个图片文件，实际上js是没有办法获取到这个图片的。但是js确实会获得一个图片类型的文件，这个图片实际上图片在电脑中的图标标识，说的比较抽象，直接上图。</p>
+<p><img data-src="/img/bVr9Jz" src="/img/bVr9Jz.png"></p>
+<p>如果复制的是<code>JPEG</code>图片，粘贴过来的却是<code>Mac</code>上的文件缩略图，后面依次是<code>PNG</code>、<code>GIF</code>、<code>ZIP</code>、<code>DMG</code>、<code>Mac目录</code>的文件缩略图。</p>
+<p>很明显，这不是我们期待得到的粘贴的结果，我们期待得到文件，但实际上却得到该文件在操作系统上的缩略图。</p>
+<p>不过粘贴事件带来的数据还有一个字符串，就是该文件的名字，所以可以用下面的方法Hack掉。</p>
+<pre><code class="javascript">    var cbd = e.clipboardData;
+    if(cbd.items &amp;&amp; cbd.items.length === 2 &amp;&amp; cbd.items[0].kind === "string" &amp;&amp; cbd.items[1].kind === "file" &amp;&amp;
+            cbd.types &amp;&amp; cbd.types.length === 2 &amp;&amp; cbd.types[0] === "text/plain" &amp;&amp; cbd.types[1] === "Files"){
+        return;
+    }</code></pre>
+<p>这么多的判断条件，基本可以确定通过剪切板过来的是粘贴的文件。我刚才测试了<code>Windows</code>的<code>Chrome</code>，不会有这个问题，当然也不能通过复制文件的方法得到任何文件。</p>
+<h1>问题又来了</h1>
+<p>当我打算写这篇博客的时候，<code>Chrome</code>开发版已经升级到了49，上面的Bug突然消失了，囧。<br>所以上面的Hack应该加上版本限制了。</p>
+<pre><code class="javascript">var ua = window.navigator.userAgent;
+ua.match(/Macintosh/i) &amp;&amp; Number(ua.match(/Chrome\/(\d{2})/i)[1]) &lt; 49</code></pre>
+<p>应该在上面的Hack再加上这两个判断，即是<code>Mac</code>下的<code>Chrome</code>49版本以下就要<code>return</code>。</p>
+<h1>探究过程走的一点弯路</h1>
+<p>由于公司IM系统正在迁移到V2消息系统，而且现有的文件类库没有办法满足业务需求，要自己封装一个文件上传库。</p>
+<p>然后副总找到产品经理，说新版怎么不支持<code>Excel</code>的粘贴，临时排期一天修复这个问题，当时是这样解决的，如果<code>items</code>长度是1并且是文件类型(单纯粘贴一个文件)，则上传，如果<code>items</code>长度是4且第4个是文件类型(经过测试是Excel的粘贴结果)，则上传。</p>
+<p>当时担心由于用户各种误操作，粘贴了不该粘贴的东西，文件上传错误，用了这种白名单机制去过滤，但是万一以后有比<code>Excel</code>粘贴得到的数据更其他的类型，就需要单独写代码兼容，所以，现在改成了如果判断是有Bug的情况，直接<code>return</code>，属于黑名单机制，这样以后再发现黑名单的情况，再添加。</p>
+<h1>可以拿来就用的代码</h1>
+<pre><code class="javascript">// demo 程序将粘贴事件绑定到 document 上
+document.addEventListener("paste", function (e) {
+    var cbd = e.clipboardData;
+    var ua = window.navigator.userAgent;
+
+    // 如果是 Safari 直接 return
+    if ( !(e.clipboardData &amp;&amp; e.clipboardData.items) ) {
+        return;
+    }
+    
+    // Mac平台下Chrome49版本以下 复制Finder中的文件的Bug Hack掉
+    if(cbd.items &amp;&amp; cbd.items.length === 2 &amp;&amp; cbd.items[0].kind === "string" &amp;&amp; cbd.items[1].kind === "file" &amp;&amp;
+        cbd.types &amp;&amp; cbd.types.length === 2 &amp;&amp; cbd.types[0] === "text/plain" &amp;&amp; cbd.types[1] === "Files" &amp;&amp;
+        ua.match(/Macintosh/i) &amp;&amp; Number(ua.match(/Chrome\/(\d{2})/i)[1]) &lt; 49){
+        return;
+    }
+
+    for(var i = 0; i &lt; cbd.items.length; i++) {
+        var item = cbd.items[i];
+        if(item.kind == "file"){
+            var blob = item.getAsFile();
+            if (blob.size === 0) {
+                return;
+            }
+            // blob 就是从剪切板获得的文件 可以进行上传或其他操作
+        }
+    }
+}, false);</code></pre>

@@ -1,0 +1,521 @@
+<p>Service Worder 是用来代替 manifest，用来生成缓存的效果的。以前吭哧吭哧的学 <a href="https://segmentfault.com/a/1190000004486660">manifest</a> 的时候，就发现 MD 好难用。而且 MDN 特意告诉你，<a href="http://manifest-validator.com/">manifest 有毒</a>，请不要乱用，保不定后面不支持。今儿，我看了下兼容性，呵呵~</p>
+<p><img data-src="/img/remote/1460000008050745?w=659&amp;h=167" src="/img/remote/1460000008050745?w=659&amp;h=167.png"></p>
+<p>人生苦短，及时享乐，前端真坑，不敢乱学。</p>
+<p>前方高能，如果觉得生活没有趣味可以继续看下去，会让你的人生更没有趣味。如果觉得凑合能过，请 <code>ctrl/command + w</code>。</p>
+<p>继续~</p>
+<p>Service Worker 讲道理是由两部分构成，一部分是 cache，还有一部分则是 <a href="https://segmentfault.com/a/1190000006678016">Worker</a>。所以，SW（Service Worker） 本身的执行，就完全不会阻碍当前 js 进程的执行，确保性能第一。那 SW 到底是怎么工作的呢？</p>
+<ul>
+<li><p>后台进程: SW 就是一个 worker 独立于当前网页进程。</p></li>
+<li><p>网络代理: SW 可以用来代理请求，缓存文件</p></li>
+<li><p>灵活触发: 需要的时候吊起，不需要的时候睡眠（这个是个坑）</p></li>
+<li><p>异步控制: SW 内部使用 promise 来进行控制。</p></li>
+</ul>
+<p>我们先来看看 SW 比较坑的地方，它的 lifecycle</p>
+<h2>SW 的生命周期</h2>
+<p>首先，SW 并不是你网页加载就与生俱来的。如果，你需要使用 SW，你首先需要注册一个 SW，让浏览器为你的网页分配一块内存空间来。并且，你能否注册成功，还需要看你缓存的资源量决定（有可能失败，真的有可能）。如果，你需要缓存的静态资源全部保存成功，那么恭喜您，SW 安装成功。如果，其中有一个资源下载失败并且无法缓存，那么这次吊起就是失败的。不过，SW 是由重试机制的，这点也不算特别坑。</p>
+<p>当安装成功之后，此时 SW 就进入了激活阶段（activation）。然后，你可以选择性的检查以前的文件是否过期等。</p>
+<p>检查完之后，SW 就进入待机状态。此时，SW 有两种状态，一种是 active，一种是 terminated。就是激活/睡眠。激活是为了工作，睡眠则为了节省内存。这是一开始设计的初衷。如果，SW 已经 OK，那么，你网页的资源都会被 SW 控制，当然，SW 第一次加载除外。<br>简单的流程图，可以参考一下 google的:</p>
+<p><img data-src="/img/remote/1460000008050746?w=702&amp;h=685" src="/img/remote/1460000008050746?w=702&amp;h=685.png"></p>
+<h2>从入门到放弃</h2>
+<p>上面简单介绍了 SW 的基本生命周期（实际上，都是废话），讲点实在的，它的兼容性咋样？</p>
+<p><img data-src="/img/remote/1460000008050747?w=1250&amp;h=212" src="/img/remote/1460000008050747?w=1250&amp;h=212.png"></p>
+<p>基本上手机端是能用的。</p>
+<h3>基于 HTTPS</h3>
+<p>现在，开发一个网站没用 HTTPS，估计都没好意思放出自己的域名（太 low）。HTTPS 不仅仅可以保证你网页的安全性，还可以让一些比较敏感的 API 完美的使用。值得一提的是，SW 是基于 HTTPS 的，所以，如果你的网站不是 HTTPS，那么基本上你也别想了 SW。这估计造成了一个困难，即，我调试 SW 的时候咋办？<br>解决办法也是有的，使用 <code>charles</code> 或者 <code>fildder</code> 完成域名映射即可。</p>
+<p>下面，我们仔细介绍下，SW 的基本使用。</p>
+<h3>Register</h3>
+<p>SW 实际上是挂载到 navigator 下的对象。在使用之前，我们需要先检查一下是否可用：</p>
+<pre><code>if ('serviceWorker' in navigator) {
+  // ....
+}</code></pre>
+<p>如果可用，我们就要使用 SW 进行路由的注册缓存文件了。不过，这里有点争议。啥时候开始执行 SW 的注册呢？上面说过，SW 就是一个网络代理，用来捕获你网页的所有 fetch 请求。那么，是不是可以这么写？</p>
+<pre><code> window.addEventListener('DOMContentLoaded', function() {
+    // 执行注册
+    navigator.serviceWorker.register('/sw.js').then(function(registration) {
+      
+    }).catch(function(err) {
+      
+    }); 
+  });</code></pre>
+<p>这样理解逻辑上是没有任何问题的，关键在于，虽然 SW 是 worker ，但浏览器的资源也是有限的，浏览器分配给你网页的内存就这么多，你再开个 SW（这个很大的。。。），没有 jank 才怪嘞，而且如果你网页在一开始加载的时候有动画展示的话，那么这种方式基本上就 GG 了。<br>另外，如果算上用户第一次加载，那么这个卡顿或者延时就很大了。<br>当然，W3C 在制定相关规范时，肯定考虑到这点，<strong>实际上 SW 在你网页加载完成同样也能捕获已经发出的请求</strong>。所以，为了减少性能损耗，我们一般直接在 onload 事件里面注册 SW 即可。GOOGLE <code> Jeff Posnick</code> 针对这个加载，专门讨论了一下，<a href="https://developers.google.com/web/fundamentals/instant-and-offline/service-worker/registration">有兴趣的可以参考一下</a>。（特别提醒，如果想要测试注册 SW 可以使用隐身模式调试！！！）<br>那当我注册成功时，怎样查看我注册的 SW 呢？<br>这很简单，直接打开 <a>chrome://inspect/#service-workers</a> 就可以查看，在当前浏览器中，正在注册的 SW。另外，还有一个 <a>chrome://serviceworker-internals</a>，用来查看当前浏览器中，所有注册好的 SW。<br>使用 SW 进行注册时，还有一个很重要的特性，即，SW 的作用域不同，监听的 fetch 请求也是不一样的。<br>例如，我们将注册路由换成: <code>/example/sw.js</code></p>
+<pre><code> window.addEventListener('DOMContentLoaded', function() {
+    // 执行注册
+    navigator.serviceWorker.register('/example/sw.js').then(function(registration) {
+      
+    }).catch(function(err) {
+      
+    });
+  });</code></pre>
+<p>那么，SW 后面只会监听 <code>/example</code> 路由下的所有 fetch 请求，而不会去监听其他，比如 <code>/jimmy</code>,<code>/sam</code> 等路径下的。</p>
+<h3>Install</h3>
+<p>从这里开始，我们就正式进入 SW 编程。记住，下面的部分是在另外一个 js 中的脚本，使用的是 <a href="https://www.villainhr.com/page/2016/08/22/Web%20Worker">worker</a> 的编程方法。如果，有同学还不理解 worker 的话，可以先去学习一下，这样在后面的学习中才不会踩很深的坑。<br>监听安装 SW 的代码也很简单：</p>
+<pre><code>self.addEventListener('install', function(event) {
+  // Perform install steps
+});</code></pre>
+<p>当安装成功后，我们能使用 SW 做什么呢？<br>那就开始缓存文件了呗。简单的例子为：</p>
+<pre><code>self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open('mysite-static-v1').then(function(cache) {
+      return cache.addAll([
+        '/css/whatever-v3.css',
+        '/css/imgs/sprites-v6.png',
+        '/css/fonts/whatever-v8.woff',
+        '/js/all-min-v4.js'
+      ]);
+    })
+  );
+});</code></pre>
+<p>此时，SW 会检测你制定文件的缓存问题，如果，已经都缓存了，那么 OK，SW 安装成功。如果查到文件没有缓存，则会发送请求去获取，并且会带上 <code>cache-bust</code> 的 query string，来表示缓存的版本问题。当然，这只针对于第一次加载的情况。当所有的资源都已经下载成功，那么恭喜你可以进行下一步了。大家可以参考一下 <a href="https://googlechrome.github.io/samples/service-worker/prefetch/index.html">google demo</a>。<br>这里，我简单说一下上面的过程，首先 <code>event.waitUntil</code> 你可以理解为 new Promise，它接受的实际参数只能是一个 promise，因为,caches 和 cache.addAll 返回的都是 Promise，这里就是一个串行的异步加载，当所有加载都成功时，那么 SW 就可以下一步。另外，<a href="https://developer.mozilla.org/zh-CN/docs/Web/API/ExtendableEvent/waitUntil">event.waitUntil</a> 还有另外一个重要好处，它可以用来延长一个事件作用的时间，这里特别针对于我们 SW 来说，比如我们使用 caches.open 是用来打开指定的缓存，但开启的时候，并不是一下就能调用成功，也有可能有一定延迟，由于系统会随时睡眠 SW，所以，为了防止执行中断，就需要使用 event.waitUntil 进行捕获。另外，event.waitUntil 会监听所有的异步 promise，如果其中一个 promise 是 reject 状态，那么该次 event 是失败的。这就导致，我们的 SW 开启失败。</p>
+<h4>不稳定加载</h4>
+<p>不过，如果其中一个文件下载失败的话，那么这次你的 SW 启动就告吹了，即，如果其中有一个 Promise 是使用 reject 的话，那就代表着--您这次启动是 GG 的。那，有没有其他办法在保证一定稳定性的前提下，去加载比较大的文件呢？<br>有的，那你别返回 cache.addAll 就ok了。什么个意思呢？<br>就这样：</p>
+<pre><code>self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open('mygame-core-v1').then(function(cache) {
+    // 不稳定文件或大文件加载
+      cache.addAll(
+        //...
+      );
+      // 稳定文件或小文件加载
+      return cache.addAll(
+        // core assets &amp; levels 1-10
+      );
+    })
+  );
+});</code></pre>
+<p>这样，第一个 <code>cache.addAll</code> 是不会被捕获的，当然，由于异步的存在，这毋庸置疑会有一些问题。比如，当大文件还在加载的时候，SW 断开，那么这次请求就是无效的。不过，你这样写本来就算是一个 trick，这种情况在制定方案的时候，肯定也要考虑进去的。整个步骤，我们可以用下图表示:<br><strong>FROM GOOGLE</strong></p>
+<p><img data-src="/img/remote/1460000008050748?w=1014&amp;h=634" src="/img/remote/1460000008050748?w=1014&amp;h=634.png"></p>
+<h3>缓存捕获</h3>
+<p>该阶段就是事关整个网页能否正常打开的一个阶段--非常关键。在这一阶段，我们将学会，如何让 web 使用缓存，如何做向下兼容。<br>先看一个简单的格式：</p>
+<pre><code>self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request)
+      .then(function(response) {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      }
+    )
+  );
+});</code></pre>
+<p>首先看一下，第一个方法--<code>event.respondWith</code>，用来包含响应主页面请求的代码。当接受到 fetch 请求时，会直接返回 <code>event.respondWith</code> Promise 结果。我们在 worker 中，捕获页面所有的 fetch 请求。可以看到 <code>event.request</code> ，这个就是 fetch 的 request 流。我们通过 caches.match 捕获，然后返回 Promise 对象，用来进行响应的处理。大家看这段代码时，可能会有很多的疑惑，是的，一开始我看的时候也是，因为，根本没注释，有些 <code>name</code> 实际上是内核自带的。上面的就有：</p>
+<ul>
+<li><p>caches: 这是用来控制缓存专门分离出来的一个对象。可以参考: <a href="https://w3c.github.io/ServiceWorker/#cache-objectsline/offline-cookbook/images/cm-on-install-not.png">caches</a></p></li>
+<li><p>fetch: 是现代浏览器用来代替 XMLHttpRequest 专门开发出的 ajax 请求。可以参考: <a href="https://www.villainhr.com/page/2016/09/25/%E5%89%8D%E7%AB%AF%20fetch%20%E9%80%9A%E4%BF%A1">fetch 通信</a></p></li>
+</ul>
+<p>简单来说，caches.match 根据 <code>event.request</code>，在缓存空间中查找指定路径的缓存文件，如果匹配到，那么 <code>response</code> 是有内容的。如果没有的话，则再通过 fetch 进行捕获。整个流图如下：</p>
+<p><img data-src="/img/remote/1460000008050749?w=666&amp;h=682" src="/img/remote/1460000008050749?w=666&amp;h=682.png"></p>
+<p>OK，那现在有个问题，如果没有找到缓存，那么应该怎么做呢？</p>
+<ul>
+<li><p>啥都不做，等下一次 SW 自己根据路由去缓存。</p></li>
+<li><p>没找到，我手动 fetch 然后添加进缓存。</p></li>
+</ul>
+<p>那怎么手动添加呢？<br>很简单，自己发送 fetch，然后使用 <code>caches</code> 进行缓存即可。不过，这里又涉及到另外一个概念，Request 和 Response 流。这是在 <a href="https://www.villainhr.com/page/2016/09/25/%E5%89%8D%E7%AB%AF%20fetch%20%E9%80%9A%E4%BF%A1">fetch 通信方式</a> 很重要的两个概念。fetch 不仅分装了 ajax，而且在通信方式上也做了进一步的优化，同 node 一样，使用流来进行重用。众所周知，一个流一般只能使用一次，可以理解为喝矿泉水，只能喝一次，不过，如果我知道了该水的配方，那么我就可以量产该水，这就是流的复制。下面代码也基本使用到这两个概念，基本代码为：</p>
+<pre><code>self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        }
+
+        // 因为 event.request 流已经在 caches.match 中使用过一次，
+        // 那么该流是不能再次使用的。我们只能得到它的副本，拿去使用。
+        var fetchRequest = event.request.clone();
+
+        // fetch 的通过信方式，得到 Request 对象，然后发送请求
+        return fetch(fetchRequest).then(
+          function(response) {
+            // 检查是否成功
+            if(!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // 如果成功，该 response 一是要拿给浏览器渲染，而是要进行缓存。
+            // 不过需要记住，由于 caches.put 使用的是文件的响应流，一旦使用，
+            // 那么返回的 response 就无法访问造成失败，所以，这里需要复制一份。
+            var responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(function(cache) {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        );
+      })
+    );
+});
+</code></pre>
+<p>那么整个流图变为：</p>
+<p><img data-src="/img/remote/1460000008050750?w=976&amp;h=590" src="/img/remote/1460000008050750?w=976&amp;h=590.png"></p>
+<p>而里面最关键的地方就是 <a href="https://streams.spec.whatwg.org/#intro">stream</a> 这是现在浏览器操作数据的一个新的标准。为了避免将数据一次性写入内存，我们这里引入了 stream，相当于一点一点的吐。这个和 nodeJS 里面的 stream 是一样的效果。你用上述哪个流图，这估计得取决于你自己的业务。</p>
+<h3>Update</h3>
+<p>在 SW 中的更新涉及到两块，一个是基本静态资源的更新，还有一个是 SW.js 文件的更新。这里，我们先说一下比较坑的 SW.js 的更新。</p>
+<h4>SW.js 的更新</h4>
+<p>SW.js 的更新不仅仅只是简单的更新，为了用户可靠性体验，里面还是有很多门道的。</p>
+<ul>
+<li><p>首先更新 SW.js 文件，这是最主要的。只有更新 SW.js 文件之后，之后的流程才能触发。SW.js 的更新也很简单，直接改动 SW.js 文件即可。浏览器会自动检查差异性（就算只有 1B 的差异也行），然后进行获取。</p></li>
+<li><p>新的 SW.js 文件开始下载，并且 <code>install</code> 事件被触发</p></li>
+<li><p>此时，旧的 SW 还在工作，新的 SW 进入 <code>waiting</code> 状态。注意，此时并不存在替换</p></li>
+<li><p>接着，当你现在已经打开的页面关闭时，那么旧的 SW 则会被 kill 掉。新的 SW 就开始接管页面的缓存资源。</p></li>
+<li><p>一旦新的 SW 接管，则会触发 <code>activate</code> 事件。</p></li>
+</ul>
+<p>整个流程图为：</p>
+<p><img data-src="/img/remote/1460000008050751?w=1030&amp;h=834" src="/img/remote/1460000008050751?w=1030&amp;h=834.png"></p>
+<p>如果上述步骤成功后，原来的 SW.js 就会被清除。但是，以前版本 SW.js 缓存文件没有被删除。针对于这一情况，我们可以在新的 SW.js 里面监听 activate 事件，进行相关资源的删除操作。当然，这里主要使用到的 API 和 caches 有很大的关系（因为，现在所有缓存的资源都在 caches 的控制下了）。比如，我以前的 SW 缓存的版本是 <code>v1</code>，现在是 <code>v2</code>。那么我需要将 <code>v1</code> 给删除掉，则代码为：</p>
+<pre><code>self.addEventListener('activate', function(event) {
+
+  var cacheWhitelist = ['v1'];
+
+  event.waitUntil(
+  // 遍历 caches 里所有缓存的 keys 值
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          if (cacheWhitelist.includes(cacheName)) {
+          // 删除 v1 版本缓存的文件
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});</code></pre>
+<p>另外，我那么你不经仅可以用来作为版本的更新，还可以作为缓存目录的替换。比如，我想直接将 <code>site-v1</code>的缓存文件，替换为 <code>ajax-v1</code> 和 <code>page-v1</code>。则，我们一是需要先在 <code>install</code> 事件里面将 <code>ajajx-v1</code> 和 <code>page-v1</code> 缓存套件给注册了，然后，在 activate 里面将 <code>site-v1</code> 缓存给删除，实际代码和上面其实是一样的：</p>
+<pre><code>self.addEventListener('activate', function(event) {
+
+  var cacheWhitelist = ['site-v1'];
+
+  event.waitUntil(
+  // 遍历 caches 里所有缓存的 keys 值
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          if (cacheWhitelist.includes(cacheName)) {
+          // 删除 v1 版本缓存的文件
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});</code></pre>
+<p>OK，SW.js 更新差不多就是这样一块内容。</p>
+<h4>文件更新</h4>
+<p>对于文件更新来说，整个机制就显得很简单了。可以说，你想要一个文件更新，只需要在 SW 的 <code>fetch</code> 阶段使用 caches 进行缓存即可。实际操作也很简单，一开始我们的 <code>install</code> 阶段的代码为：</p>
+<pre><code>self.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open('mysite-static-v1').then(function(cache) {
+      return cache.addAll([
+        '/css/whatever-v3.css',
+        '/css/imgs/sprites-v6.png',
+        '/css/fonts/whatever-v8.woff',
+        '/js/all-min-v4.js'
+      ]);
+    })
+  );
+});</code></pre>
+<p>我们只需要在这里简单的写下一下 prefetch 代码即可。</p>
+<pre><code>self.addEventListener('install', function(event) {
+  var now = Date.now();
+  // 事先设置好需要进行更新的文件路径
+  var urlsToPrefetch = [
+    'static/pre_fetched.txt',
+    'static/pre_fetched.html',
+    'https://www.chromium.org/_/rsrc/1302286216006/config/customLogo.gif'
+  ];
+  
+
+  event.waitUntil(
+    caches.open(CURRENT_CACHES.prefetch).then(function(cache) {
+      var cachePromises = urlsToPrefetch.map(function(urlToPrefetch) {
+      // 使用 url 对象进行路由拼接
+        var url = new URL(urlToPrefetch, location.href);
+        url.search += (url.search ? '&amp;' : '?') + 'cache-bust=' + now;
+        // 创建 request 对象进行流量的获取
+        var request = new Request(url, {mode: 'no-cors'});
+        // 手动发送请求，用来进行文件的更新
+        return fetch(request).then(function(response) {
+          if (response.status &gt;= 400) {
+            // 解决请求失败时的情况
+            throw new Error('request for ' + urlToPrefetch +
+              ' failed with status ' + response.statusText);
+          }
+          // 将成功后的 response 流，存放在 caches 套件中，完成指定文件的更新。
+          return cache.put(urlToPrefetch, response);
+        }).catch(function(error) {
+          console.error('Not caching ' + urlToPrefetch + ' due to ' + error);
+        });
+      });
+
+      return Promise.all(cachePromises).then(function() {
+        console.log('Pre-fetching complete.');
+      });
+    }).catch(function(error) {
+      console.error('Pre-fetching failed:', error);
+    })
+  );
+});</code></pre>
+<p>当成功获取到缓存之后， SW 并不会直接进行替换，他会等到用户下一次刷新页面过后，使用新的缓存文件。</p>
+<p><img data-src="/img/remote/1460000008050752?w=684&amp;h=924" src="/img/remote/1460000008050752?w=684&amp;h=924.png"></p>
+<p>不过，这里请注意，我并没有说，我们更新缓存只能在 <code>install</code> 里更新，事实上，更新缓存可以在任何地方执行。它主要的目的是用来更新 caches 里面缓存套件。我们提取一下代码：</p>
+<pre><code>// 找到缓存套件并打开
+caches.open(CURRENT_CACHES.prefetch).then(function(cache) {
+        // 根据事先定义的路由开始发送请求
+      var cachePromises = urlsToPrefetch.map(function(urlToPrefetch) {
+        // 执行 fetch
+        return fetch(request).then(function(response) {
+          // 缓存请求到的资源
+          return cache.put(urlToPrefetch, response);
+        }).catch(function(error) {
+          console.error('Not caching ' + urlToPrefetch + ' due to ' + error);
+        });
+      });
+    // 使用 promise.all 进行全部捕获
+      return Promise.all(cachePromises).then(function() {
+        console.log('Pre-fetching complete.');
+      });
+    }).catch(function(error) {
+      console.error('Pre-fetching failed:', error);
+    })</code></pre>
+<p>现在，我们已经拿到了核心代码，那有没有什么简便的办法，让我们少写一些配置项，直接对每一个文件进行文件更新教研。<br>有的！！！<br>还记得上面的 <code>fetch</code> 事件吗？我们简单回顾一下它的代码：</p>
+<pre><code>self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.match(event.request)
+      .then(function(response) {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      }
+    )
+  );
+});</code></pre>
+<p>实际上，我们可以将上面的核心代码做一些变化直接用上：</p>
+<pre><code>self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.open('mysite-dynamic').then(function(cache) {
+      return cache.match(event.request).then(function(response) {
+        var fetchPromise = fetch(event.request).then(function(networkResponse) {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        })
+        return response || fetchPromise;
+      })
+    })
+  );
+});</code></pre>
+<p>这里比较难的地方在于，我们并没有去捕获 fetch(fetchRequest)... 相关内容。也就是说，这一块是完全独立于我们的主体业务的。他的 fetch 只是用更新文件而已。我们可以使用一个流图进行表示：</p>
+<p><img data-src="/img/remote/1460000008050753?w=518&amp;h=467" src="/img/remote/1460000008050753?w=518&amp;h=467.png"></p>
+<p>ok，关于文件的缓存我们就介绍到这里。</p>
+<h3>用户更新</h3>
+<p>现在，为了更好的用户体验，我们可以做的更尊重用户一些。可以设置一个 button，告诉用户是否选择缓存指定文件。有同学可能会想到使用 postmessage API，来告诉 SW 执行相关的缓存信息。不过事实上，还有更简单的办法来完成，即，直接使用 caches 对象。caches 和 web worker 类似。都是直接挂载到 window 对象上的。所以，我们可以直接使用 caches 这个全局变量来进行搜索。那么该环节就不需要直接通过 SW，这个流程图可以画为：</p>
+<p><img data-src="/img/remote/1460000008050754?w=1014&amp;h=281" src="/img/remote/1460000008050754?w=1014&amp;h=281.png"></p>
+<p>代码可以参考：</p>
+<pre><code>document.querySelector('.cache-article').addEventListener('click', function(event) {
+  event.preventDefault();
+
+  var id = this.dataset.articleId;
+  // 创建 caches 套件
+  caches.open('mysite-article-' + id).then(function(cache) {
+    fetch('/get-article-urls?id=' + id).then(function(response) {
+      // 返回 json 对象
+      return response.json();
+    }).then(function(data) {
+    // 缓存指定路由
+      cache.addAll(data);
+    });
+  });
+});</code></pre>
+<p>这里我就不赘述了，简单来说就是更新一下缓存。</p>
+<h2>Caches 相关</h2>
+<p>上面大致了解了一下关于 SW 的基本流程，不过说到底，SW 只是一个容器，它的内涵只是一个驻留后台进程。我们想关心的是，在这进程里面，我们可以做些什么？<br>最主要的应该有两个东西，缓存和推送。这里我们主要讲解一下缓存。不过在SW 中，我们一般只能缓存 <code>POST</code> <br>上面在文件更新里面也讲了几个更新的方式。简单来说:</p>
+<p><img data-src="/img/remote/1460000008050755?w=358&amp;h=274" src="/img/remote/1460000008050755?w=358&amp;h=274.png"></p>
+<p>简单的情形上面已经说了，我这里专门将一下比较复杂的内容。</p>
+<h3>网络缓存同时干</h3>
+<p>这种情形一般是用来装逼的，一方面检查请求，一方面有检查缓存，然后看两个谁快，就用谁，我这里直接上代码吧：</p>
+<pre><code>function promiseAny(promises) {
+  return new Promise((resolve, reject) =&gt; {
+    // 通过 promise 的 resolve 特性来决定谁快
+    promises = promises.map(p =&gt; Promise.resolve(p));
+    // 这里调用外层的 resolve
+    promises.forEach(p =&gt; p.then(resolve));
+    // 如果其中有一方出现 error，则直接挂掉
+    promises.reduce((a, b) =&gt; a.catch(() =&gt; b))
+      .catch(() =&gt; reject(Error("All failed")));
+  });
+};
+
+self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    promiseAny([
+      caches.match(event.request),
+      fetch(event.request)
+    ])
+  );
+});</code></pre>
+<h3>总是更新</h3>
+<p>这里就和我们在后台配置的 Last-Modifier || Etag 一样，询问更新的文件内容，然后执行更新:</p>
+<pre><code>self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.open('mysite-dynamic').then(function(cache) {
+      return fetch(event.request).then(function(response) {
+        cache.put(event.request, response.clone());
+        return response;
+      });
+    })
+  );
+});</code></pre>
+<h3>先返回后更新</h3>
+<p>这应该是目前为止最佳的体验，返回的时候不会影响正在发送的请求，而接受到的新的请求后，最新的文件会替换旧的文件。（这个就是前面写的代码）:</p>
+<pre><code>self.addEventListener('fetch', function(event) {
+  event.respondWith(
+    caches.open('mysite-dynamic').then(function(cache) {
+      return cache.match(event.request).then(function(response) {
+        var fetchPromise = fetch(event.request).then(function(networkResponse) {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        })
+        return response || fetchPromise;
+      })
+    })
+  );
+});</code></pre>
+<p>接下来，我们来详细了解一下关于 Cache Object 相关的内容。加深印象：</p>
+<h2>Cache Object</h2>
+<p>Cache 虽然是在 SW 中定义的，但是我们也可以直接在 window 域下面直接使用它。它通过 Request/Response 流（就是 fetch）来进行内容的缓存。每个域名可以有多个 Cache Object，具体我们可以在控制台中查看：</p>
+<p><img data-src="/img/remote/1460000008050756?w=476&amp;h=366" src="/img/remote/1460000008050756?w=476&amp;h=366.png"></p>
+<p>并且 Cache Object 是懒更新，实际上，就可以把它比喻为一个文件夹。如果你不自己亲自更新，系统是不会帮你做任何事情的。对于删除也是一样的道理，如果你不显示删除，它会一直存在的。不过，浏览器对于每个域名的 Cache Object 数量是有限制的，并且，会周期性的删掉一些缓存信息。最好的办法，是我们自己管理资源，官方给出的建议是: <strong>使用版本号进行资源管理</strong>。上面我也展示过，删除特定版本的缓存资源：</p>
+<pre><code>self.addEventListener('activate', function(event) {
+  var cacheWhitelist = ['v2'];
+
+  event.waitUntil(
+    caches.keys().then(function(keyList) {
+      return Promise.all(keyList.map(function(key) {
+        if (cacheWhitelist.indexOf(key) === -1) {
+          return caches.delete(key);
+        }
+      }));
+    })
+  );
+});</code></pre>
+<h3>Cache Object 操作相关方法</h3>
+<p>这里，我们就可以将 Cache Object 理解为一个持久性数据库，那么针对于数据库来说，简单的操作就是 CRUD。而 Cache Object 也提供了这几个接口，并且接口结果都是通过 Promise 对象返回的，成功返回对应结果，失败则返回 undefined:</p>
+<ul><li>
+<p>Cache.match(request, options): 成功时，返回对应的响应流--response。当然，查找的时候使用的是正则匹配，表示是否含有某个具体字段。</p>
+<ul><li>
+<p>options:</p>
+<ul>
+<li><p>ignoreSearch[boolean]:是否忽略 querystring 的查找。即，我们查找的区域不包括 qs。比如: <code>http://foo.com/?value=bar</code>，我们不会再搜索 <code>?value=bar</code> 这几个字符。</p></li>
+<li><p>ignoreMethod[boolean]:当设置为 true 时，会防止 Cache 验证 http method，默认情况下，只有 GET 和 HEAD 能够通过。默认值为 false。</p></li>
+<li><p>ignoreVary[boolean]:当设置为 true 时，表示不对 vary 响应头做验证。即， Cache 只需要通过 URL 做匹配即可，不需要对响应头 vary 做验证。默认值为 false。</p></li>
+<li><p>cacheName[String]: 自己设置的缓存名字。一般用不到，match 会自动忽略。</p></li>
+</ul>
+</li></ul>
+</li></ul>
+<pre><code>cache.match(request,{options}).then(function(response) {
+  //do something with the response
+});</code></pre>
+<ul><li><p>Cache.matchAll(request, options): 成功时，返回一个数组，包含所有匹配到的响应流。options 和上面的一样，这里就不多说了。</p></li></ul>
+<pre><code>cache.matchAll(request,{options}).then(function(response) {
+    response.forEach(function(element, index, array) {
+      cache.delete(element);
+    });
+});</code></pre>
+<ul><li><p>Cache.add(url): 这实际上就是一个语法糖。fetch + put。即，它会自动的向路由发起请求，然后缓存获取到的内容。</p></li></ul>
+<pre><code>cache.add(url).then(function() {
+  // 请求的资源被成功缓存
+});
+
+# 等同于
+fetch(url).then(function (response) {
+  if (!response.ok) {
+    throw new TypeError('bad response status');
+  }
+  return cache.put(url, response);
+})
+.then(res=&gt;{
+    // 成功缓存
+})</code></pre>
+<ul><li><p>Cache.addAll(requests):这个就是上面 cache.add 的 Promise.all 实现方式。接受一个 Urls 数组，然后发送请求，缓存上面所有的资源。</p></li></ul>
+<pre><code>this.addEventListener('install', function(event) {
+  event.waitUntil(
+    caches.open('v1').then(function(cache) {
+      return cache.addAll([
+        '/public/',
+        '/public/index.html',
+        '/public/style.css',
+        '/public/app.js'
+      ]);
+    })
+  );
+});</code></pre>
+<ul><li><p>Cache.put(request, response): 将请求的资源以 req/res 键值对的形式进行缓存。如果，之前已经存在对应的 req（即，key 值），那么以前的值将会被新值覆盖。</p></li></ul>
+<pre><code>cache.put(request, response).then(function() {
+  // 成功缓存
+});</code></pre>
+<ul>
+<li><p>Cache.delete(request, options): 用来删除指定的 cache。如果你不删除，该资源会永远存在（除非电脑自动清理）。</p></li>
+<li><p>Cache.keys(request, options): 返回当前缓存资源的所有 key 值。</p></li>
+</ul>
+<pre><code>    cache.keys().then(function(keys) {
+    keys.forEach(function(request, index, array) {
+      cache.delete(request);
+    });
+  });</code></pre>
+<p>可以查看到上面的参数都共同的用到了 <code>request</code> 这就是 fetch 套件里面的请求流，具体，可以参考一下前面的代码。上面所有方法都是返回一个 Promise 对象，用来进行异步操作。</p>
+<p>上面简单介绍了一下 Cache Object，但实际上，Cache 的管理方式是两级管理。即，最外层是 <code>Cache Storage</code>，下一层是 <code>Cache Object</code>。</p>
+<h3>Cache Storage</h3>
+<p>浏览器会给每个域名预留一个 Cache Storage（只有一个）。然后，剩下的缓存资源，全部都存在下面。我们可以理解为，这就是一个顶级缓存目录管理。而我们获取 Cache Object 的唯一途径，就是通过 caches.open() 进行获取。这里，我们就可以将 open 方法理解为 <code>没有已经存在的 Cache Object 则新建，否则直接打开</code>。它的相关操作方法也有很多：</p>
+<ul><li><p>CacheStorage.match(request,{options})：在所有的 Cache Object 中进行缓存匹配。返回值为 Promise</p></li></ul>
+<pre><code>caches.match(event.request).then(function(resp) {
+  return resp || fetch(event.request).then(function(r) {
+    caches.open('v1').then(function(cache) {
+      cache.put(event.request, r);
+    });
+    return r.clone();
+  });
+});</code></pre>
+<ul><li><p>CacheStorage.has(cacheName): 用来检查是否存在指定的 Cache Object。返回 Boolean 代表是否存在。</p></li></ul>
+<pre><code>caches.has('v1').then(function(hasCache) {
+ // 检测是否存在 Cache Object Name 为 v1 的缓存内容
+  if (!hasCache) {
+    // 没存在
+  } else {
+    //...
+  }
+}).catch(function() {
+  // 处理异常
+});</code></pre>
+<ul><li><p>CacheStorage.open(cacheName): 打开指定的 Cache Object。并返回 Cache Object。</p></li></ul>
+<pre><code> caches.open('v1').then(function(cache) {
+    cache.add('/index.html');
+  });  </code></pre>
+<ul><li><p>CacheStorage.delete(cacheName): 用来删除指定的 Cache Object，返回值为 Boolean:</p></li></ul>
+<pre><code>caches.delete(cacheName).then(function(isDeleted) {
+  // 检测是否删除成功
+});
+
+# 通过,可以通过 Promise.all 的形式来删除多个 cache object
+Promise.all(keyList.map(function(key) {
+        if (cacheList.indexOf(key) === -1) {
+          return caches.delete(keyList[i]);
+        }
+      });</code></pre>
+<ul><li><p>CacheStorage.keys(): 以数组的形式，返回当前 Cache Storage 保存的所有 Cache Object Name。</p></li></ul>
+<pre><code>event.waitUntil(
+ caches.keys().then(function(keyList) {
+      return Promise.all(keyList.map(function(key) {
+        if (['v1','v2'].indexOf(key) === -1) {
+          return caches.delete(keyList[i]);
+        }
+      });
+    })
+    );</code></pre>
+<p>上面就是关于 Cache Storage 的所有内容。</p>
+<p>这里放一张自己写的总结图吧：</p>
+<p><img data-src="/img/remote/1460000008050757" src="/img/remote/1460000008050757.svg"></p>

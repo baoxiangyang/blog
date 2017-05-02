@@ -1,0 +1,216 @@
+渲染路径”与“网络”两个方面的性能优化并提供demo，篇幅较长建议电脑观看。</p>
+<p>前端优化的方面太多，本文介绍的仅仅是其中的一部分，力求涵盖“关键渲染路径”的方方面面，及一些不常被提到的“网络优化”部分。</p>
+<blockquote><p>测试环境如无特殊说明均为Chrome 57</p></blockquote>
+<hr>
+<h2>渲染页面过程</h2>
+<p>浏览器从打开一个URL到渲染完页面共有：</p>
+<ul>
+<li><p>下载HTML文档</p></li>
+<li><p>下载HTML文档中的css</p></li>
+<li><p>下载Js文件</p></li>
+<li><p>执行js脚本</p></li>
+<li><p>下载其他资源</p></li>
+<li><p>通过HTML文档构建DOM（Parse HTML）</p></li>
+<li><p>通过CSS文件构建CSSOM（Parse CSS）</p></li>
+<li><p>通过DOM与CSSOM计算render tree</p></li>
+<li><p>根据render tree进行绘制，计算各个元素位置与大小（Layout）</p></li>
+<li><p>对页面进行上色，渲染为最终显示的像素（Paint）</p></li>
+</ul>
+<p>第一次完成Paint称为“初次渲染”，这时候用户就能看到render tree里面的东西了。而完成初次渲染的过程称为“关键渲染路径”，关键渲染路径上需要加载的资源叫做“关键资源”</p>
+<p>这个过程很多很复杂，其中的依赖关系也很复杂，笔者尝试画图来表示，但是实在是没画出来，所以还是用文字来表述吧：</p>
+<ul>
+<li><p>引入的资源，哪怕被阻塞（比如被js脚本阻塞后续link标签），浏览器依旧会智能的预先加载它们（但是不执行）</p></li>
+<li><p>“CSS文件的加载”会阻塞“Js文件执行”。若CSS引用在Js文件之前，“加载CSS文件”会阻塞“Js文件执行”。即CSS文件未加载解析完成前，js文件不会得到执行。因为js有可能会修改CSSOM。带有async和defer属性的script不受限制。</p></li>
+<li><p>Parse HTML的解析是增量的，因此浏览器可以边下载HTML边构建DOM树</p></li>
+<li><p>“CSS文件的加载”会阻塞“Layout”。若页面有正在加载的CSS文件，在CSS文件加载完之前，浏览器不会对页面进行Layout，这是为了防止样式突变带来的抖动</p></li>
+<li><p>“加载Js文件”会阻塞“Parse HTML”，这个估计大家都知道了，因为js可以通过document.write修改HTML文档流</p></li>
+<li><p>“Js文件执行”会几乎会阻塞所有东西，包括Layout</p></li>
+</ul>
+<p>比较有意思的是，字体的加载会阻塞局部的渲染。若某一段文本的字体使用了一个尚未加载完的字体，这段文本则先不会被Paint，直到字体加载完或者超过某个时间（通常是3秒）文本才会突然显示。</p>
+<p>浏览器为了避免FOUT(Flash Of Unstyled Text)，会<strong>尽量</strong>等待字体加载完成后，再显示应用了该字体的内容。只有当字体超过一段时间仍未加载成功时，浏览器才会降级使用系统字体。每个浏览器都规定了自己的超时时间（Chrome是3秒）。但这也带来了FOIT(Flash Of Invisible Text)问题。内容无法尽快地被展示，导致空白</p>
+<h2>一些Demo来解释浏览器渲染流程</h2>
+<p>CSS会阻塞Layout：<a href="http://performance-360.demo.pea3nut.org/cssom-render/demo.html">Demo</a></p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;link rel="stylesheet" href="style.css" /&gt;
+    &lt;!-- 这个css文件会加载3秒钟，在这个css加载完成前浏览器不会layout --&gt;
+    &lt;link rel="stylesheet" href="../conn/sleep.php?sleep=3&amp;content=h2{color:red;}" /&gt;
+    &lt;title&gt;Title&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello&lt;/h1&gt;
+    &lt;h2&gt;World&lt;/h2&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>CSS会阻塞Js执行：<a href="http://performance-360.demo.pea3nut.org/cssom-render/demo.html">Demo</a></p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;link rel="stylesheet" href="style.css" /&gt;
+    &lt;!-- 这个css文件会加载3秒钟 --&gt;
+    &lt;link rel="stylesheet" href="../conn/sleep.php?sleep=3&amp;content=h2{color:red;}" /&gt;
+    &lt;script&gt;
+        // 这段js会等待css加载完才会运行
+        alert('js is run!');
+    &lt;/script&gt;
+    &lt;title&gt;Title&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello&lt;/h1&gt;
+    &lt;h2&gt;World&lt;/h2&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>Js执行会阻塞关键渲染路径，哪怕是defer还是async：<a href="http://performance-360.demo.pea3nut.org/defer-async/demo.html">Demo</a></p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;script&gt;
+        function sleep(ms){
+            var ts =+new Date;
+            while(true){
+                if(+new Date -ts &gt;=ms) break;
+            }
+            return +new Date -ts;
+        }
+    &lt;/script&gt;
+    &lt;!-- 这个css文件会加载2秒钟，所以会在js文件之后加载完 --&gt;
+    &lt;link rel="stylesheet" href="../conn/sleep.php?sleep=2&amp;content=h2{color:red;}" /&gt;
+    &lt;!-- 这个js文件会瞬间加载完，但是会运行3秒钟 --&gt;
+    &lt;script defer src="run3s.js"&gt;&lt;/script&gt;
+    &lt;!-- 这个js文件会瞬间加载完，但是会运行2秒钟 --&gt;
+    &lt;script async src="run2s.js"&gt;&lt;/script&gt;
+    &lt;title&gt;Title&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;!-- 打开页面后5秒钟才会显示，因为js执行会阻塞关键渲染路径 --&gt;
+    &lt;h1&gt;Hello&lt;/h1&gt;
+    &lt;h2&gt;World&lt;/h2&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>Foot会阻塞局部渲染，但是智能的浏览器会给他设定一个上限，一般是3秒钟：<a href="http://performance-360.demo.pea3nut.org/font/demo.html">Demo</a></p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;style&gt;
+        @font-face {
+            font-family: "test-font";
+            src: url("../conn/sleep.php?sleep=5&amp;file=scripts_.ttf");
+        }
+        h1{
+            font-family: "test-font";
+        }
+    &lt;/style&gt;
+    &lt;title&gt;Title&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello&lt;/h1&gt;
+    &lt;h2&gt;World&lt;/h2&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h2>CSS篇优化策略</h2>
+<p>优化核心概念是：将初次渲染不需要的CSS想办法剥离出关键渲染路径</p>
+<p>如果仅仅是为了提前初次渲染时间而进行优化，将页面必备的CSS剥离关键渲染路径而造成样式突变导致页面抖动，则得不偿失了</p>
+<h3>使用link/style的media属性</h3>
+<p>对某些媒体查询条件触发后才使用的css，可以在link标签中加入<code>media</code>属性，如下：</p>
+<pre><code class="html">&lt;link rel="stylesheet" href="index_print.css" media="print"&gt;</code></pre>
+<p>此样式表仍会加载。当浏览器环境不匹配媒体查询条件时，该样式表不会阻塞渲染。我们可针对不同媒体环境拆分CSS文件，并为link标签添加媒体查询，避免为了加载非关键CSS资源，而阻塞初次渲染</p>
+<h3>使用DOM API添加CSS</h3>
+<p>可以使用js代码来添加css</p>
+<pre><code class="js">var style = document.createElement('link');
+style.rel = 'stylesheet';
+style.href = 'index.css';
+document.head.appendChild(style);</code></pre>
+<h3>使用resoure hint规范的preload</h3>
+<p>将link标签的rel属性设置为<code>preload</code>，浏览器遇到遇到标记为preload的link时，会开始加载它，但是由于rel不是<code>stylesheet</code>，因此不会阻塞渲染。</p>
+<pre><code class="html">&lt;link rel="preload" href="index_print.css" as="style" onload="this.rel='stylesheet'"&gt;</code></pre>
+<p>然后在适当的时候，在rel改为stylesheet，即可应用此样式。</p>
+<p>但是这个属性兼容性比较差，详细可以参考<a href="http://caniuse.com/#search=preload">这里</a>。不过有一个polyfill可以用<a href="https://github.com/filamentgroup/loadCSS">loadCSS</a>，原理是通过DOM API插入样式资源。</p>
+<p>这个属性的使用情景有些偏，也可能是我理解问题：</p>
+<p>当使用preload引入css文件时，实际上证明这个页面根本不需要这个css，它有可能是打印样式，或者是响应式网站的另一套css代码。但是，使用preload属性，浏览器反而会预先加载它，也就是说，在window.onload之前，用户将耗费了网络资源在加载一个暂时不需要的样式。网络资源不可能是无限的，也就是说这个css会占用页面其他资源比如图片的网络资源。</p>
+<p>询问瓜瓜老师本人后，瓜瓜老师说：</p>
+<blockquote><p>举个例子。第三屏有个广告版，它的样式</p></blockquote>
+<p>这样确实这个css的紧急程度就介于关键渲染路径的css与页面图片之间了，不过貌似这个情景很受限。</p>
+<h2>JS篇优化策略</h2>
+<h3>使用defer延迟脚本执行</h3>
+<p>当script标签拥有defer属性时，该脚本会被推迟到整个HTML文档解析完后，再开始执行。因此将脚本放在head中，可以提早浏览器对脚本文件的加载，但是却不会阻塞parse HTML。</p>
+<pre><code class="html">&lt;script src="index.js" defer&gt;&lt;/script&gt;
+&lt;!-- 百度统计代码 --&gt;
+&lt;script src="tongji.js" defer&gt;&lt;/script&gt;</code></pre>
+<p>注意，defer的脚本不会被css阻塞，parse HTML完成后立即执行，但是有可能会阻塞关键渲染路径。为什么说有可能呢，假如脚本文件在render tree生成前加载完毕，则会开始执行，执行过程中会阻塞关键渲染路径。请参考这个<a href="http://performance-360.demo.pea3nut.org/defer-async/demo.html">Demo</a></p>
+<p>被defer的脚本，在执行时会严格按照在HTML文档中出现的顺序执行，但是实际上貌似不是这样，js文件前后文件若有依赖需慎重使用。</p>
+<h3>使用async延迟脚本执行</h3>
+<p>和defer类似，只是当js加载完后马上执行，而不在乎parse HTML是否完成，因此假如脚本比css先加载完，也会阻塞关键渲染路径。</p>
+<pre><code class="html">&lt;script src="index.js" defer&gt;&lt;/script&gt;
+&lt;!-- 百度统计代码 --&gt;
+&lt;script src="tongji.js" defer&gt;&lt;/script&gt;</code></pre>
+<h3>使用DOM API</h3>
+<p>据笔者所知，这是唯一一种100%不会阻塞关键渲染路径的js脚本加载方式。通过DOM API引入的js脚本会等到页面Layout和Paint后再开始执行，不论你将载入js文件的代码放在head中还是body后面亦是如此。</p>
+<h2>其他的优化</h2>
+<h3>使用Web Font Loader加载字体</h3>
+<p>若不想让字体阻塞局部渲染，可使用<a href="https://github.com/typekit/webfontloader">Web Font Loader</a></p>
+<h2>网络优化篇</h2>
+<p>网络优化和CSS优化策略相同，尽可能让关键资源提前加载完，所以优化时尽量将以下指标压缩到最低：</p>
+<ul>
+<li><p>关键资源数</p></li>
+<li><p>关键资源体积</p></li>
+<li><p>关键资源网络来回数</p></li>
+</ul>
+<p>当然，如果你的项目使用了先进的SPDY或HTTP/2，下面的方法可能并不适用。</p>
+<h3>优化关键资源数</h3>
+<p>RFC2616规定同域名同时只能有 2 个连接（RFC7230 中无限制），而​​​​​​​现代浏览器一般允许同域6个并发连接。因此，当页面中有许多需要外链的资源（script、link等），浏览器最多在每个域同时并发下载6个。</p>
+<p>每一个请求，若使用域名，则需要额外增加一次DNS查询时间（若缓存未过期会命中缓存），因此一个网站过多的使用不同域名的资源会额外增加DNS查询开销，这点在移动端非常明显。</p>
+<p>当然，每个请求建立根据TCP协议规定，还需要先进行3次捂手才可以建立链接。</p>
+<h4>合并请求</h4>
+<p>尽可能的合并请求，减少网络请求数。这一点可能在其他性能优化文章都说烂了：</p>
+<ul>
+<li><p>小图片转base64</p></li>
+<li><p>合并打包CSS、JS文件</p></li>
+</ul>
+<p>现在的比较流行的webpack就非常擅长做这种事情</p>
+<h4>适度使用内联CSS和Js</h4>
+<p>使用内联的CSS和JS固然可以减少请求，但是使用内联也意味着<strong>你的CSS和JS将不会再被浏览器缓存</strong>，因此要适度的使用内联，内联不是万能的。</p>
+<h4>从HTTP协议下手</h4>
+<p>最佳方案肯定是过渡到HTTP/2无疑，但是现在HTTP/2的支持并不算太好，而且各大浏览器仅支持TLS下实现的HTTP/2（说白了就是HTTPS），使得HTTP/2的使用存在许些限制。</p>
+<p>如果没有HTTP/2，或许可以：</p>
+<ul>
+<li><p>使用<code>Keep-Alive</code>可以规避TCP三次握手的时间</p></li>
+<li><p>使用<code>Transfer-Encoding:chunked</code>分块输出文件，还记得parse HTML的过程是增量的吗？若浏览器可以边下载HTML文件边解析，岂不美哉？</p></li>
+<li><p>减少重定向，这个看上去理所当然但是实际上却很容易被忽略</p></li>
+</ul>
+<h4>适度使用域名散列</h4>
+<p>浏览器同域并行下载数量有限，所以只要多建立几个二级域名就好了，然后合理的分配各个资源就好了。</p>
+<p>假如由于某些不可抗拒原因，关键资源数是12个，那么只要建立2个二级域名分别分配给其中的12个资源，浏览器会同时并行下载它们了。</p>
+<p>不过，使用域名散列要适度，每一个域名都需要额外的增加一次DNS查询时间。当然，DNS本身也有缓存，或许适当的增加DNS TTL时间也是个不错的主意。</p>
+<h3>压缩关键资源体积</h3>
+<p>对于js、css文件，现在网上现成的压缩工具一堆，而且应用十分广泛，相信大家都知道了，这里就不多说了。</p>
+<p>说到压缩，服务器开启一定的压缩策略（如gzip）是个不错的主意，效果拔群，资源大概会压缩到原有的1/3左右。</p>
+<p>图片压缩，这个需要知道什么情境下适合什么类型的图片，GIF、JPG、PNG使用情景各不相同，具体可以参考这篇文章：<a href="http://www.cnblogs.com/xinzhao/p/5130410.html">图片格式那么多，哪种更适合你？</a></p>
+<h3>关键资源网络来回数</h3>
+<p>假如一个页面需要引入2个CSS才能工作，下面有2种方式</p>
+<ul>
+<li><p>2个均用link引入</p></li>
+<li><p>1个用link引入，在css中import另一个css</p></li>
+</ul>
+<p>毫无疑问肯定是前者快，因为前者的网络来回数是1，而后者是2。</p>
+<p>因此，尽可能将资源加载扁平化，减少关键资源网络来回数是个不错的主意。</p>
+<p>当然，优化时要注意的点也有不少，比如前面提到的浏览器同域并发限制等，需要权衡使其不要影响到其他的导致初次渲染时间延后。</p>
+<h2>一些无效的优化策略</h2>
+<p>使用<code>document.write</code>打印link标签引入css仍会阻塞初次渲染。</p>
+<h2>引用</h2>
+<p>奇舞团@瓜瓜老师：</p>
+<ul>
+<li><p>PPT：<a href="https://ppt.baomitu.com/d/258e0812#/">https://ppt.baomitu.com/d/258...</a></p></li>
+<li><p>个人主页：<a href="https://melonh.com/">http://melonh.com/</a></p></li>
+</ul>
+<p>奇舞团@屈屈老师：</p>
+<ul>
+<li><p>PPT：<a href="https://ppt.baomitu.com/d/a8a49a00#/">https://ppt.baomitu.com/d/a8a...</a></p></li>
+<li><p>个人主页：<a href="https://imququ.com/">https://imququ.com/</a></p></li>
+</ul>
+<p>W3C规范：</p>
+<ul><li><p><a href="https://www.w3.org/TR/2016/REC-html51-20161101/semantics-scripting.html">https://www.w3.org/TR/2016/RE...</a>

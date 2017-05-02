@@ -1,0 +1,359 @@
+<blockquote><p><strong>文章来源：小青年原创</strong><br><strong>发布时间：2016-08-16</strong><br><strong>关键词：blob，File，FileReader，DataURI，URL</strong><br><strong>转载需标注本文原始地址: <a href="http://zhaomenghuan.github.io/#">http://zhaomenghuan.github.io...</a></strong></p></blockquote>
+<h2>写在前面</h2>
+<p>这段时间一直有朋友在问文件上传下载的事，搜一下论坛发现相关的问题不少，但是不够系统，本着为人民服务的态度本文试着将一些问题整理一下，争取用初学者可以更明确的去处理相关的问题。文件上传是开发中绕不过的一个坎儿，对于很多没有经验的人来说，简直懵逼，目前我所知道的上传方式有下面这几种：</p>
+<ul>
+<li><p>传统flash上传</p></li>
+<li><p>隐藏iframe框上传</p></li>
+<li><p>表单数据提交</p></li>
+<li><p>HTML5的新工具——File API</p></li>
+</ul>
+<p>本文限于篇幅先介绍最后一种使用html5 File API进行文件上传的相关细节。</p>
+<blockquote><p>历史上，JavaScript无法处理二进制数据。如果一定要处理的话，只能使用charCodeAt()方法，一个个字节地从文字编码转成二进制数据，还有一种办法是将二进制数据转成Base64编码，再进行处理。这两种方法不仅速度慢，而且容易出错。ECMAScript 5引入了Blob对象，允许直接操作二进制数据。Blob对象是一个代表二进制数据的基本对象，在它的基础上，又衍生出一系列相关的API，用来操作文件。</p></blockquote>
+<h2>File API</h2>
+<blockquote><p>File 接口提供了文件的信息，以及文件内容的存取方法。</p></blockquote>
+<p>File对象可以用来获取某个文件的信息，还可以用来读取这个文件的内容。通常情况下，File对象是来自用户在一个&lt;input&gt;元素上选择文件后返回的FileList对象,也可以是来自由拖放操作生成的 DataTransfer对象.</p>
+<h3>通过input file标签选择文件</h3>
+<p>默认的input file标签比较难看，需要自己改造，一般无非是将input file设置宽高，然后使用overflow: hidden;将多余的部分隐藏，在上面再盖一个美化的按钮或者提示语，如下图：</p>
+<p>浏览器原生的效果：</p>
+<p><img data-src="/img/bVBRk8?w=234&amp;h=64" src="/img/bVBRk8?w=234&amp;h=64.png"></p>
+<p>经过美化的效果：<br><img data-src="/img/bVBRlg?w=451&amp;h=101" src="/img/bVBRlg?w=451&amp;h=101.png"></p>
+<p>代码如下：</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;title&gt;&lt;/title&gt;
+        &lt;style type="text/css"&gt;
+            *{
+                margin: 0px;
+                padding: 0px;
+            }
+            .filePicker{
+                width: 160px;
+                height: 44px;
+                line-height: 44px;
+                text-align: center;
+                color: #fff;
+                background: #00b7ee;        
+            }
+            .filePicker input[type="file"] {
+                position: relative;
+                top: -44px;
+                left: 0px;
+                width: 160px;
+                height: 44px;
+                opacity: 0;
+                cursor: pointer;
+                overflow: hidden;
+                z-index: 0;
+            }
+            
+            .container{
+                width: 160px;
+                margin: 30px auto;
+            }
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div class="container"&gt;
+            &lt;input type="file" name="" id="" value="" /&gt;
+        &lt;/div&gt;    
+        &lt;div class="container"&gt;
+            &lt;div class="filePicker"&gt;
+                &lt;label&gt;点击选择文件&lt;/label&gt;
+                &lt;input id="fileInput" type="file" name="file" multiple="multiple" accept="image/*"&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>我们可以通过给input file标签设置accept属性进行文件选择过滤，该属性的值必须为一个逗号分割的列表,包含了多个唯一的内容类型声明：</p>
+<ul>
+<li><p>以 STOP 字符 (U+002E) 开始的文件扩展名。（例如：".jpg,.png,.doc"）</p></li>
+<li><p>一个有效的 MIME 类型，但没有扩展名</p></li>
+<li><p>audio/* 表示音频文件 HTML5</p></li>
+<li><p>video/* 表示视频文件 HTML5</p></li>
+<li><p>image/* 表示图片文件</p></li>
+</ul>
+<p>设置multiple属性可以进行设置为多选。</p>
+<p>设置capture属性可以进行设置打开摄像拍照或者录像。</p>
+<pre><code>Capture Image: 
+&lt;input type="file" accept="image/*" capture="camera"&gt; 
+Capture Audio: 
+&lt;input type="file" accept="audio/*" capture="microphone"&gt; 
+Capture Video: 
+&lt;input type="file" accept="video/*" capture="camcorder"&gt; </code></pre>
+<p>multiple属性和capture属性不能同时生效。</p>
+<p>通过File API,我们可以在用户选取一个或者多个文件之后,访问到代表了所选文件的一个或多个File对象，这些对象被包含在一个FileList对象中。所有type属性(attribute)为file的&lt;input&gt;元素都有一个files属性，用来存储用户所选择的文件。files有一个length属性和item方法，我们可以通过files[index]或者files.item(index)获取我们选择的file对象。可以通过change事件监听input file输入完成事件：</p>
+<pre><code>var fileInput = document.getElementById("fileInput");
+fileInput.addEventListener('change', function(event) {
+    var file = fileInput.files[0];
+    // 或file = fileInput.files.item(0);
+    console.log(file);
+}, false);</code></pre>
+<p>File API提供File对象，它是FileList对象的成员，包含了文件的一些元信息，比如文件名、上次改动时间、文件大小和文件类型。下图可以File对象的属性：</p>
+<p><img data-src="/img/bVBRlF?w=765&amp;h=146" src="/img/bVBRlF?w=765&amp;h=146.png"></p>
+<ul>
+<li><p>lastModifiedDate：文件对象最后修改的日期</p></li>
+<li><p>name：文件名,只读字符串,不包含任何路径信息.</p></li>
+<li><p>size：文件大小,单位为字节,只读的64位整数.</p></li>
+<li><p>type：MIME类型,只读字符串,如果类型未知,则返回空字符串.</p></li>
+</ul>
+<p>例如：我们可以根据size换算出我们习惯的文件大小表达方式：</p>
+<pre><code>/**
+ * 读文件大小
+ * @param {Object} file
+ */
+function readFileSize(file){
+    var size = file.size / 1024;
+    var aMultiples = ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    
+    var fileSizeString = '';
+    for(var i = 0; size &gt; 1; size /= 1024, i++) {
+       fileSizeString = size.toFixed(2) + " " + aMultiples[i];
+    }
+    return fileSizeString;
+}</code></pre>
+<p>有时候我们希望限制用户上传的文件大小，可以通过这个方法先做判断。同时我们可以通过type属性判断用户的文件类型，但是这种方法不可靠，因为用户可以通过改变后缀名实现。</p>
+<p>很多新手企图通过input file标签获得文件完整路径，由于浏览器安全机制，这个是不被允许的，但是有时候我们希望选择完图片预览一下图片，这个时候我们就可以用FileReader API实现。</p>
+<h3>通过拖放操作选择文件</h3>
+<p><strong>预览效果</strong>：</p>
+<p><img data-src="/img/bVBRlM?w=343&amp;h=454" src="/img/bVBRlM?w=343&amp;h=454.png"></p>
+<p><strong>代码实现</strong>：</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;title&gt;&lt;/title&gt;
+        &lt;style type="text/css"&gt;
+            .dropbox{
+                width: 300px;
+                height: 300px;
+                margin: 20px;
+                border: 3px dashed #e6e6e6;
+            }
+            .area{
+                margin: 100px auto;
+                width: 100px;
+                height: 100px;
+                background-repeat: no-repeat;
+                background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAABLCAIAAAB7tddWAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDo1Q0VBNzA0MjEyMDUxMUUzODk2Q0JFM0Q1RjE4QkExQyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDo1Q0VBNzA0MzEyMDUxMUUzODk2Q0JFM0Q1RjE4QkExQyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjAzNDA2MkY1MTIwMzExRTM4OTZDQkUzRDVGMThCQTFDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOjAzNDA2MkY2MTIwMzExRTM4OTZDQkUzRDVGMThCQTFDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+K6izdgAAAvpJREFUeNrsnFmPqkAQhWmX667gEp9c/v+/MkSDG+4LrvdcSYgRbw/0ALZQ9WBUJOn+uqvqHGCG3e93hUJRUoSAQBAIAkEgCASBIBAE4neRicEcII51Xb/dbnjPGOt0OqlUKok7ApN3jIKwY6DUIBAEgkAQCALho/X47TeXy8U0TcuyrtdrZKPs9/v2m8FgINYgf9QX/gTV+Xw2DCNKBJKmxmKxsAVc0kEcDgfyGq8CNp/Pa5qWy+WiHG6v13v7/XPt6Ha7Al5D3HQ1Go1sNkvtU8lkMsmtESSoCASBSFqEW/DQ0tbr9W63O51OKK6FQkFV1XQ6nSwQ0OOTyQSvjknZbDaA0mq1QCQafSFFasxmM4eCE1Do0+lUQrcSFggsPhzq20NgsVqtkpIax+MxMs+C/aXruvMxaonND75J9W5hUWWxuYAVdRfTg8EplUphGJywQPAFuBd5Dlhw/aDwwgVtCDgCdzph1QisG+dosVjkn44WYxjGC4XnvBuNRtvt9gtA2Hv47SGsZKVS4ef8eDzG4vMVCrpSgEU3xPbZbDar1erLl1AQ7XabU8xAAXvB3XffBnIHwkR2QcUYq9fr5XIZOxkTg6BEkeNLKdQF7AWPFBy1AoUmu8RG/HmE91nxM+J/ORIr07VcLvf7feCt+stAQGIBRNJtOJolDAhdj/hXGj5+u+TzIKAF+MbkK00XFta2BhDRUE0/9gv8Elogbu4TBW8+nyPhHSeuaVqtVuNQC6TzyQUCXsg0TbfyAxfIKogr9ynP1GJyYQZ57qbg7AuIRfclKZwSlDqWBQSmxM9zFALYh+fFBwJJSkNgqeFxSrAPw+EQ9QJew7Is2Sj8FgSW2nu1gylYPkKRMsRTA+4IcjA2fxsnDkLOq/IfACFP54uP1yAQBIJAEIh4gWCPkHk+GJ7AjU/fICJ+qlIghEfoDwQMtRjvyLYDRih4rsDT+bBM9tP5kuhrzN++e6SqqvCdYUb/SIO6BoEgEASCQBAIAkEgCEQg8VeAAQAB1bbO2qoeewAAAABJRU5ErkJggg==");
+            }
+            
+            #preview img{
+                width: 100px;
+                height: 100px;
+            }
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div id="dropbox" class="dropbox"&gt;
+            &lt;div class="area"&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div id="preview"&gt;&lt;/div&gt;
+        
+        &lt;script type="text/javascript"&gt;
+            var dropbox = document.getElementById("dropbox");
+            var preview = document.getElementById("preview");
+            
+            dropbox.addEventListener("dragenter", function(e){
+                e.stopPropagation();
+                  e.preventDefault();
+            }, false);
+            
+            dropbox.addEventListener("dragover", function(e){
+                e.stopPropagation();
+                  e.preventDefault();
+            }, false);
+            
+            dropbox.addEventListener("drop", function(e){
+                e.stopPropagation();
+                  e.preventDefault();
+            
+                  var dt = e.dataTransfer;
+                  var files = dt.files;
+                  
+                  for (var i = 0; i &lt; files.length; i++) {
+                    var file = files[i];
+                    var imageType = /^image\//;
+
+                    if ( !imageType.test(file.type) ) {
+                          continue;
+                    }
+                    
+                    // 填充选择的图片到展示区
+                    var img = document.createElement("img");
+                    img.classList.add("obj");
+                    img.file = file;
+                    preview.appendChild(img);
+                    
+                    // 读取File对象中的内容
+                    var reader = new FileReader();
+                    reader.onload = (function(aImg) { 
+                      return function(e) { 
+                        aImg.src = e.target.result; 
+                      }; 
+                    })(img);
+                    reader.readAsDataURL(file);
+                }
+            }, false);
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>在这个例子中，ID 为 dropbox 的元素所在的区域是我们的拖放目的区域。我们需要在该元素上绑定 dragenter，dragover，和drop 事件。我们必须阻止dragenter和dragover事件的默认行为，这样才能触发 drop 事件。我们从drop 事件对象中获取到dataTransfer对象，这个对象包含Filelist对象。</p>
+<h2>FileReader API</h2>
+<blockquote><p>使用FileReader对象,web应用程序可以异步的读取存储在用户计算机上的文件(或者原始数据缓冲)内容,可以使用File对象或者Blob对象来指定所要处理的文件或数据.其中File对象可以是来自用户在一个&lt;input&gt;元素上选择文件后返回的FileList对象,也可以来自拖放操作生成的 DataTransfer对象,还可以是来自在一个HTMLCanvasElement上执行mozGetAsFile()方法后的返回结果。</p></blockquote>
+<h3>DataURI对象</h3>
+<p>在上面通过拖放操作选择文件的例子中，我们使用了"data:image/png;base64,xxxxxxxxxxxxx"这种形式的字符串作为背景，而不是图片，选择的图片展示也是使用这种形式。这种字符串叫做DataURI对象，允许将一个小文件进行编码后嵌入到另外一个文档里，格式为：</p>
+<pre><code>data:[&lt;MIME type&gt;][;charset=&lt;charset&gt;][;base64],&lt;encoded data&gt;</code></pre>
+<p>整体可以视为三部分，即声明：参数+数据，逗号左边的是各种参数，右边的是数据。</p>
+<p>URL是uniform resource locator的缩写，在web中的每一个可访问资源都有一个URL地址，例如图片，HTML文件，js文件以及style sheet文件，我们可以通过这个地址去download这个资源。其实URL是URI的子集，URI是uniform resource identifier的缩写。URI是用于获取资源，包括其附加的信息的一种协议。附加信息可能是地址，也可能不是地址，如果是地址，那么这时URI就变成URL了。注意的是data URI不是URL，因为它并不包含资源的公共地址。</p>
+<p>我们可以通过FileReader 的readAsDataURL方法获得：</p>
+<pre><code>var reader = new FileReader();
+reader.onload = function() {
+    console.log(this.result);
+}
+reader.readAsDataURL(file);</code></pre>
+<p>有时候我们需要将DataURI对象转blob对象：</p>
+<pre><code>/**
+ * dataURI 转 blob
+ * @param {Object} dataURI
+ */
+function dataURItoBlob(dataURI) {
+    var arr = dataURI.split(','), mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+}</code></pre>
+<h3>URL对象</h3>
+<p>我们除了可以使用base64字符串作为内容的DataURI将一个文件嵌入到另外一个文档里，还可以使用URL对象。URL对象用于生成指向File对象或Blob对象的URL。</p>
+<blockquote><p>window.URL.createObjectURL</p></blockquote>
+<p>静态方法会创建一个 DOMString，它的 URL 表示参数中的对象。这个 URL 的生命周期和创建它的窗口中的 document 绑定。这个新的URL 对象表示着指定的 File 对象或者 Blob 对象。</p>
+<pre><code>var objecturl =  window.URL.createObjectURL(file);</code></pre>
+<blockquote><p>window.URL.revokeObjectURL</p></blockquote>
+<p>静态方法用来释放一个之前通过调用 window.URL.createObjectURL() 创建的已经存在的 URL 对象。当你结束使用某个 URL 对象时，应该通过调用这个方法来让浏览器知道不再需要保持这个文件的引用了。</p>
+<pre><code>window.URL.revokeObjectURL(objecturl)</code></pre>
+<p>例如：使用对象URL来显示图片：</p>
+<pre><code>window.URL = window.URL || window.webkitURL;
+
+var img = document.createElement("img");
+img.src = window.URL.createObjectURL(blob);
+img.height = 60;
+img.onload = function(e) {
+    window.URL.revokeObjectURL(this.src);
+}
+document.body.appendChild(img);</code></pre>
+<h3>FileReader API详解</h3>
+<h4>状态常量</h4>
+<ul>
+<li><p><strong>EMPTY</strong>：值为0，还没有加载任何数据;</p></li>
+<li><p><strong>LOADING</strong>：值为0，数据正在被加载;</p></li>
+<li><p><strong>DONE</strong>：值为0，已完成全部的读取请求。</p></li>
+</ul>
+<h4>属性</h4>
+<ul>
+<li><p><strong>error</strong>：在读取文件时发生的错误， 只读;</p></li>
+<li><p><strong>readyState</strong>：表明FileReader对象的当前状态，值为State constants中的一个，只读；</p></li>
+<li><p><strong>result</strong>：取到的文件内容，这个属性只在读取操作完成之后才有效,并且数据的格式取决于读取操作是由哪个方法发起的，只读。</p></li>
+</ul>
+<h4>方法</h4>
+<ul>
+<li><p><strong>abort()</strong>：中止该读取操作.在返回时,readyState属性的值为DONE.</p></li>
+<li><p><strong>readAsArrayBuffer()</strong>：开始读取指定的Blob对象或File对象中的内容. 当读取操作完成时,readyState属性的值会成为DONE,如果设置了onloadend事件处理程序,则调用之.同时,result属性中将包含一个ArrayBuffer对象以表示所读取文件的内容.</p></li>
+<li><p><strong>readAsBinaryString()</strong>：开始读取指定的Blob对象或File对象中的内容. 当读取操作完成时,readyState属性的值会成为DONE,如果设置了onloadend事件处理程序,则调用之.同时,result属性中将包含所读取文件的原始二进制数据.</p></li>
+<li><p><strong>readAsDataURL()</strong>：开始读取指定的Blob对象或File对象中的内容. 当读取操作完成时,readyState属性的值会成为DONE,如果设置了onloadend事件处理程序,则调用之.同时,result属性中将包含一个data: URL格式的字符串以表示所读取文件的内容.</p></li>
+<li><p><strong>readAsText()</strong>：开始读取指定的Blob对象或File对象中的内容. 当读取操作完成时,readyState属性的值会成为DONE,如果设置了onloadend事件处理程序,则调用之.同时,result属性中将包含一个字符串以表示所读取的文件内容.</p></li>
+</ul>
+<h4>事件处理</h4>
+<ul>
+<li><p><strong>onabort</strong>：当读取操作被中止时调用.</p></li>
+<li><p><strong>onerror</strong>：当读取操作发生错误时调用.</p></li>
+<li><p><strong>onload</strong>：当读取操作成功完成时调用.</p></li>
+<li><p><strong>onloadend</strong>：当读取操作完成时调用,不管是成功还是失败.该处理程序在onload或者onerror之后调用.</p></li>
+<li><p><strong>onloadstart</strong>：当读取操作将要开始之前调用.</p></li>
+<li><p><strong>onprogress</strong>：在读取数据过程中周期性调用.</p></li>
+</ul>
+<p><strong>上传实例</strong>：以二进制流上传文件</p>
+<pre><code>var fileInput = document.getElementById("fileInput");
+fileInput.addEventListener('change', function(event) {
+    var file = fileInput.files[0];
+    if (file) {
+        var reader = new FileReader();  
+        var xhr = new XMLHttpRequest();
+        xhr.onprogress=function(e){
+            var percentage = Math.round((e.loaded * 100) / e.total);
+            console.log("percentage:"+percentage);
+        }
+        xhr.onload=function(e){
+            console.log("percentage:100");
+        }
+        xhr.open("POST", "这里填写服务器地址");  
+        reader.onload = function(evt) {
+            xhr.send(evt.target.result);
+        };
+        reader.readAsBinaryString(file);
+    }
+});         </code></pre>
+<h2>blob 二进制大对象</h2>
+<p>BLOB (binary large object)，二进制大对象，是一个可以存储二进制文件的容器。</p>
+<blockquote><p>创建Blob对象的方法有几种，可以调用Blob构造函数，还可以使用一个已有Blob对象上的slice()方法切出另一个Blob对象，还可以调用canvas对象上的toBlob方法。</p></blockquote>
+<p>第一次见到这个词是半年之前，那个时候居然没有听过blob，然后上网查了一下，巴拉巴拉一大堆，当时是不理解的。</p>
+<p>看了前面的一系列API和对象，或许很多同学开始晕了，但是在一开始说到的blob对象，我们一直没有提到，如果本文不提及，显然是不合理的。毕竟作为File对象的爸爸，blob劳苦功高。上述的FileReader对象也可以操作blob对象。</p>
+<p>Blob对象有两个只读属性：</p>
+<ul>
+<li><p>size：二进制数据的大小，单位为字节。</p></li>
+<li><p>type：二进制数据的MIME类型，全部为小写，如果类型未知，则该值为空字符串。<br>在Ajax操作中，如果xhr.responseType设为blob，接收的就是二进制数据。</p></li>
+</ul>
+<h3>Blob 构造函数生成blob对象</h3>
+<p>Blob构造函数，接受两个参数。第一个参数是一个包含实际数据的数组，第二个参数是数据的类型，这两个参数都不是必需的。数组元素可以是任意多个的ArrayBuffer，ArrayBufferView (typed array)， Blob，或者 DOMString对象。<br>例如：</p>
+<pre><code>var arr = ['&lt;h1&gt;hello world&lt;/h1&gt;'];
+var blob = new Blob(arr, { "type" : "text/xml" }); // the blob
+console.log(blob);</code></pre>
+<p>效果如下：</p>
+<p><img data-src="/img/bVBRmh?w=401&amp;h=63" src="/img/bVBRmh?w=401&amp;h=63.png"></p>
+<h4>用JS在浏览器中创建下载文件</h4>
+<p>前端很多项目中，都有文件下载的需求，特别是JS生成文件内容，然后让浏览器执行下载操作（例如在线图片编辑、在线代码编辑、iPresst等）但受限于浏览器，很多情况下我们都只能给出个链接，让用户点击打开-》另存为。如下面这个链接：</p>
+<pre><code>&lt;a href="file.js"&gt;file.js&lt;/a&gt;</code></pre>
+<p>用户点击这个链接的时候，浏览器会打开并显示链接指向的文件内容，显然，这并没有实现我们的需求。HTML5中给a标签增加了一个download属性，只要有这个属性，点击这个链接时浏览器就不在打开链接指向的文件，而是改为下载（目前只有chrome、firefox和opera支持）。下载时会直接使用链接的名字来作为文件名，但是是可以改的，只要给download加上想要的文件名即可，如：<code>download="not-a-file.js"</code>。但是这样还不够，以上的方法只适合用在文件是在服务器上的情况。如果在浏览器端js生成的内容，想让浏览器进行下载要如何办到呢？DataURI可以实现这个效果，但是DataURI的文件类型被限制了，我们这里可以变通一下实现blob对象。</p>
+<pre><code>&lt;a id="aLink"&gt;下载&lt;/a&gt;
+&lt;script type="text/javascript"&gt;
+    function downloadFile (el, fileName, content) {
+        var aLink = document.querySelector(el);
+        var blob = new Blob([content]);                
+        aLink.download = fileName;
+        aLink.href = URL.createObjectURL(blob);
+    }
+    document.querySelector('#aLink').addEventListener('click',function () {
+        downloadFile('#aLink', 'hello.txt', '&lt;h1&gt;hello world&lt;/h1&gt;');
+    })
+&lt;/script&gt;</code></pre>
+<h3>Blob对象的slice方法生成blob对象</h3>
+<p>Blob对象的slice方法，将二进制数据按照字节分块，返回一个新的Blob对象。</p>
+<pre><code>var newBlob = oldBlob.slice(startingByte, endindByte);</code></pre>
+<p>下面是一个使用XMLHttpRequest对象，将大文件分割上传的例子。</p>
+<pre><code>function upload(blobOrFile) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/server', true);
+  xhr.onload = function(e) { ... };
+  xhr.send(blobOrFile);
+}
+
+document.querySelector('input[type="file"]').addEventListener('change', function(e) {
+  var blob = this.files[0];
+
+  const BYTES_PER_CHUNK = 1024 * 1024; // 1MB chunk sizes.
+  const SIZE = blob.size;
+
+  var start = 0;
+  var end = BYTES_PER_CHUNK;
+
+  while(start &lt; SIZE) {
+    upload(blob.slice(start, end));
+
+    start = end;
+    end = start + BYTES_PER_CHUNK;
+  }
+}, false);</code></pre>
+<h2>参考文档</h2>
+<p><a href="https://developer.mozilla.org/zh-CN/docs/Using_files_from_web_applications">在web应用中使用文件</a><br><a href="http://aiyouu.net/data-uris-explained/">DataURI详解</a><br><a href="http://javascript.ruanyifeng.com/htmlapi/file.html">文件和二进制数据的操作</a><br><a href="http://www.zhangxinxu.com/wordpress/2013/10/understand-domstring-document-formdata-blob-file-arraybuffer/">理解DOMString、Document、FormData、Blob、File、ArrayBuffer数据类型</a><br><a href="http://www.jb51.net/article/47723.htm">用JS在浏览器中创建下载文件</a></p>

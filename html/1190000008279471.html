@@ -1,0 +1,144 @@
+pack</code>提供的一个非常强大的功能就是<code>code spliting(代码切割)</code>。</p>
+<p>在<code>webpack 1.x</code>中提供了</p>
+<pre><code class="javascript">    require.ensure([], () =&gt; {
+        let module = require('./page1/module');
+        // do something
+    }, 'module1')</code></pre>
+<p>利用<code>require.ensure</code>这个<code>API</code>使得<code>webpack</code>单独将这个文件打包成一个可以异步加载的<code>chunk</code>.</p>
+<p>具体的套路见我写的另一篇blog: <a href="https://segmentfault.com/a/1190000007962830">webpack分包及异步加载套路</a></p>
+<p>一句话总结就是：</p>
+<p>在输出的<code>runtime</code>代码中,包含了异步<code>chunk</code>的<code>id</code>及<code>chunk name</code>的映射关系。需要异步加载相应的<code>chunk</code>时，通过生成<code>script</code>标签，然后插入到<code>DOM</code>中完成<code>chunk</code>的加载。通过<code>JSONP</code>,<code>runtime</code>中定义好函数，<code>chunk</code>加载完成后即会立即执行这个函数。</p>
+<p>从编译生成后的代码来看，<code>webpack 1.x</code>从<code>chunk</code>的加载到执行的过程处理的比较粗糙，仅仅是通过添加<code>script</code>标签，异步加载<code>chunk</code>后，完成函数的执行。</p>
+<p><strong>这个过程当中，如果出现了<code>chunk</code>加载不成功时，这种情况下应该如何去容错呢？</strong></p>
+<p>在<code>webpack2</code>中相比于<code>webpack1.x</code>在这个点的处理上是将<code>chunk</code>的加载包裹在了<code>promise</code>当中，那么这个过程变的可控起来。具体的<code>webpack2</code>实现套路也是本文想要去说明的地方。</p>
+<p><code>webpack</code>提供的异步加载函数是</p>
+<pre><code class="javascript">    /******/     // This file contains only the entry chunk.
+/******/     // The chunk loading function for additional chunks
+            // runtime代码里面只包含了入口的chunk
+            // 这个函数的主要作用:
+            // 1. 异步加载chunk
+            // 2. 提供对于chunk加载失败或者处于加载中的处理
+            // 其中chunk加载状态的判断是根据installedChunks对象chunkId是数字0还是数组来进行判断的
+/******/     __webpack_require__.e = function requireEnsure(chunkId) {
+                // 数字0代表chunk加载成功
+/******/         if(installedChunks[chunkId] === 0)  
+/******/             return Promise.resolve();
+
+/******/         // an Promise means "currently loading".
+                // 如果installedChunks[chunkId]为一个数组
+/******/         if(installedChunks[chunkId]) {
+                    // 返回一个promise对象
+/******/             return installedChunks[chunkId][2];
+/******/         }
+/******/         // start chunk loading
+                // 通过生成script标签来异步加载chunk.文件名是根据接受的chunkId来确认的
+/******/         var head = document.getElementsByTagName('head')[0];
+/******/         var script = document.createElement('script');
+/******/         script.type = 'text/javascript';
+/******/         script.charset = 'utf-8';
+/******/         script.async = true;
+                // 超时时间为120s
+/******/         script.timeout = 120000;
+
+/******/         if (__webpack_require__.nc) {
+/******/             script.setAttribute("nonce", __webpack_require__.nc);
+/******/         }
+                // 需要加载的文件名
+/******/         script.src = __webpack_require__.p + "js/register/" + ({"2":"index"}[chunkId]||chunkId) + ".js";
+                // 120s的定时器，超时后触发onScriptComplete回调
+/******/         var timeout = setTimeout(onScriptComplete, 120000);
+                // chunk加载完毕后的回调
+/******/         script.onerror = script.onload = onScriptComplete;
+/******/         function onScriptComplete() {
+/******/             // avoid mem leaks in IE.
+/******/             script.onerror = script.onload = null;
+                    // 清空定时器
+/******/             clearTimeout(timeout);
+                    // 获取这个chunk的加载状态
+                    // 若为数字0，表示加载成功
+                    // 若为一个数组, 调用数组的第2个元素（第二个元素为promise内传入的reject函数），使得promise捕获抛出的错误。reject(new Error('xxx'))
+/******/             var chunk = installedChunks[chunkId];
+/******/             if(chunk !== 0) {
+/******/                 if(chunk) chunk[1](new Error('Loading chunk ' + chunkId + ' failed.'));
+/******/                 installedChunks[chunkId] = undefined;
+/******/             }
+/******/         };
+                
+                // 每次需要进行异步加载chunk时，会将这个chunk的加载状态进行初始化为一个数组,并以key/value的形式保存在installedChunks里
+                // 这个数组为[resolve, reject, promise];
+/******/         var promise = new Promise(function(resolve, reject) {
+/******/             installedChunks[chunkId] = [resolve, reject];
+/******/         });
+/******/         installedChunks[chunkId][2] = promise;
+
+/******/         head.appendChild(script);
+                //返回promise
+/******/         return promise;
+/******/     };</code></pre>
+<p>我们再来看看路由配置文件编译后生成的代码<code>index.js</code>, 特别注意下<code>__webpack_require__.e</code>这个异步加载函数：</p>
+<pre><code class="javascript">Router
+.home('path1')
+.addRoute({
+    path: 'path1',
+    animate: 'zoomIn',
+    viewBox: '.public-path1-container',
+    template: __webpack_require__(5),
+    //  挂载controller
+    pageInit: function pageInit() {
+        var _this = this;
+
+        console.time('route async path1');
+        // 异步加载0.js(这个文件是webpack通过code spliting自己生成的文件名)
+        // 具体异步加载代码的封装见👆分析
+        // 其中0.js包含了包含了path1这个路由下的业务代码
+        // __webpack_require__.e(0) 起的作用仅为加载chunk以及提供对于chunk加载失败错误的抛出
+        // 具体的业务代码的触发是通过__webpack_require_e(0).then(__webpack_require__.bind(null, 8)).then(function(module) { ... })进行触发
+        // __webpack_require__.bind(null, 8) 返回的是module[8]暴露出来的module
+        // 这段代码执行时,首先初始化一个module对象
+        // module = {
+        //        i: moduleId,  // 模块id
+        //        l: false,     // 加载状态
+        //        exports: {}   // 需要暴露的对象
+        //    }
+        // 通过异步加载的chunk最后暴露出来的对象是作为了module.exports.default属性
+        // 因此在第二个方法中传入的对象的default属性才是你模块8真正所暴露的对象
+        __webpack_require__.e/* import() */(0).then(__webpack_require__.bind(null, 8)).then(function (module) {
+            var controller = module.default;
+            Router.registerCtrl('path1', new controller(_this.viewBox));
+        // 添加错误处理函数，用以捕获前面可能抛出的错误
+        }).catch(function (e) {
+            return console.log('chunk loading failed');
+        });
+    },
+
+    //  进入路由跳转之前
+    beforeEnter: function beforeEnter() {},
+
+    //  路由跳转前
+    beforeLeave: function beforeLeave() {}
+})
+.addRoute({
+    path: 'path2',
+    viewBox: '.public-path2-container',
+    animate: 'zoomIn',
+    template: __webpack_require__(6),
+    pageInit: function pageInit() {
+        var _this2 = this;
+
+        __webpack_require__.e/* import() */(1).then(__webpack_require__.bind(null, 9)).then(function (module) {
+            console.time('route async path2');
+            var controller = module.default;
+            Router.registerCtrl('path2', new controller(_this2.viewBox));
+        }).catch(function (e) {
+            return console.log('chunk loading failed');
+        });
+    },
+    beforeEnter: function beforeEnter() {},
+    beforeLeave: function beforeLeave() {}
+});
+
+Router.bootstrap();</code></pre>
+<p>总结一下就是:</p>
+<p><code>webpack2</code>相比于<code>webpack1.x</code>将异步加载<code>chunk</code>的过程封装在了<code>promise</code>当中,如果<code>chunk</code>加载超时或者失败会抛出错误，这时我们可以针对抛出的错误做相应的错误处理。</p>
+<p>此外还应该注意下,<code>webpack2</code>异步加载<code>chunk</code>是基于原生的<code>promise</code>。如果部分环境暂时还不支持原生<code>promise</code>时需要提供<code>polyfill</code>。另外就是<code>require.ensure</code>可以接受第三个参数用以给<code>chunk</code>命名，但是<code>import</code>这个<code>API</code>没有提供这个方法</p>
+<p>更多的细节大家可以运行<a href="https://github.com/CommanderXL/xRoute/tree/webpack2">demo</

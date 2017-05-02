@@ -1,0 +1,188 @@
+<p>JSON可以表示一下三种类型的值：</p>
+<ul>
+<li><p>简单值：使用与js相同的语法可以在json中表示字符串、数值、布尔值和null。但是<strong>json不支持js的undefined</strong>。</p></li>
+<li><p>对象：对象作为一种复杂的数据类型，表示的是一组有序的键值对。每个键值对的值可以是简单值，也可以是复杂数据类型的值</p></li>
+<li><p>数组：数组也是一种复杂数据类型，表示一组有有序的的值列表，可以通过数值索引来访问其中的值。数组的值也可以是任意类型，简单值，对象，数组均可。</p></li>
+</ul>
+<p>json不支持变量，函数，对象实例，它就是一种表示结构化数据的格式。</p>
+<h2>简单值</h2>
+<p><strong>js字符串与json最大的区别在于json字符串必须使用双引号，单引号会导致语法错误。</strong></p>
+<h2>对象</h2>
+<p>js中的对象：</p>
+<pre><code>var person = {
+    name: "oliver",
+    age:29
+};
+</code></pre>
+<p>但在JSON中属性需要加上<strong>双引号</strong>：</p>
+<pre><code>{
+    "name": "oliver",
+    "age": 29
+}
+</code></pre>
+<p>并且<strong>没有声明变量；没有末尾的分号。</strong>绝对不能在同一个对象中出现两个同名属性。</p>
+<h2>数组</h2>
+<p>js中的数组：</p>
+<pre><code>var values = [321,"Oliver",false]
+</code></pre>
+<p>JSON中的数组：</p>
+<pre><code>[321,"Oliver",false]
+</code></pre>
+<p>JSON中没有变量和分号。</p>
+<h1>解析与序列化</h1>
+<h2>JSON对象</h2>
+<p>json流行的最主要的原因是因为json数据结构可以解析为js的对象。早期的json解析器基本上是使用js的eval（）函数。对于较早版本的浏览器，可以使用一个shim：<a href="https://github.com/douglacrockford/JSON-js"></a><a href="https://github.com/douglacrockford/JSON-js">https://github.com/douglacrockford/JSON-js</a>。对于那些不能原生支持JSON解析的浏览器，使用shim是最佳选择。ECMAScript 5对解析JSON的行为进行了规范，定义了全局对象JSON。</p>
+<p>JSON对象有两个方法：</p>
+<ul>
+<li><p><code>stringify()</code></p></li>
+<li><p><code>parse()</code></p></li>
+</ul>
+<p>在最简单的情况下，这两个方法分别用于把javascript对象序列化为JSON字符串和把JSON字符串解析为原声的javascript值。</p>
+<p>如（JSON.stringify()）：</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    other: undefined //被忽略
+};
+
+var jsontext = JSON.stringify(book);
+
+console.log(jsontext); //{"title":"javascript","authors":["oliver","troy"],"edition":2,"year":2000}
+</code></pre>
+<p>又如（JSON.parse()）：</p>
+<pre><code>var anotherBook = JSON.parse(jsontext);
+console.log(Object.keys(anotherBook).toString()); //title,authors,edition,year
+</code></pre>
+<h2>序列化选项</h2>
+<p><code>JSON.stringify()</code>除了要序列化的Javascript对象外，还可以接收另外两个参数，这两个参数用于指定以不同方式序列化javascript对象。</p>
+<p>第一个参数是一个过滤器，可以是一个<strong>数组</strong>，也可以是一个<strong>函数</strong>。</p>
+<p>第二个参数是一个选项，表示是否在JSON字符串中保留缩进。单独或组合使用这两个参数，可以全面化的控制JSON序列化。</p>
+<h3>过滤结果</h3>
+<p>当<code>JSON.stringify()</code>的第二个参数是一个数组。在返回结果中，只会包含这些属性。</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    other: undefined //被忽略
+};
+var jsontext = JSON.stringify(book,["title","authors"]);
+console.log(jsontext); //{"title":"javascript","authors":["oliver","troy"]}
+</code></pre>
+<p>如果第二个参数是函数，传入的函数接收两个参数，<strong>属性名</strong>和<strong>属性值</strong>(function (key,value))。</p>
+<p>根据属性名可以知道应该如何处理序列化的对象中的属性。属性名只能是字符串，而在值并非键值对结构的值时，键名可以是空字符串。为了改变序列化对象的结果，函数返回值就是相应键的值。如果返回undefined作为属性值，则表示跳过这个属性。</p>
+<p>如：</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    other: undefined //被忽略
+};
+var jsontext = JSON.stringify(book,function (key,value) {
+    switch (key) {
+        case "authors":
+            return value.join("-");
+            break;
+        case "edition":
+            return undefined;
+            break;
+        default:
+            return value;
+    }
+});
+console.log(jsontext); //{"title":"javascript","authors":"oliver-troy","year":2000}
+</code></pre>
+<h3>字符串缩进</h3>
+<p>当JSON.stringify()的第三个参数是用于控制结果中的缩进和空白符。如果这个参数是一个数值，表示是每个级别缩进的空格数。</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    other: undefined //被忽略
+};
+var jsonText = JSON.stringify(book,null,4);
+var pre = document.getElementById("pre");
+pre.innerHTML = jsonText;
+// {
+//     "title": "javascript",
+//     "authors": [
+//         "oliver",
+//         "troy"
+//     ],
+//     "edition": 2,
+//     "year": 2000
+// }
+</code></pre>
+<p>最大的缩进空格数是10，超过10，则设定为10.</p>
+<p>如果缩进字符串是一个字符串而非数值，则在这个字符串将在JSON字符串中被用作缩进字符。缩进字符串最多也只出现10个字符长度。</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    other: undefined //被忽略
+};
+var jsonText = JSON.stringify(book,null,"----");
+var pre = document.getElementById("pre");
+pre.innerHTML = jsonText;
+// {
+// ----"title": "javascript",
+// ----"authors": [
+// --------"oliver",
+// --------"troy"
+// ----],
+// ----"edition": 2,
+// ----"year": 2000
+// }
+</code></pre>
+<h3>
+<code>toJSON()</code>方法</h3>
+<p>toJSON()方法，为任何对象添加，它会在对象被序列化是调用，返回指定的数据，而不是整个对象的序列化数据。</p>
+<p>toJSON()方法可以作为函数过滤器的补充，因此理解序列化内部顺序十分重要。假设把一个对象传入JSON.stringify()，序列化该对象的顺序如下：</p>
+<ol>
+<li><p>如果存在toJSON()方法而且能通过它取得有效地值，则调用该方法。否则按照默认顺序执行序列化。</p></li>
+<li><p>如果提供了第二个参数，应用这个函数过滤器。传入函数过滤器的值是第一步的返回值。</p></li>
+<li><p>对第2步返回的每个值进行相应的序列化</p></li>
+<li><p>如果提供了第三个参数，执行相应的格式化</p></li>
+</ol>
+<p>如：</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    toJSON: function () {
+        return this.title + this.edition; //javascript2
+    },
+    other: undefined //被忽略
+};
+var jsonText = JSON.stringify(book);
+console.log(jsonText); //javascript2
+</code></pre>
+<h2>解析选项</h2>
+<p><code>JSON.parse()</code>方法也可以接收另一个参数，该参数是一个函数，将在每个键值对上调用。</p>
+<p>这个函数被称为<strong>还原函数</strong>，它与JSON.stringify()方法中的<strong>过滤函数</strong>有些相似，都接收键值对，返回一个值。如果还原函数返回undefined，则表示要从结果中删除相应的键，如果返回其他值，则将改值插入到结果中。</p>
+<pre><code>var book = {
+    title: "javascript",
+    authors: ["oliver", "troy"],
+    edition: 2,
+    year: 2000,
+    date: new Date(2001, 1, 1),
+    other: undefined //被忽略
+};
+var jsonText = JSON.stringify(book);
+console.log(jsonText); //{"title":"javascript","authors":["oliver","troy"],"edition":2,"year":2000,"date":"2001-01-31T16:00:00.000Z"}
+var anotherbook = JSON.parse(jsonText, function(key, value) {
+    switch (key) {
+        case "date":
+            return new Date(value);
+            break;
+        default:
+            return value;
+            break;
+    }
+})

@@ -1,0 +1,90 @@
+ax通信的一个主要限制，来源于跨域安全策略。在默认情况下，Ajax只能访问与包含它的页面位于同一个域中的资源。但是有时也需要一些跨域的请求。为了解决这个问题，现在的浏览器采用CORS（Cross-Origin Resource Sharing,跨域资源共享）策略来实现。CORS是W3C的一个工作草案，定义了必须访问跨源资源时浏览器与服务器之间如何进行沟通。这个策略的基本思想是使用自定义的HTTP头部让浏览器与服务器进行沟通，从而决定请求或响应的成功和失败。注意请求和响应都不包含cookie信息。</p>
+<h1>IE对CORS的实现</h1>
+<p>IE8中引入了XDR（ XDomainRequest） 类型， 这个对象与XHR类似， 但是能实现安全可靠的跨域通信。 XDR对象的安全机制部分实现了W3C的CORS规范。 以下是XDR与XHR的不同之处：<br>cookie不会随请求发送， 也不会随响应返回</p>
+<p>只能设置请求头部信息中的Content - Type字段</p>
+<p>不能访问响应头部信息</p>
+<p>只支持GET和POST请求</p>
+<p>XDR对象使用方法： 创建一个实例， 调用open方法， 调用send方法。 open方法只接受两个参数： 请求的类型和URL。 所有XDR的请求都是异步的。 请求返回后会触发load事件， 响应数据保存在responseText属性中。</p>
+<pre><code>var xdr = new XDomainRequest();
+xdr.onload = function() {
+    alert(xdr.responseText);
+};
+xdr.open("get", "http://www.somewhere-else.com/page/");
+xdr.send(null);
+</code></pre>
+<p>在跨域请求上唯一可以获得响应的信息就是错误本身， 因此确定响应失败的方式就是使用onerror事件。 要放到open之前使用。</p>
+<pre><code>xdr.onerror = function() {
+    alert("an error occurred!");
+}
+</code></pre>
+<p>在请求返回之前， 可以调用取消命令abort（） 方法：</p>
+<pre><code>xdr.abort(); //终止请求
+</code></pre>
+<p>与XHR一样， XDR对象也支持timeout属性以及ontimeout事件处理程序。</p>
+<pre><code>xdr.timeout = 1000;
+xdr.ontimeout = function() {
+    alert("late!")
+}
+</code></pre>
+<p>将这些处理程序添加到open之前才可以哦。<br>为了支持post请求， XDR对象提供了contentType属性， 用来表示发送数据的格式： 在open之后， send之前设置</p>
+<pre><code>xdr.contentType = "application/x-www-form-urlencoded";
+</code></pre>
+<h1>其他浏览器对CORS的实现</h1>
+<p>使用标准的XHR对象并在open()方法中传入绝对URL即可：</p>
+<pre><code>var xhr = new XMLHttpRequest();
+xhr.onload = function () {
+    if ((xhr.status &gt;= 200 &amp;&amp; xhr.status &lt; 300) || xhr.status == 304) {
+        document.getElementById("content").innerHTML = xhr.responseText;
+    } else {
+        console.log("error");
+    }
+};
+xhr.open("get", "http://www.somewhere-else.com/page/", true);
+xhr.send();
+</code></pre>
+<p>其他的浏览器都通过XMLHttpRequest对象实现了对CORS的原生支持。但是在跨域请求的时候有以下的限制：</p>
+<ul>
+<li><p>不能使用setRequestHeader()设置自定义头部。</p></li>
+<li><p>不能接受和发送cookie</p></li>
+<li><p>调用getAllResponseHeaders()方法总会返回空字符串。</p></li>
+</ul>
+<p>无论是同源请求还是跨域请求，对于本地资源最好使用相对URL，在访问远程资源时再使用绝对URL。</p>
+<h1>Preflighted　Ｒequests</h1>
+<p>透明服务器验证机制，支持开发人员使用自定义的头部，get和post之外的方法，以及不同类型的主题内容。这种请求使用OPTIONS方法，发送下列头部：</p>
+<ul>
+<li><p><code>Origin</code>：与简单的请求相同</p></li>
+<li><p><code>Access-Control-Request-Method</code>:请求自身使用的方法</p></li>
+<li><p><code>Access-Control-Request-Headers</code>:(可选)自定义头部信息，多喝头部逗号分隔。</p></li>
+</ul>
+<p>发送请求之后，服务器决定是否允许这种类型的请求。服务器通过响应发送如下的头部与浏览器进行沟通：</p>
+<ul>
+<li><p><code>Access-Control-Allow-Origin</code>:与简单的请求相同</p></li>
+<li><p><code>Access-Control-Allow-Methods</code>:允许的方法，多个方法以逗号分隔</p></li>
+<li><p><code>Access-Control-Allow-Headers</code>:允许的头部，多个头部以逗号分隔</p></li>
+<li><p><code>Access-Control-Max-Age</code>:应该将这个Preflight请求缓存多长时间（以秒表示）</p></li>
+</ul>
+<h1>带凭据的请求</h1>
+<p>通过将<code>withCredentials</code>属性设置为true，可以指定特定的请求应该发送凭据。如果服务器接收带凭据的请求，会用下面的HTTP头部响应</p>
+<pre><code>Access-Control-Allow-Credentials:true
+</code></pre>
+<h1>跨浏览器的CORS</h1>
+<pre><code>function createCORSRequest(method, url) {
+    var xhr = new XMLHttpRequest();
+    if ("withCredentials" in xhr) {
+        xhr.open(method, url, true);
+    } else if (typeof XDomainRequest != "undefined") {
+        xhr = new XDomainRequest();
+        xhr.open(method, url);
+    } else {
+        xhr = null;
+    }
+    return xhr;
+}
+var request = createCORSRequest("get", "http://somewhere-else.com/page/");
+if (request) {
+    request.onload = function() {
+        //request.responseText
+    };
+    request.send();
+
+}

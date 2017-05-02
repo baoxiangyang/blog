@@ -64,6 +64,9 @@
         h1 {
           font-size: 18px;
           padding-left: 25px;
+          height: 60px;
+          line-height: 60px;
+          margin: 0;
         }
         &:last-child {
           text-align: right;
@@ -77,6 +80,9 @@
           margin-right: 10px;
         }
       }
+    }
+    a {
+      color: #000;
     }
   }
 </style>

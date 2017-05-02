@@ -1,0 +1,469 @@
+<p>上一篇系列文章整理了<a href="http://segmentfault.com/a/1190000003088878">CSS选择器的基础使用方法</a>，因为内容较多且细致，写了很多DEMO，目前将它整理成适合移动端浏览器的<strong>CSS选择器的参考手册</strong>，方便学习CSS的人参考使用，马上就要搞定了，之后会放出 (<strong>笑脸</strong>)。</p>
+<p>本节内容会跟着上一节的内容继续完善，首先会补充CSS选择器的浏览器支持情况（主要是说IE），比如我们最常用的<code>s1,s2,…,sN</code>群组选择器在IE7时才被支持，并且IE7还支持了很多我们没有想到的选择器，如子元素选择器，属性选择器，了解后你会发现IE7还是挺了不起的。</p>
+<p>之后还会补充平常使用选择器遇到的一些问题以及解决方案，最后了解浏览器是如何读取选择器的，怎样使用选择器能达到高效率。</p>
+<h2>浏览器支持</h2>
+<h3>了不起的IE7</h3>
+<p>当我们在开发网页时，如果网页需要兼容IE6，那么自然地会把IE6和IE7浏览器归为一路货色，对于不兼容的选择器和属性都将不再考虑使用，可是你是否知道<strong>IE7</strong>相比<strong>IE6</strong>增加了许多选择器可以用，如群组选择器，相邻选择器，兄弟选择器，属性选择器。</p>
+<p>以下选择器是不支持<strong>IE6</strong>，仅支持 <strong>IE7</strong> 及以上的浏览器</p>
+<h4>基本选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>s1,s2,...,sN</td>
+  <td>群组选择器，同时匹配所有s1元素或s2元素</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E &gt; F</td>
+  <td>子元素选择器，匹配所有E元素的子元素F</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E + F</td>
+  <td>毗邻元素选择器，匹配所有紧随E元素之后的同级元素F</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E ~ F</td>
+  <td>匹配任何E标签之后的同级F标签</td>
+  <td>3</td>
+</tr>
+</tbody>
+</table>
+<h4>属性选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>E[attr]</td>
+  <td>匹配att属性的E元素</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E[attr="val"]</td>
+  <td>匹配att属性且属性值等于val的E元素</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E[attr~="val"]</td>
+  <td>匹配att属性且属性值中的词列表有一个等于val的E元素</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E[attr^="val"]</td>
+  <td>匹配att属性且属性值为以val开头的字符串的E元素</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E[attr$="val"]</td>
+  <td>匹配att属性且属性值为以val结尾的字符串的E元素</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E[attr*="val"]</td>
+  <td>匹配att属性且属性值为包含val的字符串的E元素</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E[att|="val"]</td>
+  <td>匹配att属性且属性值为以val开头并用连接符"-"分隔的字符串的E元素</td>
+  <td>2.1</td>
+</tr>
+</tbody>
+</table>
+<p>在<strong>IE7</strong>浏览器，单复选框的<code>checked</code>在属性选择器中是不被支持的，这部分内容会在下面的常见问题中详细说明。</p>
+<h4>伪类选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>E:hover</td>
+  <td>设置元素在其鼠标悬停时的样式</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E:first-child</td>
+  <td>匹配父元素的第一个子元素E</td>
+  <td>2.1</td>
+</tr>
+</tbody>
+</table>
+<p><code>E:hover</code>在IE6中只有a元素可用</p>
+<h4>伪元素选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>E:first-letter</td>
+  <td>选择文本块的第一个字母</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E:first-line</td>
+  <td>选择元素的第一行</td>
+  <td>2.1</td>
+</tr>
+</tbody>
+</table>
+<h3>平庸的IE8浏览器</h3>
+<p>虽然来到IE8的时代，但是对于新选择器的支持并不多，不过还好我们最常用的<code>E:before</code>和<code>E:after</code>配合<code>content</code>属性都在IE8中得到了很好的支持。</p>
+<p>以下选择器不支持<strong>IE6，IE7</strong>，仅支持 <strong>IE8</strong> 及以上的浏览器</p>
+<h4>伪类选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody><tr>
+<td>E:focus</td>
+  <td>设置对象在成为输入焦点时的样式</td>
+  <td>2.1</td>
+</tr></tbody>
+</table>
+<h4>伪元素选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>E:before</td>
+  <td>在元素前面插入内容，配合"content"使用</td>
+  <td>2.1</td>
+</tr>
+<tr>
+<td>E:after</td>
+  <td>在元素后面插入内容，配合"content"使用</td>
+  <td>2.1</td>
+</tr>
+</tbody>
+</table>
+<h3>狂拽炫酷*炸天的IE9</h3>
+<p>IE最好的时代就是迎接CSS3的到来，从IE9支持了一大坨新CSS3的伪类以及伪元素，我就勉强给IE使用上这个酷炫点的修饰语。</p>
+<p>以下选择器不支持<strong>IE6，IE7，IE8</strong>，仅支持 <strong>IE9</strong> 及以上的浏览器</p>
+<h4>伪类选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>E:checked</td>
+  <td>匹配用户界面上处于选中状态的元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:enabled</td>
+  <td>匹配用户界面上处于可用状态的元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:disabled</td>
+  <td>匹配用户界面上处于禁用状态的元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:root</td>
+  <td>匹配文档的根元素，对于HTML文档，就是HTML元素</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:last-child</td>
+  <td>匹配父元素的最后一个子元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:nth-last-child(n)</td>
+  <td>匹配父元素的倒数第n个子元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:nth-of-type(n)</td>
+  <td>匹配同类型中的第n个同级兄弟元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:nth-last-of-type(n)</td>
+  <td>匹配同类型中的倒数第n个同级兄弟元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:first-of-type</td>
+  <td>匹配同类型中的第一个同级兄弟元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:last-of-type</td>
+  <td>匹配同类型中的最后一个同级兄弟元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:only-child</td>
+  <td>匹配父元素仅有的一个子元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:only-of-type</td>
+  <td>匹配同类型中的唯一的一个同级兄弟元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:empty</td>
+  <td>匹配没有任何子元素（包括text节点）的元素E</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:not(s)</td>
+  <td>匹配不含有s选择符的元素</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E:target</td>
+  <td>匹配文档中特定"id"点击后的效果</td>
+  <td>3</td>
+</tr>
+</tbody>
+</table>
+<h4>伪元素选择器</h4>
+<table>
+<thead><tr>
+<th>选择器</th>
+            <th>描述</th>
+            <th>版本</th>
+        </tr></thead>
+<tbody>
+<tr>
+<td>E::first-letter</td>
+  <td>选择文本块的第一个字母</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E::first-line</td>
+  <td>选择元素的第一行</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E::before</td>
+  <td>在元素前面插入内容，配合"content"使用</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E::after</td>
+  <td>在元素后面插入内容，配合"content"使用</td>
+  <td>3</td>
+</tr>
+<tr>
+<td>E::selection</td>
+  <td>设置对象被选择时的样式</td>
+  <td>3</td>
+</tr>
+<tr></tr>
+</tbody>
+</table>
+<h3>让IE6-8支持伪类和属性选择器</h3>
+<p>如何才能让IE6~8支持CSS3伪类和属性选择器，也许你已经想到了，我们会用JavaScript工具来进行辅助，那么刚好<a href="http://selectivizr.com/">|8e50989464f7517425e2c31ba2d6dd59424|</a>就可以完成这件事情，而且使用起来很简单，只要把<code>selectivizr.js</code>引入到页面上就可以了，如下：</p>
+<pre><code>&lt;!- -[if (gte IE 6)&amp;(lte IE 8)]&gt;
+
+      &lt;script type="text/javascript" src="selectivizr.js"&gt;&lt;/script&gt;
+
+&lt;![endif]- -&gt;</code></pre>
+<p>但是使用它还有一些注意事项：</p>
+<ol>
+<li><p>必须要引用一个JavaScript库，比如jQuery</p></li>
+<li><p>只能解析<code>&lt;link&gt;</code>标签引入的样式，如果是<code>&lt;style&gt;</code>定义的样式是不会解析的</p></li>
+<li><p>动态生成的DOM不会做二次映射</p></li>
+<li><p>需要在标准模式的DTD才能够生效</p></li>
+</ol>
+<p>项目地址：<a href="http://selectivizr.com">http://selectivizr.com</a></p>
+<h2>常见问题与Bug</h2>
+<h3>
+<code>*</code> 通配符造成继承失效</h3>
+<pre><code>* {
+    color:red;
+}
+
+#test{
+    color:blue; 
+}</code></pre>
+<pre><code>&lt;div id='test'&gt;
+    &lt;a href="#"&gt;text&lt;/a&gt;
+&lt;/div&gt;</code></pre>
+<p>▲ 最终text的颜色却是红色的</p>
+<p>按照我们的理解，<code>id</code>的优先级是高于<code>*</code>通配符的，而文字也本应该继承<code>id</code>元素的color值，所以最终的文字应该是蓝色呀。</p>
+<p>所以这里混淆了一个概念，继承的样式的优先级永远低于元素本身的样式，包括通配符选择器，所以大家在开发中，应该尽可能的避免滥用通配符，以免带来一些隐性问题。</p>
+<p>关于这个问题，还可以参考《<a href="http://segmentfault.com/a/1190000000453851">关于CSS特殊性的问题</a>》</p>
+<p>而在IE6及更早浏览器并不支持通配选择符(<code>*</code>)，只是将它忽略了，所以也变相的能看到效果。</p>
+<h3>E:hover 失效</h3>
+<p><code>E:hover</code>伪类用于设置元素在其鼠标悬停时的样式，但是在某种情况会导致效果失效，如下:</p>
+<pre><code>#test {
+    background:red;
+}
+#test div { 
+    display:none;
+}
+#test:hover div{
+    display:block;
+    background:yellow;
+}</code></pre>
+<pre><code>&lt;div id="test"&gt;触发我&lt;div&gt;看到我了吧&lt;/div&gt;&lt;/div&gt;</code></pre>
+<p>▲ 当触发<code>#test:hover</code>时，此效果是在<strong>IE6</strong>中是无效的，因为在IE6中，<code>E:hover</code>伪类仅能用于a（超链接）对象，且该<code>a</code>对象必须要拥有<code>href</code>属性。</p>
+<p><code>E:hover</code>还有一种失效的状态，是大家最常见的，代码如下：</p>
+<pre><code>a:link {color:gray;}
+a:hover{color:green;}
+a:visited{color:yellow;}
+a:active{color:blue;}</code></pre>
+<pre><code>&lt;a href="#nogo"&gt;文字&lt;/a&gt;</code></pre>
+<p>▲ 当超链接处于<code>a:hover</code>时，你会发现其效果是无效，文字的颜色不会变成绿色，这是因为超链接的伪类样式书写是有固定顺序的，不能颠倒，这四个属性正确的定义顺序为：</p>
+<pre><code>a:link {}
+a:visited {}
+a:hover {}
+a:active {}</code></pre>
+<h3>E:focus 失效</h3>
+<pre><code>
+#test:focus + p {
+    font-weight:bold;
+}</code></pre>
+<pre><code>&lt;button id="test"&gt;点击我触发focus&lt;/button&gt;
+&lt;p&gt;文字&lt;/p&gt;</code></pre>
+<p>▲ 当点击<code>button</code>按钮触发<code>:focus</code>时将邻近元素的文字进行加粗，但是这个效果在<strong>IE8</strong>是失效的，如何来修复它呢，只需要添加一个空的<code>:focus</code>选择器，如下：</p>
+<pre><code>#test:focus + p {
+    font-weight:bold;
+}
+#test:focus {}</code></pre>
+<h3>E:first-line 失效</h3>
+<p>如果在当前选择器内使用了<code>!important</code>，<code>:first-line</code>伪类内部的定义的属性会被完全忽略，示例：</p>
+<pre><code>p {
+    color:blue;
+}
+p:first-line {
+    color:red !important;
+}</code></pre>
+<pre><code>&lt;p&gt;第一行文字，&lt;br/&gt;第二行文字&lt;/p&gt;</code></pre>
+<p>▲ 正常情况下第一行的文字会变成红色，但是在IE8浏览器却忽略它没有任何变化，如何来解决这个问题呢，把<code>!important</code>去掉就好了，如下：。</p>
+<pre><code>p {
+    color:blue;
+}
+p:first-line {
+    color:red;
+}</code></pre>
+<h3>E:first-letter 失效</h3>
+<p><code>E:first-letter</code>失效和<code>E:first-line</code>失效的问题是相同的，解决方案请参考上方。</p>
+<h3>E &gt; F 失效</h3>
+<p>就是子选择器中间有注释会导致属性失效，如下：</p>
+<pre><code>#test &gt; 
+/*子选择器*/
+p {
+    color:red;
+}</code></pre>
+<pre><code>&lt;div id="test"&gt;
+    &lt;p&gt;文字&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+<p>▲  如果你非要这样写注释，那么在IE7下会导致子选择器失效，同样，<code>E + F</code>邻近选择器也有同样的问题，如何解决呢，不在选择器中间添加注释就可以了。</p>
+<h2>性能优化</h2>
+<p>CSS 选择器我们都在使用，但是如何让它变的更简洁，高效呢？ <br>首先选择器对性能的影响源于<strong>浏览器匹配选择器和文档元素时所消耗的时间</strong>，所以优化选择器的原则是应尽量避免使用消耗更多匹配时间的选择器，但是在此之前我们需要先了解浏览器的匹配机制，就是它是如何读取我们的选择器的。</p>
+<h3>选择器匹配机制</h3>
+<pre><code>#nav &gt; a {
+    color:red;
+}</code></pre>
+<p>当我们看到这个选择器的时候，会认为首先会找到id为<code>nav</code>的元素，然后在找到其子元素，将样式属性应用到<code>a</code>元素上。</p>
+<p>事实上，却恰恰相反，因为浏览器读取选择器时，不是按照我们的阅读习惯从左到右，而是遵循的<strong>从选择器的右边到左边进行读取的</strong>。</p>
+<p>当我们知道这个匹配机制后，再回来看这个选择器，浏览器必须先遍历页面中所有的 a 元素，然后查找其父元素的<code>id</code>是否为<code>nav</code>，这样一来你就会发看似高效的选择器在实际中的匹配开销是很高的。</p>
+<p>理解了CSS选择器从右到左匹配的机制后，我们再看以下两种选择器：</p>
+<pre><code>div #nav</code></pre>
+<pre><code>#nav div</code></pre>
+<p>你是否会认为第2种选择器的效率要高于第1种，那么就错了，其实第一个选择器的效率更高，因为第一个选择器的<strong>关键选择器</strong>使用了<code>#id</code>选择器”，而第二个选择器的<strong>关键选择器</strong>使用的是<code>div</code>标签选择器。</p>
+<p>这里所说的<strong>关键选择器</strong>，就是CSS选择器中最右边部分，它是被浏览器最先寻找的，那么哪类选择器是最高效的？哪个是会影响选择器效率的关键选择器？</p>
+<h3>选择器效率</h3>
+<p>在上面内容中我们了解浏览器的匹配机制，以及关键选择器的重要性，那么哪些CSS选择器能够减少性能损耗呢？</p>
+<p>Google 资深web开发工程师 <a href="http://stevesouders.com/">Steve Souders</a> 对 CSS 选择器的执行效率从高到低做了一个排序：</p>
+<ol>
+<li><p>id选择器（#id）</p></li>
+<li><p>类选择器（.className）</p></li>
+<li><p>标签选择器（div,h1,p）</p></li>
+<li><p>相邻选择器（h1+p）</p></li>
+<li><p>子选择器（ul &gt; li）</p></li>
+<li><p>后代选择器（li a）</p></li>
+<li><p>通配符选择器（*）</p></li>
+<li><p>属性选择器（a[rel="external"]）</p></li>
+<li><p>伪类选择器（a:hover,li:nth-child）</p></li>
+</ol>
+<p>从Steve Souders的<code>CSS Test</code>我们可以看出<code>#id</code>选择器和<code>.className</code>类选择器在速度上的差异很小很小。而在一个<code>a</code>标签选择器的测试上显示，它比<code>#id</code>选择器和类选择器的速度慢了很多，从这里我们可以看出<code>#id</code>、<code>.className</code>选择器 和 <code>a</code>标签、<code>li a</code>后代选择器中间的差异较大，但是相互之间的差异较小。</p>
+<p>接下来举几个示例：</p>
+<pre><code>#nav {}
+.menu{}</code></pre>
+<pre><code>p#nav {}
+p.menu {}</code></pre>
+<p>▲ 上面的选择器效率要高于下面的选择器，标签元素会降低选择器效率</p>
+<h3>优化建议</h3>
+<p>我们理解了CSS选择器从右到左匹配的机制，也了解关键选择器的重要性，以及CSS选择器的效率排序，那么在使用选择器的时候，通过避免不恰当的使用，来提升 CSS 选择器性能。</p>
+<h4>避免使用通用选择器</h4>
+<pre><code>#nav * {…}</code></pre>
+<p>▲ 这个选择器所做的是选择所有在页面上的单个元素（是每个单个的元素），然后去看看它们是否有一个<code>#nav</code>的父元素。这是非常不高效选择器，开销太大了，应该避免关键选择器是通配选择器的情况。</p>
+<h4>避免使用标签或 class 选择器限制 id 选择器</h4>
+<pre><code>/* Bad */
+div#nav {…}
+.menuBalck#menu {…}
+
+/* Good */
+#nav {…}
+#menu {…}</code></pre>
+<p>▲ ID选择器本身就是唯一的，加上div反而增加不必要的匹配；</p>
+<h4>避免使用标签限制 class 选择器</h4>
+<pre><code>/* Bad */
+span.red {…}
+
+/* Good */
+.text-red {…}</code></pre>
+<p>▲ 在标签上定义<code>class</code>选择器，在开发和维护时容易混淆，一般不建议这样写。</p>
+<h4>避免使用多层标签选择器。使用 class 选择器替换，减少css查找</h4>
+<pre><code>/* Bad */
+a[href="#"] &gt; span &gt; em {…}
+
+/* Good */
+.className {}</code></pre>
+<p>▲ 这种情况建议直接定义.className 选择器，然后使用<code>&lt;em class="className"&gt;&lt;/em&gt;</code></p>
+<h4>避免过渡使用子选择器</h4>
+<pre><code>/* Bad */
+div ul li a {}
+div &gt; ul &gt; li &gt; a {}
+
+/* Good */
+.className {…}</code></pre>
+<p>▲ 这种情况建议直接定义.className 选择器，然后使用<code>&lt;a class="className"&gt;&lt;/a&gt;</code></p>
+<h4>避免过度限制选择器</h4>
+<pre><code>/* Bad */
+html body .wrapper #content a {}
+
+/* Good */
+#content a {}</code></pre>
+<p>▲ 这里至少有3个选择器是完全不需要的，过度限制选择器使浏览器工作比它实际需要的更繁重，花费的时间更多，所以这里应该避免。</p>
+<h4>利用可继承性</h4>
+<pre><code>/* Bad */
+#nav &gt; li &gt; a { color:red; } 
+
+/* Good */
+#nav { color:red; }</code></pre>
+<p>▲ 在使用选择器之前，请先考虑利用继承性实现</p>
+<p>下一节继续整理选择器的优先

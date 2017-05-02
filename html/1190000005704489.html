@@ -1,0 +1,115 @@
+试环境发布更新的时候，同事问：“<strong>为什么我需要手动清理浏览器缓存才能看到变更？难道系统上线后也需要客户自己清理浏览器缓存吗</strong>！”看来，这个坑需要我来填了。</p>
+<h2>什么是浏览器缓存</h2>
+<p><code>浏览器缓存(Brower Caching)</code>是浏览器在本地磁盘对用户最近请求过的文档进行存储，当访问者再次访问同一页面时，浏览器就可以直接从本地磁盘加载文档。</p>
+<p>浏览器缓存的优点有：</p>
+<ol>
+<li><p>减少了冗余的数据传输，节省了网费</p></li>
+<li><p>减少了服务器的负担，大大提升了网站的性能</p></li>
+<li><p>加快了客户端加载网页的速度</p></li>
+</ol>
+<p>在前端开发面试中，浏览器缓存是web性能优化面试题中很重要的一个知识点，从而说明浏览器缓存是提升web性能的一大利器，但是浏览器缓存如果使用不当，也会产生很多问题，正所谓是，想说爱你，并不是很容易的事。所以，结合最近遇到的案例，本文对浏览器缓存相关的知识进行总结归纳，希望对读者有所帮助。</p>
+<h2>浏览器缓存的分类</h2>
+<p>浏览器缓存主要有两类：<code>缓存协商</code>和<code>彻底缓存</code>，也有称之为<code>协商缓存</code>和<code>强缓存</code>。</p>
+<p>浏览器在第一次请求发生后，再次请求时：</p>
+<ol>
+<li><p>浏览器会先获取该资源缓存的header信息，根据其中的<code>expires</code>和<code>cahe-control</code>判断是否命中<code>强缓存</code>，若命中则直接从缓存中获取资源，包括缓存的header信息，本次请求不会与服务器进行通信；</p></li>
+<li><p>如果没有命中强缓存，浏览器会发送请求到服务器，该请求会携带第一次请求返回的有关缓存的header字段信息（Last-Modified/IF-Modified-Since、Etag/IF-None-Match）,由服务器根据请求中的相关header信息来对比结果是否命中协商缓存，若命中，则服务器返回新的响应header信息更新缓存中的对应header信息，但是并不返回资源内容，它会告知浏览器可以直接从缓存获取；否则返回最新的资源内容</p></li>
+</ol>
+<h3>强缓存</h3>
+<p>强缓存是利用http的返回头中的<code>Expires</code>或者<code>Cache-Control</code>两个字段来控制的，用来表示资源的缓存时间。</p>
+<p><strong>Expires</strong><br>该字段是http1.0时的规范，它的值为一个绝对时间的GMT格式的时间字符串，比如<code>Expires:Mon,18 Oct 2066 23:59:59</code> GMT。这个时间代表着这个资源的失效时间，在此时间之前，即命中缓存。这种方式有一个明显的缺点，由于失效时间是一个绝对时间，所以当服务器与客户端时间偏差较大时，就会导致缓存混乱。</p>
+<p><strong>Cache-Control</strong><br>Cache-Control是http1.1时出现的header信息，主要是利用该字段的<code>max-age</code>值来进行判断，它是一个相对时间，例如Cache-Control:max-age=3600，代表着资源的有效期是3600秒。cache-control除了该字段外，还有下面几个比较常用的设置值：</p>
+<ul>
+<li><p>no-cache：不使用本地缓存。需要使用缓存协商，先与服务器确认返回的响应是否被更改，如果之前的响应中存在ETag，那么请求的时候会与服务端验证，如果资源未被更改，则可以避免重新下载。</p></li>
+<li><p>no-store：直接禁止游览器缓存数据，每次用户请求该资源，都会向服务器发送一个请求，每次都会下载完整的资源。</p></li>
+<li><p>public：可以被所有的用户缓存，包括终端用户和CDN等中间代理服务器。</p></li>
+<li><p>private：只能被终端用户的浏览器缓存，不允许CDN等中继缓存服务器对其缓存。</p></li>
+</ul>
+<p><strong>Cache-Control与Expires可以在服务端配置同时启用，同时启用的时候Cache-Control优先级高。</strong></p>
+<h3>协商缓存</h3>
+<p>协商缓存就是由服务器来确定缓存资源是否可用，所以客户端与服务器端要通过某种标识来进行通信，从而让服务器判断请求资源是否可以缓存访问，这主要涉及到下面两组header字段，这两组搭档都是<code>成对</code>出现的，即第一次请求的响应头带上某个字段（<code>Last-Modified</code>或者<code>Etag</code>），则后续请求则会带上对应的请求字段（<code>If-Modified-Since</code>或者<code>If-None-Match</code>），若响应头没有Last-Modified或者Etag字段，则请求头也不会有对应的字段。</p>
+<p><strong>Last-Modify/If-Modify-Since</strong></p>
+<p>浏览器第一次请求一个资源的时候，服务器返回的header中会加上Last-Modify，Last-modify是一个时间标识该资源的最后修改时间，例如Last-Modify: Thu,31 Dec 2037 23:59:59 GMT。</p>
+<p>当浏览器再次请求该资源时，request的请求头中会包含If-Modify-Since，该值为缓存之前返回的Last-Modify。服务器收到If-Modify-Since后，根据资源的最后修改时间判断是否命中缓存。</p>
+<p>如果命中缓存，则返回304，并且不会返回资源内容，并且不会返回Last-Modify。</p>
+<p><strong>ETag/If-None-Match</strong></p>
+<p>与Last-Modify/If-Modify-Since不同的是，Etag/If-None-Match返回的是一个校验码。ETag可以保证每一个资源是唯一的，资源变化都会导致ETag变化。服务器根据浏览器上送的If-None-Match值来判断是否命中缓存。</p>
+<p>与Last-Modified不一样的是，当服务器返回304 Not Modified的响应时，由于ETag重新生成过，response header中还会把这个ETag返回，即使这个ETag跟之前的没有变化。</p>
+<p><strong>为什么要有Etag</strong></p>
+<p>你可能会觉得使用Last-Modified已经足以让浏览器知道本地的缓存副本是否足够新，为什么还需要Etag呢？HTTP1.1中Etag的出现主要是为了解决几个Last-Modified比较难解决的问题：</p>
+<ul>
+<li><p>一些文件也许会周期性的更改，但是他的内容并不改变(仅仅改变的修改时间)，这个时候我们并不希望客户端认为这个文件被修改了，而重新GET；</p></li>
+<li><p>某些文件修改非常频繁，比如在秒以下的时间内进行修改，(比方说1s内修改了N次)，If-Modified-Since能检查到的粒度是s级的，这种修改无法判断(或者说UNIX记录MTIME只能精确到秒)；</p></li>
+<li><p>某些服务器不能精确的得到文件的最后修改时间。</p></li>
+</ul>
+<p><strong>Last-Modified与ETag是可以一起使用的，服务器会优先验证ETag，一致的情况下，才会继续比对Last-Modified，最后才决定是否返回304。</strong></p>
+<p>强缓存与协商缓存的区别可以用下表来表示：</p>
+<table>
+<thead><tr>
+<th>缓存类型</th>
+<th>获取资源形式</th>
+<th>状态码</th>
+<th>发送请求到服务器</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>强缓存</td>
+<td>从缓存取</td>
+<td>200（from cache）</td>
+<td>否，直接从缓存取</td>
+</tr>
+<tr>
+<td>协商缓存</td>
+<td>从缓存取</td>
+<td>304（Not Modified）</td>
+<td>否，通过服务器来告知缓存是否可用</td>
+</tr>
+</tbody>
+</table>
+<h2>用户行为对缓存的影响</h2>
+<table>
+<thead><tr>
+<th>用户操作</th>
+<th>Expires/Cache-Control</th>
+<th colspan="2">Last-Modied/Etag</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>地址栏回车</td>
+<td>有效</td>
+<td colspan="2">有效</td>
+</tr>
+<tr>
+<td>页面链接跳转</td>
+<td>有效</td>
+<td colspan="2">有效</td>
+</tr>
+<tr>
+<td>新开窗口</td>
+<td>有效</td>
+<td colspan="2">有效</td>
+</tr>
+<tr>
+<td>前进回退</td>
+<td>有效</td>
+<td colspan="2">有效</td>
+</tr>
+<tr>
+<td>F5刷新</td>
+<td>无效</td>
+<td colspan="2">有效</td>
+</tr>
+<tr>
+<td>Ctrl+F5强制刷新</td>
+<td>无效</td>
+<td colspan="2">无效</td>
+</tr>
+</tbody>
+</table>
+<h2>实际问题分析</h2>
+<p>如文章开头所属，代码更新到线上后用户浏览器不能自行更新，我们不能要求客户在系统更新后都进行一次缓存清理的操作。</p>
+<p><strong>到底该如何解决呢？</strong></p>
+<p>在资源请求的URL中增加一个参数，比如：js/mian.js?ver=0.7.1。这个参数是一个版本号，每一次部署的时候变更一下，当这个参数变化的时候，强缓存都会失效并重新加载。这样一来，静态资源，部署以后就需要重新加载。这样就比较完美的解决了问题。</p>
+<h2>进一步思考</h2>
+<p>这样做是不是最完美的呢？很遗憾，不是。</p>
+<p>至于有什么更好的建议，希望大家在留言区进行讨论。<

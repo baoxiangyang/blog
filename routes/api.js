@@ -1,6 +1,9 @@
 let router = require('koa-router')(),
-	mongo = require('../dbs/mongodb.js');
-
+	mongo = require('../dbs/mongodb.js'),
+	fs = require('fs'),
+	fsPromise = require('../common/fsPromise.js'),
+	path = require('path');
+//获取文章列表
 router.post('/articleList', async function (ctx, next) {
 	let findObj = {
 		currentPage: ctx.request.body.currentPage,
@@ -49,12 +52,38 @@ router.post('/articleList', async function (ctx, next) {
 	
 	let articleData = await mongo.findArticleArr(findObj);
 	ctx.body = {
-		state: 0,
+		error: 0,
 		data: {
 			articleData
 		},
 		msg: '获取文章列表成功'
 	};
 });
-
+//获取文章详情
+router.post('/articleDatails', async function(ctx, next){
+	let id = ctx.request.body.id,
+		filePath = './html/'+ id +'.html';
+	if(fs.existsSync(filePath)){
+		let data = await fsPromise(filePath, 'readFile');
+		if(data.error){
+			ctx.body = {
+				error: -2,
+				msg: '读取文章失败请稍后再试！',
+				data: null
+			};
+			return false;
+		}
+		ctx.body = {
+			error: 0,
+			msg: '',
+			data: data.data
+		}; 
+	}else{
+		ctx.body = {
+			error: -1,
+			msg: '此文章不存在',
+			data: null
+		}; 
+	}
+});
 module.exports = router;

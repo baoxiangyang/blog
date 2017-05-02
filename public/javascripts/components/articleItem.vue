@@ -1,6 +1,6 @@
 <template>
 	<section class="articleItem">
-      <h3>{{detailsData.title}} <small >作者：<span>{{detailsData.author}}</span> 时间：<time :datetime="detailsData.time">{{detailsData.timeMsg}}</time></small ></h3>
+      <h3><router-link :to="{name: 'articleDetails', params: { id: detailsData.id }}">{{detailsData.title}}</router-link> <small >作者：<span>{{detailsData.author}}</span> 时间：<time :datetime="detailsData.time">{{detailsData.timeMsg}}</time></small ></h3>
       <div>{{detailsData.description}}</div>
       <p>
         <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in detailsData.label">{{item}}</el-tag>

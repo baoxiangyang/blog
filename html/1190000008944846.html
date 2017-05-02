@@ -1,0 +1,76 @@
+<p>最近有人给我的 <a href="https://github.com/lin-xin/vue-manage-system">Vue2 后台管理系统解决方案</a> 提了 issue ，说执行 npm run build 构建项目的时候极其慢，然后就引起我的注意了。在项目中，引入了比较多的第三方库，导致项目大，而每次修改，都不会去修改到这些库，构建却都要再打包这些库，浪费了不少时间。所以，把这些不常变动的第三方库都提取出来，下次 build 的时候不再构建这些库，这样既可大大缩短构建时间。那么要怎么去实现呢？</p>
+<h2>解决方案</h2>
+<h3>DllPlugin 和 DllReferencePlugin</h3>
+<p>查找了一下资料，发现我们可以利用 webpack 的插件 DllPlugin 和 DllReferencePlugin 来实现我们要的功能。</p>
+<p>DllPlugin 可以把我们需要打包的第三方库打包成一个 js 文件和一个 json 文件，这个 json 文件中会映射每个打包的模块地址和 id，DllReferencePlugin 通过读取这个json文件来使用打包的这些模块。</p>
+<p>接下来就看如何实现。</p>
+<h3>配置文件</h3>
+<p>在 build 文件夹中新建 webpack.dll.config.js (项目基于 vue-cli 的)</p>
+<pre><code class="javascript">const path = require('path');
+const webpack = require('webpack');
+
+module.exports = {
+  entry: {
+    vendor: ['vue/dist/vue.common.js','vue-router', 'babel-polyfill','axios','vue-echarts-v3']
+  },
+  output: {
+    path: path.join(__dirname, '../static/js'),
+    filename: '[name].dll.js',
+    library: '[name]_library'       // vendor.dll.js中暴露出的全局变量名
+  },
+  plugins: [
+    new webpack.DllPlugin({
+      path: path.join(__dirname, '.', '[name]-manifest.json'),
+      name: '[name]_library'
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false
+      }
+    })
+  ]
+};</code></pre>
+<p>然后在 package.json 中配置命令</p>
+<pre><code class="javascript">"scripts": {
+    ...
+    "build:dll": "webpack --config build/webpack.dll.conf.js"
+}</code></pre>
+<p>执行 npm run build:dll 命令来生成 vendor.dll.js 和 vendor-manifest.json</p>
+<p>需要在 index.html 引入 vendor.dll.js</p>
+<pre><code class="html">&lt;body&gt;
+    &lt;div id="app"&gt;&lt;/div&gt;
+    &lt;script src="./static/js/vendor.dll.js"&gt;&lt;/script&gt;
+&lt;/body&gt;</code></pre>
+<p>vendor-manifest.json 的内容大概如下：</p>
+<pre><code>{
+  "name": "vendor_library",
+  "content": {
+    "./node_modules/core-js/modules/_export.js": {
+      "id": 0,
+      "meta": {}
+    },
+    ...
+}</code></pre>
+<p>接下来就在 webpack.base.config.js 中通过 DLLReferencePlugin 来使用 DllPlugin 生成的 DLL Bundle</p>
+<pre><code class="javascript">var webpack = require('webpack');
+
+module.exports = {
+    entry: {
+        app: ['./src/main.js']
+    },
+    module: {
+        ...
+    }
+    // 添加DllReferencePlugin插件
+    plugins: [
+        new webpack.DllReferencePlugin({
+            context: path.resolve(__dirname, '..'),
+            manifest: require('./vendor-manifest.json')
+        }),
+    ]
+}</code></pre>
+<p>原先 build 需要 95446ms，配置之后执行 build 只需 14360ms，减少了 75% 的时间。</p>
+<p>但是存在一个问题，当把太多的第三方依赖都打包到 vendor.dll.js 中去，该文件太大也会影响首屏加载时间。所以要权衡利弊，可以异步加载的插件就没有必要打包进来了，不要一味的把所有都打包到这里面来获取构建时的快感。</p>
+<h3>示例地址：<a href="https://github.com/lin-xin/vue-manage-system">vue-manage-system</a>
+</h3>
+<h3>个人博客：<a href="https://github.com/lin-xin/blog">lin-xin/

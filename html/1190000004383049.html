@@ -1,0 +1,52 @@
+<p>首先举个例子，iphone6s的像素分辨率为1334x750,326ppi,4.7英寸。如图<br>下面我们一个一个来解释。<br><img data-src="/img/bVsvUM" src="/img/bVsvUM.png"></p>
+<h2>像素密度</h2>
+<h3>A.定义</h3>
+<p>326ppi代表的就是像素密度(pixels per inch),指的是每英寸的长度上排列的像素点数量。</p>
+<h5>a.屏幕分辨率</h5>
+<p>首先1334x750，代表的是屏幕分辨率，也就是说iPhone6s的屏幕是由纵向像素1334*横向像素750个像素点组成。单位pixel。</p>
+<h5>b.物理尺寸</h5>
+<p>如图可以知道，4.7英寸也就指的是iPhone6s屏幕对角线的物理长度。1英寸是一个固定长度，等于2.54厘米。</p>
+<h3>B.像素密度的计算</h3>
+<p>像素密度=对角线分辨率/屏幕尺寸。如下<br><strong>计算</strong>:勾股定理算出对角线的分辨率：√(1334²+750²)</p>
+<pre><code>    对角线分辨率除以屏幕尺寸：√(1334²+750²)/4.7≈440dpi。</code></pre>
+<h3>C.直观感受理解像素密度</h3>
+<p>像素密度越高，代表屏幕显示效果越精细。Retina屏比普通屏清晰很多，就是因为Retina屏幕像素密度高。最明显的就是iPhone 3GS和iPhone 4的区别。屏幕尺寸一样因为屏幕分辨率相差一倍所以屏幕像素密度也相差一倍。显示效果如下<br><img data-src="/img/bVsvWG" src="/img/bVsvWG.png"><br>如图看出iPhone4显示要比iPhone 3gs清晰的多。根本原因是因为iPhone3gs的1个像素点的大小相对于iPhone4来说等于它屏幕的4个(2x2)像素大小。如下图。<br><img data-src="/img/bVsvWK" src="/img/bVsvWK.png"></p>
+<p><strong>注意注意注意:</strong>这里的1像素指的是物理设备的1个像素点。也就是说不同像素密度的物理设备的一个像素点的大小是不一样的。也就意味着对于物理设备屏幕的单个像素点的大小是不是一个固定的大小。用稍微专业一点的话来说就是，单个的设备像素的大小是不定的。</p>
+<h2>重要概念理解</h2>
+<p>上面我们讨论的是关于物理设备的像素密度(再次强调:这里的像素就是物理像素或者说是设备像素，对应于像素密度不同的设备具体像素点的大小都是不一样大的。像素密度越大，像素点越小，显示的细节就越多越丰富。反之则情况刚好相反)。那么接下来我们要说的几个重要概念是什么呢？我们先从css像素与设备像素开始讨论。</p>
+<h3>A.css像素和设备像素</h3>
+<p>首先我们需要明确一点:在我们编写CSS的时候的px和设备自身的px是没有任何关系的。</p>
+<ul>
+<li><p>css pixel:浏览器使用的抽象单位，主要用来在网页上绘制内容。</p></li>
+<li><p>device pixel:显示屏幕的最小物理单位，每个dp包含自己的颜色、亮度。</p></li>
+</ul>
+<p>既然css pixel与device pixel没有任何关系，那么我们在编写页面时怎么设置多宽(用多少的<code>css像素</code>)的网页才能适配不同的设备(才能覆盖<code>设备的像素</code>)呢？？？为了解决这个问题，我们再引入一个重要的概念viewport。</p>
+<h3>B.viewport</h3>
+<p>viewport翻译过来就是视口的意思。viewport有两种,一种是layout viewport,还有一种是visual viewport。这两种viewport的大小都是以<code>css像素</code>进行绘制的。</p>
+<ul>
+<li><p><strong>1.layout viewport</strong>:把layout viewport想象成为不会变更大小和形状的大图。现在想像你有一个小一些的框架，你通过它来看这张大图。（可以理解为「管中窥豹」）这个小框架的周围被不透明的材料所环绕，这掩盖了你所有的视线，只留这张大图的一部分给你。你通过这个框架所能看到的大图的部分就是visual viewport。当你保持框架（缩小）来看整个图片的时候，你可以不用管大图，或者你可以靠近一些（放大）只看局部。你也可以改变框架的方向，但是大图（layout viewport）的大小和形状永远不会变。<br><strong>计算:</strong><code>document.documentElement.clientWidth/Height</code></p></li>
+<li><p><strong>2.visual viewport</strong>:是页面当前显示在屏幕上的部分。用户可以通过滚动来改变他所看到的页面的部分，或者通过缩放来改变visual viewport的大小。<br><strong>计算:</strong><code>window.innerWidth/Height</code></p></li>
+</ul>
+<p>当你缩小或者放大页面时，visual viewport的大小会发生变化。当你放大页面，能看到页面的内容也就越少，当你缩小页面能看到的页面内容也就越多。根本上是因为当你缩小或者放大网页时，网页上的<code>css像素</code>就变小或者变大了，但是layout viewport的大小是不变的。也就意味着，当<code>css像素</code>变大时，layout viewport中能容纳的单位css像素也就变少了，因此visual viewport的大小就变小了。反之也是一个道理。这个过程中，layout viewport并不会发生任何变化(当然，在窗口的大小发生变化的时候，layout viewport的大小也会随之变化，窗口越大能够容纳的CSS像素越多，layout viewport也就越大，反之亦然)。如图<br><img data-src="/img/bVsv2n" src="/img/bVsv2n.png"><br><strong>1:1</strong><br><img data-src="/img/bVsv2z" src="/img/bVsv2z.png"><br><strong>1:1.3</strong></p>
+<p>因此可以把layout viewport想象成为一个虚拟的"<code>窗口</code>"。窗口可大于或小于设备的<code>可视区域</code>(也就是visual viewport)，一般设备默认layout viewport大于visual viewport。这样不会破坏没有针对设备的浏览器优化的网页的布局，用户可以通过平移和缩放来看网页的其他部分。</p>
+<p>部分机型默认layout viewport:<br><img data-src="/img/bVsv3r" src="/img/bVsv3r.png"><br>你也可以通过上面给出的<code>document.documentElement.clientWidth/Height</code>在chrome控制台中进行测试layout viewport的大小。</p>
+<h3>C.小总结1</h3>
+<p>根据以上的讨论我们知道了:</p>
+<ol>
+<li><p>我们写页面时是在layout viewport上进行的布局，用的是<code>css像素</code>，可以由<code>document.documentElement.clientWidth/Height</code>计算。(与程序员相关)</p></li>
+<li><p>各种设备的屏幕分辨率表示的像素是<code>设备像素</code>可以由<code>screen.width/height</code>计算。(与硬件产品相关)</p></li>
+<li><p>我们观看页面时是通过visual viewport进行观看的，用的也是<code>css像素</code>，可以由<code>window.innerWidth/Height</code>来计算。(与用户行为相关)</p></li>
+</ol>
+<h2>设置layout viewport大小</h2>
+<p>通过上面的讨论，我们知道，屏幕的分辨率的设备像素与我们编写页面时使用的CSS像素并没有什么直接关系。而且<br><strong>问题1.从大的方面来看</strong>:首先，我们编写的CSS是在<strong>layout viewport</strong>中绘制。其次，从下图可以看出，设备分辨率和<strong>layout viewport</strong>也没有什么直接关系<br><strong>问题2.从小的方面</strong>来看:首先， CSS像素在不放大和缩小的情况下，在任何设备中的<code>1个CSS像素</code>都是一样大的。其次，不同像素密度的设备，<strong>设备屏幕(与像素密度有关)</strong>中的<code>1个设备像素</code>的大小是各不相同的。可以知道，在没有进行任何设置的情况下，单位设备像素与单位css像素也扯不上什么关系。<br><img data-src="/img/bVsv3t" src="/img/bVsv3t.png"></p>
+<h3>设置viewport</h3>
+<p>如果我们想要自己写出来的页面在各个设备下都工作良好，就会出现困难？因此为了让他们之间扯上关系，我们便需要做一些设置。像下面这样</p>
+<p><code>&lt;meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"&gt;</code></p>
+<p>每个设置对应的意思<br><img data-src="/img/bVswa5" src="/img/bVswa5.png"></p>
+<p>这样设置了之后，我们的layout viewport的大小也就与设备大小相等了(高度上也是相等的)。如图。既然它们相等那么可以推理得出此时的单位设备像素和单位CSS像素在缩放比例为1的情况下，也就是相等的了。</p>
+<p>这时候我们显示的页面的屏幕和我们布局页面的大小是一样的，那么在进行布局的时候，也就容易了很多。<br><img data-src="/img/bVsweU" src="/img/bVsweU.png"></p>
+<h3>小总结2:</h3>
+<p>知道了这样设置后，对于我们布局来说问题也就不大了。<br>1.我们在layout viewport上布局，这样设置后，layout viewport的大小等于设备屏幕的大小<br>2.不同像素密度的设备的单位设备像素大小的变化也就会同步引起单位CSS像素大小的变化。也就是说，我们在用CSS编写网页的时候，在不同像素密度的设备中的css像素大小是不一样的是变化的。(这里一定要理解)。</p>
+<p>但是，这里还有一个问题，iphone6 plus 414这个宽度是从哪里来的呢？</p>
+<h2>像素密度与转换系数</h2>
+<p>Android和IOS都会通过转换系数让控件适应屏幕的尺寸。而这个转换系数就和最开始讲的像素密度PPI有关。不同的PPI转化系数不同。如图<br><img data-src="/img/bVsyko" src="/img/bVsyko.jpeg"><br>由图可以知道iphone6 plus的屏幕分辨率为1242*2208，转化系数为3。<br>1242/3=414。<br>414便由此而得，这是设备自身进行的转化，而我们设置的layout viewport的大小也就等于设备自身转换后的大小。</p>

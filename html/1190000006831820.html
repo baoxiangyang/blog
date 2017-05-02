@@ -1,0 +1,336 @@
+<p>使用React我们首先要知道如何传递数据，组件如何沟通，才能展示我们想要的数据。下面的列子都是使用ES6语法，不懂的同学需要先学习ES6语法。</p>
+<h2>数据流</h2>
+<p>React是单向数据流，从父节点传递到子节点（通过<code>props</code>）。如果顶层的某个<code>props</code>改变了，React会重渲染所有的子节点（未做性能优化）。严格意义上React只提供，也强烈建议使用这种数据交流方式。</p>
+<h3>Props</h3>
+<p><code>props</code>是property的缩写，可以理解为HTML标签的attribute。请把<code>props</code>当做只读的（不可以使用<code>this.props</code>直接修改props），<code>props</code>是用于整个组件树中传递数据和配置。在当前组件访问<code>props</code>，使用<code>this.props</code>。在什么情况下可以使用<code>props</code>，请看<a href="https://segmentfault.com/a/1190000006792687">组件生命周期</a></p>
+<pre><code class="jsx">class Component {
+  constructor(props){
+    super(props);
+  }
+  render(){
+    return (
+        &lt;div title={this.props.title}&gt;&lt;/div&gt;
+    )
+  }
+}
+&lt;Component title="test"/&gt;//调用title就传进去了</code></pre>
+<h3>PropTypes</h3>
+<p><code>PropsTypes</code>是React中用来定义<code>props</code>的类型，不符合定义好的类型会报错。建议可复用组件要使用prop验证！接着上面的列子设置<code>PropsTypes</code>如下：</p>
+<pre><code class="jsx">class Component {
+  ...
+}
+Component.PropsType = {
+  title: React.PropTypes.string,
+}</code></pre>
+<p><code>React.PropTypes</code> 提供很多验证器 (validator) 来验证传入数据的有效性。官方定义的验证器如下，不是使用ES6语法。</p>
+<pre><code class="jsx">React.createClass({
+  propTypes: {
+    // 可以声明 prop 为指定的 JS 基本类型。默认
+    // 情况下，这些 prop 都是可传可不传的。
+    optionalArray: React.PropTypes.array,
+    optionalBool: React.PropTypes.bool,
+    optionalFunc: React.PropTypes.func,
+    optionalNumber: React.PropTypes.number,
+    optionalObject: React.PropTypes.object,
+    optionalString: React.PropTypes.string,
+    optionalSymbol: React.PropTypes.symbol,
+
+    // 所有可以被渲染的对象：数字，
+    // 字符串，DOM 元素或包含这些类型的数组(or fragment) 。
+    optionalNode: React.PropTypes.node,
+
+    // React 元素
+    optionalElement: React.PropTypes.element,
+
+    // 你同样可以断言一个 prop 是一个类的实例。
+    // 用 JS 的 instanceof 操作符声明 prop 为类的实例。
+    optionalMessage: React.PropTypes.instanceOf(Message),
+
+    // 你可以用 enum 的方式
+    // 确保你的 prop 被限定为指定值。
+    optionalEnum: React.PropTypes.oneOf(['News', 'Photos']),
+
+    // 指定的多个对象类型中的一个
+    optionalUnion: React.PropTypes.oneOfType([
+      React.PropTypes.string,
+      React.PropTypes.number,
+      React.PropTypes.instanceOf(Message)
+    ]),
+
+    // 指定类型组成的数组
+    optionalArrayOf: React.PropTypes.arrayOf(React.PropTypes.number),
+
+    // 指定类型的属性构成的对象
+    optionalObjectOf: React.PropTypes.objectOf(React.PropTypes.number),
+
+    // 特定形状参数的对象
+    optionalObjectWithShape: React.PropTypes.shape({
+      color: React.PropTypes.string,
+      fontSize: React.PropTypes.number
+    }),
+
+    // 你可以在任意东西后面加上 `isRequired`
+    // 来确保 如果 prop 没有提供 就会显示一个警告。
+    requiredFunc: React.PropTypes.func.isRequired,
+
+    // 不可空的任意类型
+    requiredAny: React.PropTypes.any.isRequired,
+
+    // 你可以自定义一个验证器。如果验证失败需要返回一个 Error 对象。
+    // 不要直接使用 `console.warn` 或抛异常，
+    // 因为这在 `oneOfType` 里不起作用。
+    customProp: function(props, propName, componentName) {
+      if (!/matchme/.test(props[propName])) {
+        return new Error('Validation failed!');
+      }
+    }
+  },
+  /* ... */
+});</code></pre>
+<h3>defaultProps</h3>
+<p>如何设置组件默认的<code>props</code>？</p>
+<pre><code class="jsx">//React提供的crateClass创建方式
+var Component = React.createClass({
+  getDefaultProps(){
+    return {
+      //这里设置defaultProps
+    }
+  }
+})
+//ES6
+class Component {
+  ...
+}
+Component.defaultProps = {}
+//ES7 stage-0
+class Component {
+  static defaultProps = {
+    
+  }
+  ...
+}</code></pre>
+<h3>state</h3>
+<p>每个组件都有属于自己的<code>state</code>，<code>state</code>和<code>props</code>的区别在于前者之只存在于组件内部，只能从当前组件调用<code>this.setState</code>修改state值（不可以直接修改<code>this.state</code>）。一般我们更新子组件都是通过改变<code>state</code>值，更新新子组件的<code>props</code>值从而达到更新。</p>
+<p>那如何设置默认state?</p>
+<pre><code class="jsx">//React提供的crateClass创建方式
+var Component = React.createClass({
+  getInitialState(){
+    return {
+      //这里设置初始state值
+    }
+  }
+})
+//ES6 &amp;&amp; ES7
+class Component {
+  constructor(){
+    this.state = {}//在ES6中的构造函数中初始化，可以之直接赋值，在其他方法中，只能使用this.setState
+  }
+  ...
+}</code></pre>
+<h3>props和state使用方式</h3>
+<p>尽可能使用<code>props</code>当做数据源，<code>state</code>用来存放状态值（简单的数据），如复选框、下拉菜单等。</p>
+<h2>组件沟通</h2>
+<p>组件沟通因为React的单向数据流方式会有所限制，下面述说组件之间的沟通方式。</p>
+<h3>父子组件沟通</h3>
+<p>这种方式是最常见的，也是最简单的。</p>
+<ul><li><p>父组件更新组件状态</p></li></ul>
+<p>父组件更新子组件状态，通过传递<code>props</code>，就可以了。</p>
+<ul><li><p>子组件更新父组件状态</p></li></ul>
+<p>这种情况需要父组件传递回调函数给子组件，子组件调用触发即可。</p>
+<p>代码示例：</p>
+<pre><code class="jsx">class Child extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  
+  render(){
+    return (
+      &lt;div&gt;
+        {this.props.text}
+        &lt;br /&gt;
+        &lt;button onClick={this.props.refreshParent}&gt;
+            更新父组件
+        &lt;/button&gt;
+      &lt;/div&gt;
+    )
+  }
+}
+class Parent extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  refreshChild(){
+    return (e)=&gt;{
+      this.setState({
+        childText: "父组件沟通子组件成功",
+      })
+    }
+  }
+  refreshParent(){
+    this.setState({
+      parentText: "子组件沟通父组件成功",
+    })
+  }
+  render(){
+    return (
+      &lt;div&gt;
+        &lt;h1&gt;父子组件沟通&lt;/h1&gt;
+        &lt;button onClick={this.refreshChild()} &gt;
+            更新子组件
+        &lt;/button&gt;
+        &lt;Child 
+          text={this.state.childText || "子组件未更新"} 
+          refreshParent={this.refreshParent.bind(this)}
+        /&gt;
+        {this.state.parentText || "父组件未更新"}
+      &lt;/div&gt;
+    )
+  }
+}</code></pre>
+<p>codepen例子<a href="https://codepen.io/nange/pen/KgwRJk">React组件之父子组件沟通</a> 。</p>
+<h3>兄弟组件沟通</h3>
+<p>当两个组件有相同的父组件时，就称为兄弟组件（堂兄也算的）。按照React单向数据流方式，我们需要借助父组件进行传递，通过父组件回调函数改变兄弟组件的<code>props</code>。</p>
+<h4>方式一</h4>
+<p>通过<code>props</code>传递父组件回调函数。</p>
+<pre><code class="jsx">class Brother1 extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  
+  render(){
+    return (
+      &lt;div&gt;
+        &lt;button onClick={this.props.refresh}&gt;
+            更新兄弟组件
+        &lt;/button&gt;
+      &lt;/div&gt;
+    )
+  }
+}
+class Brother2 extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  
+  render(){
+    return (
+      &lt;div&gt;
+         {this.props.text || "兄弟组件未更新"}
+      &lt;/div&gt;
+    )
+  }
+}
+class Parent extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  refresh(){
+    return (e)=&gt;{
+      this.setState({
+        text: "兄弟组件沟通成功",
+      })
+    }
+  }
+  render(){
+    return (
+      &lt;div&gt;
+        &lt;h2&gt;兄弟组件沟通&lt;/h2&gt;
+        &lt;Brother1 refresh={this.refresh()}/&gt;
+        &lt;Brother2 text={this.state.text}/&gt;
+      &lt;/div&gt;
+    )
+  }
+}</code></pre>
+<p>codepen例子：<a href="https://codepen.io/nange/pen/xEbJVg">React组件之兄弟组件沟通</a>。</p>
+<h4>方式二</h4>
+<p>但是如果组件层次太深（如下图），上面的兄弟组件沟通方式就效率低了（不建议组件层次太深）。</p>
+<p><img data-src="/img/remote/1460000006831823?w=278&amp;h=300" src="/img/remote/1460000006831823?w=278&amp;h=300.png"></p>
+<p>React提供了一种上下文方式（挺方便的），可以让子组件直接访问祖先的数据或函数，无需从祖先组件一层层地传递数据到子组件中。</p>
+<pre><code class="jsx">class Brother1 extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  
+  render(){
+    
+    return (
+      &lt;div&gt;
+        &lt;button onClick={this.context.refresh}&gt;
+            更新兄弟组件
+        &lt;/button&gt;
+      &lt;/div&gt;
+    )
+  }
+}
+Brother1.contextTypes = {
+  refresh: React.PropTypes.any
+}
+class Brother2 extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  
+  render(){
+    return (
+      &lt;div&gt;
+         {this.context.text || "兄弟组件未更新"}
+      &lt;/div&gt;
+    )
+  }
+}
+Brother2.contextTypes = {
+  text: React.PropTypes.any
+}
+class Parent extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {}
+  }
+  
+  getChildContext(){
+    return {
+      refresh: this.refresh(),
+          text: this.state.text,
+      }
+    }
+  
+  refresh(){
+    return (e)=&gt;{
+      this.setState({
+        text: "兄弟组件沟通成功",
+      })
+    }
+  }
+  render(){
+    return (
+      &lt;div&gt;
+        &lt;h2&gt;兄弟组件沟通&lt;/h2&gt;
+        &lt;Brother1 /&gt;
+        &lt;Brother2 text={this.state.text}/&gt;
+      &lt;/div&gt;
+    )
+  }
+}
+Parent.childContextTypes = {
+  refresh: React.PropTypes.any,
+  text: React.PropTypes.any,
+}</code></pre>
+<p>codepen例子：<a href="https://codepen.io/nange/pen/VKYBAX">React组件之兄弟组件沟通2</a></p>
+<h3>全局事件</h3>
+<blockquote><p>For communication between two components that don't have a parent-child relationship, you can set up your own global event system. Subscribe to events in <code>componentDidMount()</code>, unsubscribe in <code>componentWillUnmount()</code>, and call <code>setState()</code> when you receive an event.<a href="https://facebook.github.io/flux/">Flux</a> pattern is one of the possible ways to arrange this.</p></blockquote>
+<p>官网中提到可以使用全局事件来进行组件间的通信，官网推荐Flux（Facebook官方出的），还有Relay、Redux、trandux等第三方类库。这些框架思想都一致，都是统一管理组件state变化情况，达到<strong>数据可控</strong>目的。本人使用了Redux，建议要会其中一种。对于EventEmitter或PostalJS这类的第三方库是不建议使用的，这类全局事件框架并没有统一管理组件数据变化，用多了会导致数据流不可控。</p>
+<p>这里就不细说，请选择其中一种类库，深入学习下。</p>
+<h2>总结</h2>
+<p>简单的组件交流我们可以使用上面非全局事件的简单方式，但是当项目复杂，组件间层次越来越深，上面的交流方式就不太合适（当然还是要用到的，简单的交流）。强烈建议使用Flux、Relay、Redux、trandux等类库其中一种，这些类库不只适合React，像Angular等都可以使用。</p>
+<h2>参考文章</h2>
+<ul>
+<li><p><a href="http://www.alloyteam.com/2016/01/some-methods-of-reactjs-communication-between-components/">ReactJS组件间沟通的一些方法</a></p></li>
+<li><p><a href="http://www.alloyteam.com/2015/09/react-redux/">React 数据流管理架构之 Redux 介绍</a></p></li>
+</ul>

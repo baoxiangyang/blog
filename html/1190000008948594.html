@@ -1,0 +1,597 @@
+<h2>基本说明</h2>
+<p>我们的项目是一个OC与javascript重度交互的app，OC与javascript交互的那部分是在<a href="https://github.com/marcuswestin/WebViewJavascriptBridge">WebViewJavascriptBridge的github地址</a>的基础上修改的，WebViewJavascriptBridge应该是当前最流行最成功的OC与Web交互实现了。最近看了一下他的实现原理，顺便也为后面项目扩展打下基础。<br>为了简化讲解过程，我忽略了UIWebView的实现过程，只解析WKWebView的实现过程。</p>
+<p>我们可以在OC中调用javascript方法，但是反过来不能在javascript中调用OC方法。所以<code>WebViewJavascriptBridge</code>的实现过程就是在OC环境和javascript环境各自保存一个相互调用的信息。每一个调用之间都有id和callbackid来找到两个环境对应的处理。下图是我对于每个类的讲解：</p>
+<p><img data-src="/img/remote/1460000008948597" src="/img/remote/1460000008948597.png"></p>
+<ul>
+<li><p>nouse文件夹下面的文件是与UIWebView相关的东西，我们暂时不管，基本原理和WKWebView一样。其中<code>WebViewJavascriptBridge_JS.m</code>中是javascript代码，为了方便理解，我直接新建了一个<code>WebViewJavascriptBridge_JS.js</code>文件来代替，方便后面解析。</p></li>
+<li><p><code>WebViewJavascriptBridge_JS.js</code>文件中是javascript环境的bridge初始化和处理，里面负责接收oc发给javascript的消息，并且把javascript环境的消息发送给oc。</p></li>
+<li><p><code>WKWebViewJavascriptBridge.m</code>主要负责OC环境的消息处理，并且把OC环境的消息发送给javascript环境。</p></li>
+<li><p><code>WebViewJavascriptBridgeBase.m</code>主要实现了OC环境的bridge初始化和处理。</p></li>
+<li><p><code>ExampleApp.html</code>主要用于模拟生产环境下的web端。</p></li>
+</ul>
+<h2>初始化过程</h2>
+<h3>1、OC环境初始化</h3>
+<p>我们从OC环境的初始化开始。</p>
+<pre><code class="objc">//初始化一个OC环境的桥WKWebViewJavascriptBridge并且初始化。
++ (instancetype)bridgeForWebView:(WKWebView*)webView {
+    WKWebViewJavascriptBridge* bridge = [[self alloc] init];
+    //调用下面那个方法
+    [bridge _setupInstance:webView];
+    [bridge reset];
+    return bridge;
+}
+//初始化
+- (void) _setupInstance:(WKWebView*)webView {
+    _webView = webView;
+    _webView.navigationDelegate = self;
+    _base = [[WebViewJavascriptBridgeBase alloc] init];
+    _base.delegate = self;
+}
+
+//messageHandlers用于保存OC环境注册的方法，key是方法名，value是这个方法对应的回调block
+//startupMessageQueue用于保存是实话过程中需要发送给javascirpt环境的消息。
+//responseCallbacks用于保存OC于javascript环境相互调用的回调模块。通过_uniqueId加上时间戳来确定每个调用的回调。
+- (id)init {
+    if (self = [super init]) {
+        self.messageHandlers = [NSMutableDictionary dictionary];
+        self.startupMessageQueue = [NSMutableArray array];
+        self.responseCallbacks = [NSMutableDictionary dictionary];
+        _uniqueId = 0;
+    }
+    return self;
+}</code></pre>
+<p>所有与javascript之间交互的信息都存储在<code>messageHandlers</code>和<code>responseCallbacks</code>中。这两个属性记录了OC环境与javascript交互的信息。</p>
+<h3>2、OC环境注册方法</h3>
+<p>注册一个OC方法<code>OC提供方法给JS调用</code>给javascript调用，并且把他的回调实现保存在<code>messageHandlers</code>中。</p>
+<pre><code class="objc">[_bridge registerHandler:@"OC提供方法给JS调用" handler:^(id data, WVJBResponseCallback responseCallback) {
+    //NSLog(@"testObjcCallback called: %@", data);
+    responseCallback(@"OC发给JS的返回值");
+}];
+
+- (void)registerHandler:(NSString *)handlerName handler:(WVJBHandler)handler {
+    _base.messageHandlers[handlerName] = [handler copy];
+}</code></pre>
+<h3>3、Web环境初始化</h3>
+<p>加载Web环境的html,这里就是<code>ExampleAPP.html</code>文件,我删除了非关键部分。</p>
+<pre><code class="javascript">function setupWebViewJavascriptBridge(callback) {
+     //第一次调用这个方法的时候，为false
+    if (window.WebViewJavascriptBridge) {
+        var result = callback(WebViewJavascriptBridge);
+        return result;
+    }
+    //第一次调用的时候，也是false
+    if (window.WVJBCallbacks) {
+        var result = window.WVJBCallbacks.push(callback);
+        return result;
+    }
+    //把callback对象赋值给对象。
+    window.WVJBCallbacks = [callback];
+    //这段代码的意思就是执行加载WebViewJavascriptBridge_JS.js中代码的作用
+    var WVJBIframe = document.createElement('iframe');
+    WVJBIframe.style.display = 'none';
+    WVJBIframe.src = 'https://__bridge_loaded__';
+    document.documentElement.appendChild(WVJBIframe);
+    setTimeout(function() {
+        document.documentElement.removeChild(WVJBIframe)
+    }, 0);
+}
+
+//setupWebViewJavascriptBridge执行的时候传入的参数，这是一个方法。
+function callback(bridge) {
+    var uniqueId = 1
+    //把WEB中要注册的方法注册到bridge里面
+    bridge.registerHandler('OC调用JS提供的方法', function(data, responseCallback) {
+        log('OC调用JS方法成功', data)
+        var responseData = { 'JS给OC调用的回调':'回调值!' }
+        log('OC调用JS的返回值', responseData)
+        responseCallback(responseData)
+    })
+};
+//驱动所有hander的初始化
+setupWebViewJavascriptBridge(callback);</code></pre>
+<p>我们调用<code>setupWebViewJavascriptBridge</code>函数，并且这个函数传入的callback也是一个函数。callback函数中有我们在javascript环境中注册的<code>OC调用JS提供的方法</code>方法。<code>setupWebViewJavascriptBridge</code>的实现过程中我们可以发现，如果不是第一次初始化，会通过<code>window.WebViewJavascriptBridge</code>或者<code>window.WVJBCallbacks</code>两个判断返回。</p>
+<p>iframe可以理解为webview中的窗口，当我们改变iframe的src属性的时候，相当于我们浏览器实现了链接的跳转。比如从<code>www.baidu.com</code>跳转到<code>www.google.com</code>。下面这段代码的目的就是实现一个到<code>https://__bridge_loaded__</code>的跳转。从而达到初始化javascript环境的bridge的作用。</p>
+<pre><code class="javascript">//这段代码的意思就是执行加载WebViewJavascriptBridge_JS.js中代码的作用
+var WVJBIframe = document.createElement('iframe');
+WVJBIframe.style.display = 'none';
+WVJBIframe.src = 'https://__bridge_loaded__';
+document.documentElement.appendChild(WVJBIframe);
+setTimeout(function() {
+    document.documentElement.removeChild(WVJBIframe)
+}, 0);</code></pre>
+<p>我们知道只要webview有跳转，就会调用webview的代理方法。我们重点看下面这个代理方法。</p>
+<pre><code class="objc">- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+    if (webView != _webView) { return; }
+    NSURL *url = navigationAction.request.URL;
+    NSLog(@"点开URL%@",url);
+    __strong typeof(_webViewDelegate) strongDelegate = _webViewDelegate;
+    //如果是WebViewJavascriptBridge发送或者接受的消息，则特殊处理。否则按照正常流程处理。
+    if ([_base isWebViewJavascriptBridgeURL:url]) {
+        //1第一次注入JS代码
+        if ([_base isBridgeLoadedURL:url]) {
+            [_base injectJavascriptFile];
+        //处理WEB发过来的消息
+        } else if ([_base isQueueMessageURL:url]) {
+            [self WKFlushMessageQueue];
+        } else {
+            [_base logUnkownMessage:url];
+        }
+        decisionHandler(WKNavigationActionPolicyCancel);
+    }
+    //下面是webview的正常代理执行流程，不用管。
+    if (strongDelegate &amp;&amp; [strongDelegate respondsToSelector:@selector(webView:decidePolicyForNavigationAction:decisionHandler:)]) {
+        [_webViewDelegate webView:webView decidePolicyForNavigationAction:navigationAction decisionHandler:decisionHandler];
+    } else {
+        decisionHandler(WKNavigationActionPolicyAllow);
+    }
+}</code></pre>
+<p>在这段代码中，我们首先通过<code>[_base isWebViewJavascriptBridgeURL:url]</code>来判断是否是普通的跳转还是<code>webViewjavascriptBridege</code>的跳转。如果是<code>__bridge_loaded__</code>表示是初始化javascript环境的消息，如果是<code>__wvjb_queue_message__</code>则表示是发送javascript消息。<code>https://__bridge_loaded__</code>显然是第一种消息。OC具体具体判断逻辑代码如下：</p>
+<pre><code class="objc">#define kOldProtocolScheme @"wvjbscheme"
+#define kNewProtocolScheme @"https"
+#define kQueueHasMessage   @"__wvjb_queue_message__"
+#define kBridgeLoaded      @"__bridge_loaded__"
+
+//是否是WebViewJavascriptBridge框架相关的链接
+- (BOOL)isWebViewJavascriptBridgeURL:(NSURL*)url {
+    if (![self isSchemeMatch:url]) {
+        return NO;
+    }
+    BOOL result =  [self isBridgeLoadedURL:url] || [self isQueueMessageURL:url];
+    return result;
+}
+/*
+    是否是WebViewJavascriptBridge发送或者接受的消息
+ */
+- (BOOL)isSchemeMatch:(NSURL*)url {
+    NSString* scheme = url.scheme.lowercaseString;
+    BOOL result = [scheme isEqualToString:kNewProtocolScheme] || [scheme isEqualToString:kOldProtocolScheme];
+    return result;
+}
+//是WebViewJavascriptBridge发送的消息还是WebViewJavascriptBridge的初始化消息。
+- (BOOL)isQueueMessageURL:(NSURL*)url {
+    NSString* host = url.host.lowercaseString;
+    return [self isSchemeMatch:url] &amp;&amp; [host isEqualToString:kQueueHasMessage];
+}
+//是否是https://__bridge_loaded__这种初始化加载消息
+- (BOOL)isBridgeLoadedURL:(NSURL*)url {
+    NSString* host = url.host.lowercaseString;
+    BOOL result = [self isSchemeMatch:url] &amp;&amp; [host isEqualToString:kBridgeLoaded];
+    return result;
+}
+</code></pre>
+<p>接下来调用<code>[_base injectJavascriptFile]</code>方法，这个方法的作用就是把<code>WebViewJavascriptBridge_JS.js</code>中的方法注入到webview中并且执行，从而达到初始化javascript环境的brige的作用。</p>
+<pre><code class="objc">//初始化的是否注入WebViewJavascriptBridge_JS.js
+- (void)injectJavascriptFile {
+    NSString *js;
+    //WebViewJavascriptBridge_JS.js文件内容其实就是WebViewJavascriptBridge_JS.m对应的内容，我只是把它整理方便阅读。
+    if (true) {
+        js = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"WebViewJavascriptBridge_JS.js" ofType:nil] encoding:NSUTF8StringEncoding error:nil];
+    }else{
+        js = WebViewJavascriptBridge_js();
+    }
+    //把javascript代码注入webview中执行,这里执行具体的注入操作。
+    [self _evaluateJavascript:js];
+    //如果javascript环境初始化完成以后，有startupMessageQueue消息。则立即发送消息。
+    if (self.startupMessageQueue) {
+        NSArray* queue = self.startupMessageQueue;
+        self.startupMessageQueue = nil;
+        for (id queuedMessage in queue) {
+            [self _dispatchMessage:queuedMessage];
+        }
+    }
+}
+//把javascript代码写入webview
+- (NSString*) _evaluateJavascript:(NSString*)javascriptCommand {
+    [_webView evaluateJavaScript:javascriptCommand completionHandler:nil];
+    return NULL;
+}</code></pre>
+<h3>3、WebViewJavascriptBridge_JS.js解析</h3>
+<p>上面我们讲到了注入javascript方法到webview中。具体的代码就是<code>WebViewJavascriptBridge_JS.js</code>这个文件中的方法。我们通过分析这个文件的代码可以知道javascript环境的bridge是如何初始化的。</p>
+<pre><code class="javascript">;(function() {
+    //如果已经初始化了，则返回。
+    if (window.WebViewJavascriptBridge) {
+        return;
+    }
+    if (!window.onerror) {
+        window.onerror = function(msg, url, line) {
+            console.log("WebViewJavascriptBridge: ERROR:" + msg + "@" + url + ":" + line);
+        }
+    }
+    //初始化一些属性。
+    var messagingIframe;
+    //用于存储消息列表
+    var sendMessageQueue = [];
+    //用于存储消息
+    var messageHandlers = {};
+    //通过下面两个协议组合来确定是否是特定的消息，然后拦击。
+    var CUSTOM_PROTOCOL_SCHEME = 'https';
+    var QUEUE_HAS_MESSAGE = '__wvjb_queue_message__';
+    //oc调用js的回调
+    var responseCallbacks = {};
+    //消息对应的id
+    var uniqueId = 1;
+    //是否设置消息超时
+    var dispatchMessagesWithTimeoutSafety = true;
+    //web端注册一个消息方法
+    function registerHandler(handlerName, handler) {
+        messageHandlers[handlerName] = handler;
+    }
+    //web端调用一个OC注册的消息
+    function callHandler(handlerName, data, responseCallback) {
+        if (arguments.length == 2 &amp;&amp; typeof data == 'function') {
+            responseCallback = data;
+            data = null;
+        }
+        _doSend({ handlerName: handlerName, data: data }, responseCallback);
+    }
+    function disableJavscriptAlertBoxSafetyTimeout() {
+        dispatchMessagesWithTimeoutSafety = false;
+    }
+        //把消息转换成JSON字符串返回
+    function _fetchQueue() {
+        var messageQueueString = JSON.stringify(sendMessageQueue);
+        sendMessageQueue = [];
+        return messageQueueString;
+    }
+    //OC调用JS的入口方法
+    function _handleMessageFromObjC(messageJSON) {
+        _dispatchMessageFromObjC(messageJSON);
+    }
+
+    //初始化桥接对象，OC可以通过WebViewJavascriptBridge来调用JS里面的各种方法。
+    window.WebViewJavascriptBridge = {
+        registerHandler: registerHandler,
+        callHandler: callHandler,
+        disableJavscriptAlertBoxSafetyTimeout: disableJavscriptAlertBoxSafetyTimeout,
+        _fetchQueue: _fetchQueue,
+        _handleMessageFromObjC: _handleMessageFromObjC
+    };
+
+
+    //处理从OC返回的消息。
+    function _dispatchMessageFromObjC(messageJSON) {
+        if (dispatchMessagesWithTimeoutSafety) {
+            setTimeout(_doDispatchMessageFromObjC);
+        } else {
+            _doDispatchMessageFromObjC();
+        }
+
+        function _doDispatchMessageFromObjC() {
+            var message = JSON.parse(messageJSON);
+            var messageHandler;
+            var responseCallback;
+            //回调
+            if (message.responseId) {
+                responseCallback = responseCallbacks[message.responseId];
+                if (!responseCallback) {
+                    return;
+                }
+                responseCallback(message.responseData);
+                delete responseCallbacks[message.responseId];
+            } else {//主动调用
+                if (message.callbackId) {
+                    var callbackResponseId = message.callbackId;
+                    responseCallback = function(responseData) {
+                        _doSend({ handlerName: message.handlerName, responseId: callbackResponseId, responseData: responseData });
+                    };
+                }
+                //获取JS注册的函数
+                var handler = messageHandlers[message.handlerName];
+                if (!handler) {
+                    console.log("WebViewJavascriptBridge: WARNING: no handler for message from ObjC:", message);
+                } else {
+                    //调用JS中的对应函数处理
+                    handler(message.data, responseCallback);
+                }
+            }
+        }
+    }
+    //把消息从JS发送到OC，执行具体的发送操作。
+    function _doSend(message, responseCallback) {
+        if (responseCallback) {
+            var callbackId = 'cb_' + (uniqueId++) + '_' + new Date().getTime();
+            //存储消息的回调ID
+            responseCallbacks[callbackId] = responseCallback;
+            //把消息对应的回调ID和消息一起发送，以供消息返回以后使用。
+            message['callbackId'] = callbackId;
+        }
+        //把消息放入消息列表
+        sendMessageQueue.push(message);
+        //下面这句话会出发JS对OC的调用
+        //让webview执行跳转操作，从而可以在
+        //webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler 中拦截到JS发给OC的消息
+        messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+    }
+
+
+    messagingIframe = document.createElement('iframe');
+    messagingIframe.style.display = 'none';
+    //messagingIframe.body.style.backgroundColor="#0000ff";
+    messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+    document.documentElement.appendChild(messagingIframe);
+
+
+    //注册_disableJavascriptAlertBoxSafetyTimeout方法，让OC可以关闭回调超时，默认是开启的。
+    registerHandler("_disableJavascriptAlertBoxSafetyTimeout", disableJavscriptAlertBoxSafetyTimeout);
+    //执行_callWVJBCallbacks方法
+    setTimeout(_callWVJBCallbacks, 0);
+
+    //初始化WEB中注册的方法。这个方法会把WEB中的hander注册到bridge中。
+    //下面的代码其实就是执行WEB中的callback函数。
+    function _callWVJBCallbacks() {
+        var callbacks = window.WVJBCallbacks;
+        delete window.WVJBCallbacks;
+        for (var i = 0; i &lt; callbacks.length; i++) {
+            callbacks[i](WebViewJavascriptBridge);
+        }
+    }
+})();</code></pre>
+<p>其实我们发现整个js文件就是一个立即执行的javascript方法。</p>
+<ul>
+<li><p>首先我们发现会初始化一个WebViewJavascriptBridge对象。并且这个对象是赋值给window对象，这里window对象可以理解为webview。所以说我们后面在OC环境中如果要调用js方法，就可以通过<code>window.WebViewJavascriptBridge</code>在加上具体方法来调用。</p></li>
+<li><p>WebViewJavascriptBridge对象中有javascript环境注入的提供给OC调用的方法registerHandler，javascript调用OC环境方法的callHandler。</p></li>
+<li><p>_fetchQueue这个方法的作用就是把javascript环境的方法序列化成JSON字符串，然后传入OC环境再转换。</p></li>
+<li><p>_handleMessageFromObjC就是处理OC发给javascript环境的方法。</p></li>
+</ul>
+<p>在这个文件中也初始化了一个iframe实现webview的url跳转功能，从而激发webview代理方法的调用。</p>
+<pre><code class="javascript">    messagingIframe = document.createElement('iframe');
+    messagingIframe.style.display = 'none';
+    //messagingIframe.body.style.backgroundColor="#0000ff";
+    messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+    document.documentElement.appendChild(messagingIframe);</code></pre>
+<p>上面的src就是<code>https://__wvjb_queue_message__/</code>。这个是javascript发送的OC的第一条消息，目的和上面OC环境的startupMessageQueue一样，就是在javascript环境初始化完成以后，把javascript要发送给OC的消息立即发送出去。</p>
+<p>然后我们看文件的最后面有如下代码。这段代码的作用就是立即执行ExampleApp.html中的callback方法。callback中传入的bridge参数就是我们这里初始化的window.WebViewJavascriptBridge对象。</p>
+<pre><code class="javascript">    //执行_callWVJBCallbacks方法
+    setTimeout(_callWVJBCallbacks, 0);
+
+    //初始化WEB中注册的方法。这个方法会把WEB中的hander注册到bridge中。
+    //下面的代码其实就是执行WEB中的callback函数。
+    function _callWVJBCallbacks() {
+        var callbacks = window.WVJBCallbacks;
+        delete window.WVJBCallbacks;
+        for (var i = 0; i &lt; callbacks.length; i++) {
+            callbacks[i](WebViewJavascriptBridge);
+        }
+    }</code></pre>
+<p>直到这里，OC环境和javascript环境的bridege都建立完毕。OC和javascript环境都有一个bridge对象，这个对象都保存着注册的每个方法和回调，并且维护着各自的消息队列、回调id、requestId等一系列信息。</p>
+<h2>OC发消息给WEB</h2>
+<p>OC要调用javascript环境的方法，其实就是调用<code>ExampleApp.html</code>中的<code>bridge.registerHandler</code>注册的方法。</p>
+<pre><code class="objc">//点击按钮开始一个OC消息.ExampleWKWebViewController.m中一个方法开始。
+- (void)callHandler:(id)sender {
+    id data = @{ @"OC调用JS方法": @"OC调用JS方法的参数" };
+    [_bridge callHandler:@"OC调用JS提供的方法" data:data responseCallback:^(id response) {
+       // NSLog(@"testJavascriptHandler responded: %@", response);
+    }];
+}
+/*
+    handerName:OC调用JS提供的方法
+    data:{@"OC调用JS方法的参数":@"OC调用JS方法"}
+    responseCallback:回调block
+ */
+- (void)callHandler:(NSString *)handlerName data:(id)data responseCallback:(WVJBResponseCallback)responseCallback {
+    [_base sendData:data responseCallback:responseCallback handlerName:handlerName];
+}</code></pre>
+<p>把所有信息存入一个名字为message的字典中。里面拼装好参数<code>data</code>、回调ID<code>callbackId</code>、消息名字<code>handlerName</code>。具体如下：</p>
+<pre><code class="objc">- (void)sendData:(id)data responseCallback:(WVJBResponseCallback)responseCallback handlerName:(NSString*)handlerName {
+    NSMutableDictionary* message = [NSMutableDictionary dictionary];
+    
+    if (data) {
+        message[@"data"] = data;
+    }
+    
+    if (responseCallback) {
+        NSString* callbackId = [NSString stringWithFormat:@"objc_cb_%ld", ++_uniqueId];
+        self.responseCallbacks[callbackId] = [responseCallback copy];
+        message[@"callbackId"] = callbackId;
+    }
+    
+    if (handlerName) {
+        message[@"handlerName"] = handlerName;
+    }
+    [self _queueMessage:message];
+}</code></pre>
+<p>把OC消息序列化、并且转化为javascript环境的格式。然后在主线程中调用_evaluateJavascript。</p>
+<pre><code class="objc">//把消息发送给WEB环境
+- (void)_dispatchMessage:(WVJBMessage*)message {
+    NSString *messageJSON = [self _serializeMessage:message pretty:NO];
+    [self _log:@"SEND" json:messageJSON];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\'" withString:@"\\\'"];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\f" withString:@"\\f"];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\u2028" withString:@"\\u2028"];
+    messageJSON = [messageJSON stringByReplacingOccurrencesOfString:@"\u2029" withString:@"\\u2029"];
+    
+    NSString* javascriptCommand = [NSString stringWithFormat:@"WebViewJavascriptBridge._handleMessageFromObjC('%@');", messageJSON];
+    if ([[NSThread currentThread] isMainThread]) {
+        [self _evaluateJavascript:javascriptCommand];
+
+    } else {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self _evaluateJavascript:javascriptCommand];
+        });
+    }
+}</code></pre>
+<p>具体注入的javascript字符串如下：</p>
+<pre><code>WebViewJavascriptBridge._handleMessageFromObjC('{\"callbackId\":\"objc_cb_1\",\"data\":{\"OC调用JS方法\":\"OC调用JS方法的参数\"},\"handlerName\":\"OC调用JS提供的方法\"}');</code></pre>
+<p>其实就是通过javascript环境中的Bridge对象的<code>_handleMessageFromObjC</code>方法。下面我们去<code>WebViewJavascriptBridege_JS.js</code>中看<code>_handleMessageFromObjC</code>的处理过程。</p>
+<pre><code class="javascript">//处理从OC返回的消息。
+function _dispatchMessageFromObjC(messageJSON) {
+    if (dispatchMessagesWithTimeoutSafety) {
+        setTimeout(_doDispatchMessageFromObjC);
+    } else {
+        _doDispatchMessageFromObjC();
+    }
+
+    function _doDispatchMessageFromObjC() {
+        var message = JSON.parse(messageJSON);
+        var messageHandler;
+        var responseCallback;
+        //回调
+        if (message.responseId) {
+            responseCallback = responseCallbacks[message.responseId];
+            if (!responseCallback) {
+                return;
+            }
+            responseCallback(message.responseData);
+            delete responseCallbacks[message.responseId];
+        } else {//主动调用
+            if (message.callbackId) {
+                var callbackResponseId = message.callbackId;
+                responseCallback = function(responseData) {
+                    _doSend({ handlerName: message.handlerName, responseId: callbackResponseId, responseData: responseData });
+                };
+            }
+            //获取JS注册的函数
+            var handler = messageHandlers[message.handlerName];
+            if (!handler) {
+                console.log("WebViewJavascriptBridge: WARNING: no handler for message from ObjC:", message);
+            } else {
+                //调用JS中的对应函数处理
+                handler(message.data, responseCallback);
+            }
+        }
+    }
+}
+</code></pre>
+<p>上面这段代码很容易理解，其实就是如果消息中有callbackId则表示是一个回调。直接调用_doSend方法把信息返回OC。否则就是Web环境主动调用OC的情况。此时把callbackID、handlerName、responseCallback封装进一个message对象中保存起来(其实你会发现和OC环境的bridge处理一样)。然后通过_doSend发消息发送到OC环境。下面我们看看_doSend的具体实现：</p>
+<pre><code class="javascript">//把消息从JS发送到OC，执行具体的发送操作。
+function _doSend(message, responseCallback) {
+    if (responseCallback) {
+        var callbackId = 'cb_' + (uniqueId++) + '_' + new Date().getTime();
+        //存储消息的回调ID
+        responseCallbacks[callbackId] = responseCallback;
+        //把消息对应的回调ID和消息一起发送，以供消息返回以后使用。
+        message['callbackId'] = callbackId;
+    }
+    //把消息放入消息列表
+    sendMessageQueue.push(message);
+    //下面这句话会出发JS对OC的调用
+    //让webview执行跳转操作，从而可以在
+    //webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler 中拦截到JS发给OC的消息
+    messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+}
+</code></pre>
+<p>其中最重要还是最后面的通过改变iframe的<code>messagingIframe.src</code>。从而触发webview的代理方法<code>webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler</code>从而在OC中处理javascript环境触发过来的回调。具体如下:</p>
+<pre><code class="objc">if ([_base isWebViewJavascriptBridgeURL:url]) {
+    //第一次注入JS代码
+    if ([_base isBridgeLoadedURL:url]) {
+        [_base injectJavascriptFile];
+    //处理WEB发过来的消息
+    } else if ([_base isQueueMessageURL:url]) {
+        [self WKFlushMessageQueue];
+    } else {
+        [_base logUnkownMessage:url];
+    }
+    decisionHandler(WKNavigationActionPolicyCancel);
+}</code></pre>
+<p>这里会走<code>[self WKFlushMessageQueue];</code>方法。然后通过调用<code>WebViewJavascriptBridge._fetchQueue()</code>来获取javascript给OC的回调信息。</p>
+<pre><code class="objc">//获取WEB消息的JSON字符串
+- (NSString *)webViewJavascriptFetchQueyCommand {
+    return @"WebViewJavascriptBridge._fetchQueue();";
+}
+////把消息或者WEB回调从OC发送到OC
+- (void)WKFlushMessageQueue {
+    NSString *js = [_base webViewJavascriptFetchQueyCommand];
+    [_webView evaluateJavaScript:js completionHandler:^(NSString* result, NSError* error) {
+        if (error != nil) {
+            NSLog(@"WebViewJavascriptBridge: WARNING: Error when trying to fetch data from WKWebView: %@", error);
+        }
+        //把消息或者WEB回调从OC发送到OC
+        [_base flushMessageQueue:result];
+    }];
+}
+</code></pre>
+<p>获取到javascript给OC的回调消息以后，然后把javascript的bridge返回的信息加工处理成OC环境的bridge能识别的信息。从而找到具体的实现执行。</p>
+<pre><code class="objc">//把从WEB发送的消息返回。然后在这里处理
+- (void)flushMessageQueue:(NSString *)messageQueueString{
+    if (messageQueueString == nil || messageQueueString.length == 0) {
+        NSLog(@"WebViewJavascriptBridge: WARNING: ObjC got nil while fetching the message queue JSON from webview. This can happen if the WebViewJavascriptBridge JS is not currently present in the webview, e.g if the webview just loaded a new page.");
+        return;
+    }
+
+    id messages = [self _deserializeMessageJSON:messageQueueString];
+    for (WVJBMessage* message in messages) {
+        if (![message isKindOfClass:[WVJBMessage class]]) {
+            NSLog(@"WebViewJavascriptBridge: WARNING: Invalid %@ received: %@", [message class], message);
+            continue;
+        }
+        [self _log:@"RCVD" json:message];
+        
+        NSString* responseId = message[@"responseId"];
+        if (responseId) {
+            WVJBResponseCallback responseCallback = _responseCallbacks[responseId];
+            responseCallback(message[@"responseData"]);
+            [self.responseCallbacks removeObjectForKey:responseId];
+        } else {
+            WVJBResponseCallback responseCallback = NULL;
+            NSString* callbackId = message[@"callbackId"];
+            if (callbackId) {
+                responseCallback = ^(id responseData) {
+                    if (responseData == nil) {
+                        responseData = [NSNull null];
+                    }
+                    
+                    WVJBMessage* msg = @{ @"responseId":callbackId, @"responseData":responseData };
+                    [self _queueMessage:msg];
+                };
+            } else {
+                responseCallback = ^(id ignoreResponseData) {
+                    // Do nothing
+                };
+            }
+            
+            WVJBHandler handler = self.messageHandlers[message[@"handlerName"]];
+            
+            if (!handler) {
+                NSLog(@"WVJBNoHandlerException, No handler for message from JS: %@", message);
+                continue;
+            }
+            
+            handler(message[@"data"], responseCallback);
+        }
+    }
+}</code></pre>
+<p>这里会调用handler方法，通过javascript传过来的responseId获取对应的<code>WVJBResponseCallback</code>。然后执行这个block。到这里从OC发送消息到javascript并且javascript返回消息给OC的流程走完了。</p>
+<h2>WEB发消息给OC</h2>
+<p>首先通过<code>ExampleAPP.html</code>中的<code>bridge.callHandler</code>方法，这里的bridge就是<code>window.WebViewJavascriptBridge</code>对象：</p>
+<pre><code class="javascript">bridge.callHandler('OC提供方法给JS调用',params, function(response) {
+    log('JS调用OC的返回值', response)
+})</code></pre>
+<p>接下来调用<code>window.WebViewJavascriptBridge</code>中的callHander方法</p>
+<pre><code class="javascript">//web端调用一个OC注册的消息
+function callHandler(handlerName, data, responseCallback) {
+    if (arguments.length == 2 &amp;&amp; typeof data == 'function') {
+        responseCallback = data;
+        data = null;
+    }
+    _doSend({ handlerName: handlerName, data: data }, responseCallback);
+}</code></pre>
+<p>然后调用<code>WebViewJavascriptBridge_JS.js</code>中的方法执行具体的操作。具体就和OC调用javascript过程一样了，就不解释了。</p>
+<pre><code class="javascript">//把消息从JS发送到OC，执行具体的发送操作。
+function _doSend(message, responseCallback) {
+    if (responseCallback) {
+        var callbackId = 'cb_' + (uniqueId++) + '_' + new Date().getTime();
+        //存储消息的回调ID
+        responseCallbacks[callbackId] = responseCallback;
+        //把消息对应的回调ID和消息一起发送，以供消息返回以后使用。
+        message['callbackId'] = callbackId;
+    }
+    //把消息放入消息列表
+    sendMessageQueue.push(message);
+    //下面这句话会出发JS对OC的调用
+    //让webview执行跳转操作，从而可以在
+    //webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler 中拦截到JS发给OC的消息
+    messagingIframe.src = CUSTOM_PROTOCOL_SCHEME + '://' + QUEUE_HAS_MESSAGE;
+}</code></pre>
+<h2>总结</h2>
+<p>其实现在想想，原理很简单。</p>
+<ul>
+<li><p>分别在OC环境和javascript环境都保存一个bridge对象，里面维持着requestId,callbackId,以及每个id对应的具体实现。</p></li>
+<li><p>OC通过javascript环境的<code>window.WebViewJavascriptBridge</code>对象来找到具体的方法，然后执行。</p></li>
+<li><p>javascript通过改变iframe的src来出发webview的代理方法<code>webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler</code>从而实现把javascript消息发送给OC这个功能。</p></li>
+</ul>
+<p>其实这里只是解析了webview与OC交互的桥接问题，其他比如webview中的请求拦截、添加进度条、运营商劫持、如何组织交互规则等问题这里还没有涉及。这些在我们项目中运用，具体就不抽出来了。</p>
+<p>最后，具体的源码在<a href="https://github.com/huang303513/iOSSourceCodeStudy">github地址</a>。</p>

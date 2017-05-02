@@ -10,7 +10,10 @@ const articleModule = {
 		error: false,
 		errorMsg: '',
 		errorCode: 0,
-		loading: false
+		loading: false,
+		activeIndex: '/article?type=all',
+		search:'',
+		type: 'all'
 	},
 	mutations: {
 		//修改文章列表

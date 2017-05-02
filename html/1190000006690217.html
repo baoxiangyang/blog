@@ -1,0 +1,101 @@
+<p><img data-src="/img/bVCexV" src="/img/bVCexV.png"></p>
+<p>ECMAScript 6.0，ECMAScript 2015，直到大家最后确定简称为 ES6，从最初的制定，到最后发布成为国际标准，历时 15 年之久。</p>
+<p>2015 年 6 月，ES6 正式发布，过去了一年，已有不少开发者在 SegmentFault 分享了 ES6 相关的内容，从初探到深入，从理论到实践。</p>
+<p>这期，我们就来聊聊 ES6 的新特性，开始上手实践：</p>
+<ol>
+<li><p>走马观花，初识 ES6</p></li>
+<li><p>新功能及特性的学习</p></li>
+<li><p>重要特性之 Module</p></li>
+<li><p>上手实践之 Angular 搭配</p></li>
+</ol>
+<p>从这四个方面逐步深入。篇幅较长，内容极多，请准备好你的时间与大脑 ∠( ᐛ 」∠)＿</p>
+<h3>走马观花</h3>
+<p>几篇简单易懂的文章，让未接触过 ES6 的新同学有大致的了解。</p>
+<blockquote><p><strong>阮一峰 - <a href="http://es6.ruanyifeng.com/#docs/intro">ECMAScript 6 简介</a></strong></p></blockquote>
+<p>作为入门，阮一峰老师的《ECMAScript 6 入门》一书中的 &lt;ECMAScript 6 简介&gt; 章节必不可少。此章节中，阮一峰老师对 ECMAScript 历史做了较详细的介绍，同时也介绍了 ECMAScript 和 JavaScript 的关系、部署进度、Babel 转码器等等。</p>
+<blockquote><p><strong>meikidd - <a href="https://segmentfault.com/a/1190000003764489">ES6 走马观花</a></strong></p></blockquote>
+<p>阅读本文，你将了解到</p>
+<ul>
+<li><p>什么是 ES6</p></li>
+<li><p>ES6 有哪些“明星”特性</p></li>
+<li><p>ES6 可以运行在哪些环境</p></li>
+</ul>
+<blockquote><p><strong>LeuisKen - <a href="https://segmentfault.com/a/1190000003818502">译丨Learn ES2015</a></strong></p></blockquote>
+<p>再深入一步，在译文《Learn ES2015》中，将介绍到更多 ES6 的新特性：箭头函数、类、增强的对象字面量、模板字符串、解构、迭代器、生成器、Unicode 编码、模块、代理对象、二进制和八进制字面量、Promises、Reflect API、Tail Calls……</p>
+<p><strong>更多阅读：</strong></p>
+<ul>
+<li><p>不写代码的码农 - <a href="https://segmentfault.com/a/1190000003771043">ECMAScript 6 不完全教程</a></p></li>
+<li><p>AlexChen - <a href="https://segmentfault.com/a/1190000003492656">ES6 中非常实用的新特性介绍</a></p></li>
+</ul>
+<h3>分解学习</h3>
+<p>熟悉 ES6 之后，我们将开始逐一分解、进行详细的特性学习。</p>
+<blockquote><p><strong>zach5078 - <a href="https://segmentfault.com/a/1190000004365693">30 分钟掌握 ES6/ES2015 核心内容（上）</a>、<a href="https://segmentfault.com/a/1190000004368132">（下）</a></strong></p></blockquote>
+<p>上篇介绍了 ES6 最常用的几个语法，包括 <code>let</code>, <code>const</code>, <code>class</code>, <code>extends</code>, <code>super</code>, <code>arrow functions</code>, <code>template string</code>, <code>destructuring</code>, <code>default</code>, <code>rest arguments</code>。</p>
+<p>下篇介绍 <code>import</code>、<code>export</code> 以及 ES6 module 的其他高级用法。</p>
+<blockquote><p><strong>菜菜蔡伟 - <a href="https://segmentfault.com/a/1190000002920859">译丨JavaScript ES6 解构赋值指南</a>、<a href="https://segmentfault.com/a/1190000003021261">迭代器指南</a>、<a href="https://segmentfault.com/a/1190000003781467">箭头函数指南</a></strong></p></blockquote>
+<p>这个系列，详细讲解了解构赋值（Destructuring）、迭代器（Iterators）、箭头函数（Arrow Functions）等新特性</p>
+<ul>
+<li><p>数组的解构赋值、对象的解构赋值、函数参数的解构赋值，ES6 的解构赋值给 JavaScript 的语法带来了更多的现代化，它在减少了代码量的同时，增加了代码的可读性和表现力；</p></li>
+<li><p>for-of、惰性执行、内置迭代器、无限迭代器、Generator 函数，迭代器给 JavaScript 中的循环、Generator 函数和值序列（Value Series）带来了新的维度；</p></li>
+<li><p>this、arguments、yield，箭头函数获得成就“ES6 最受欢迎特性之一”。</p></li>
+</ul>
+<blockquote><p><strong> grace_xhw - <a href="https://segmentfault.com/a/1190000006057291">译丨ES6 中 Arguments 和 Parameters 用法解析</a>、<a href="https://segmentfault.com/a/1190000006129388">最深刻而易懂的 ES6 解构教程</a></strong></p></blockquote>
+<p>ES6 给 JavaScript 带来了上百个大大小小的改进，其中就包括</p>
+<ul>
+<li><p>arguments 和 parameters，ES6 显著地完善了 JS 中参数的处理方式；</p></li>
+<li><p>解构赋值，作为 ES6 的重要新特性，解构可以从根本上改变你的 JS 编码方式，用的越多，你就会发现越多塑造数据和函数的方式，这些实现方式在过去几乎是不可能的。</p></li>
+</ul>
+<p>这两篇文章，深入探讨这些特性中你所需要知悉的一切。</p>
+<blockquote><p><strong>小問 - <a href="https://segmentfault.com/a/1190000004993542">生成器（Generator）</a></strong></p></blockquote>
+<p>生成器（Generator）可以说是在 ES2015 中最为强悍的一个新特性，因为生成器是涉及到 ECMAScript 引擎运行底层的特性，生成器可以实现一些从前无法想象的事情。</p>
+<blockquote><p><strong>zindex - <a href="https://segmentfault.com/a/1190000004396187">ES6 探秘：Classes</a></strong></p></blockquote>
+<p>ES6 中增加的某些新特性，从底层的角度来说，只是一些语法糖。如果不了解这些语法糖的本质，是用不安心的。Classes 就是其中之一，它并没有引入一种新的继承模式，而是为对象创建和继承提供了更清晰、易用的语法。</p>
+<blockquote><p><strong>meikidd - <a href="https://segmentfault.com/a/1190000004014046">ES6 旧瓶新酒</a></strong></p></blockquote>
+<p>ES6 对这些原来就被广泛使用的 JS 对象——String、Number、Array、Object——扩展的一些有用的新方法。</p>
+<blockquote><p><strong>ping4god - <a href="https://segmentfault.com/a/1190000006035363">译丨实例解析 ES6 Proxy 使用场景</a></strong></p></blockquote>
+<p>ES6 中的箭头函数、数组解构、rest 参数等特性一经实现就广为流传，但类似 Proxy 这样的特性却很少见到有开发者在使用，一方面在于浏览器的兼容性，另一方面也在于要想发挥这些特性的优势，需要开发者深入地理解其使用场景。本文将介绍 Proxy 的使用方式，并通过列举具体实例来解释 Proxy 的使用场景。</p>
+<p><strong>更多阅读：</strong></p>
+<ul>
+<li><p>fighterleslie - <a href="https://segmentfault.com/a/1190000002955405">备胎的自我修养——趣谈 JavaScript 中的 ASI(Automatic Semicolon Insertion</a></p></li>
+<li><p>JoeRay - <a href="https://segmentfault.com/a/1190000005013592">ES6 学习笔记之箭头函数</a></p></li>
+<li><p>shane_xu - <a href="https://segmentfault.com/a/1190000003854407">ES6 学习笔记 3——Symbol</a></p></li>
+<li><p>见见 - <a href="https://segmentfault.com/a/1190000003092875">触摸 ES6 - 模板字符串</a>、<a href="https://segmentfault.com/a/1190000004112086">解构赋值</a></p></li>
+<li><p>array_huang - <a href="https://segmentfault.com/a/1190000005042668">ES6 部分方法点评（一）</a></p></li>
+<li><p>大猛 - <a href="https://segmentfault.com/a/1190000005593043">使用 ES6 写更好的 JavaScript</a></p></li>
+</ul>
+<h3>细说 Module</h3>
+<p>完成了上个阶段，你会发现 ES6 中有两个非常重要的特性：Module 和 Promise，是无论如何都绕不过去的。所以这期我们将 Module 作为重点学习，Promise 会是之后的 ES6 相关周刊中的重点。</p>
+<blockquote><p><strong>野狗科技 - <a href="https://segmentfault.com/a/1190000003971627">写了十年 JS 却不知道模块化为何物？</a></strong></p></blockquote>
+<p>模块化这个问题并非一开始就存在，WWW 刚刚问世的时候，HTML、JavaScript、CSS（JS 和 CSS 都是后来在网景被引进浏览器的）都是极其简单的存在，不需要模块化。模块化的需求是规模的产物，当 web page 进化到 web application，浏览器端处理的逻辑越来越复杂，展现的样式和动画越来多，对于工程的要求也就越来越高，模块化的需求也就产生了。</p>
+<blockquote><p><strong>PortWatcher - <a href="https://segmentfault.com/a/1190000003410285">译丨ES6 的模块系统</a></strong></p></blockquote>
+<p>事过情迁，JavaScript 项目已经变得十分庞大，社区也发展出了一些有助于开发可扩展程序的工具。比如模块系统。JavaScript 其实很早就发展出了模块系统，以及对应的包管理工具（如 AMD，CommonJS 和 NPM），而带有模块特性的 ES6，是不是姗姗来迟呢？</p>
+<blockquote><p><strong>Amio - <a href="https://segmentfault.com/a/1190000004940294">为何 ES Module 如此姗姗来迟</a></strong></p></blockquote>
+<p>浏览器大战风起云涌，大家争先恐后地部署 ES2015 新特性，然 ES Module 这个万众期待的重要特性却始终迟迟未能实现。Module 的规范是完工了的，只是对于模块如何加载和解析留给了“实现环境决定”——根据历史经验问题往往就出现在“实现环境决定”这一环。</p>
+<p>import 和 export 的语法规范很明确，模块的解析器 V8 早已实现，万事俱备只欠加载。区区加载能有多麻烦？</p>
+<blockquote><p><strong>文蔺 - <a href="https://segmentfault.com/a/1190000006043377">译丨从发展历史理解 ES6 Module</a></strong></p></blockquote>
+<p>在很长一段时间内，ES6 带来了 JavaScript 最大的变化，包括管理大型、复杂代码库的一些新特性。这些特性，主要是 import 和 export 关键词，共同被称为 Modules。</p>
+<blockquote><p><strong>grace_xhw - <a href="https://segmentfault.com/a/1190000006215047">译丨从 JS 模块化现状阐释选择 ES6 模块的重要性</a></strong></p></blockquote>
+<p>为了弄明白为什么全部迁移到 ES6 模块如此重要，首先需要描述一下当前的实际状况。在过去 5 年，JavaScript 的发展如此迅猛，以至于大多数的开发者都没有意识到现在有 5 种方式可以来创建 JavaScript 脚本和应用…</p>
+<blockquote><p><strong>见见 - <a href="https://segmentfault.com/a/1190000004331382">Rollup 试炼之路</a></strong></p></blockquote>
+<p>Rollup 是下一代 ES6 模块化工具。ES6 之后，模块化的写法将更加的趋势化，会将以前的文件切割成多个的细小模块。那么如何来高效的组织管理这些文件，又有了很多不同的方案。现有的模块化打包已经有如 Browserify 和 Webpack，那为啥还需要一个新的呢？</p>
+<h3>ES6 + Angular</h3>
+<p>ES6 的各式搭配风格中，Angular 当作是一种经典。</p>
+<blockquote><p><strong>leftstick - <a href="https://segmentfault.com/a/1190000005103425">用 ES6 编写 AngularJS 程序是怎样一种体验</a></strong></p></blockquote>
+<p>过去我们认为屌炸天的 AngularJS（现在也屌炸天，只不过还有 Angular2, React, Vue 横空出世）是不是可以用 ES6 来写？少年不要怀疑，真的可以哦！</p>
+<blockquote><p><strong>kuitos - <a href="https://segmentfault.com/a/1190000005352995">Angular 1.x + ES6 开发风格指南</a></strong></p></blockquote>
+<p>框架的选型在这几年是很头痛的事情，你无法肯定某个框架会是终极解决方案。但是有一点毫无疑问，就是使用 ES6 来写业务代码是势在必行的。这便是一篇趟坑经验文。</p>
+<blockquote><p><strong>n͛i͛g͛h͛t͛i͛r͛e͛ - <a href="https://segmentfault.com/a/1190000002680386">ES6 + Angular 1.x</a></strong></p></blockquote>
+<p>ES2015 是让人兴奋的，除了语法层面的种种提升之外，最令人期待的就是模块化系统和异步模块加载机制。JavaScript 第一次在语言层面拥有了标准且先进的模块化系统。然而标准本身只是落在纸面上的“理想”，更进一步的问题则是如何实践？这篇例子就是结合 jspm，通过 ES2015 构造一个基于 Angular 1.x 的前端项目—。</p>
+<blockquote><p><strong>静逸秋水 - <a href="https://segmentfault.com/a/1190000005771002">使用 ES2015 开发 Angular1.x 应用指南</a></strong></p></blockquote>
+<p>Angular 的编码风格以及架构已经使用 ES2015 进行重写，这些在 Angular 1.5+ 的变化可以更好帮助你升级到 Angular2，这份指南包括了新的单向数据流、事件委托、组件架构和组件路由的最佳实践。</p>
+<blockquote><p><strong>xufei - <a href="https://github.com/xufei/blog/issues/29">Angular 1.x 和 ES6 的结合</a></strong></p></blockquote>
+<p>特别推荐：徐飞老师关于 Angular 和 ES6 结合的见解</p>
+<p>「在任何一个严谨的项目中，应当有比较确定的业务模型，即使脱离界面本身，这些模型也应当是可以运作的，而 ES6 之类语法的便利性，使得我们可以更好地组织下层业务代码。即使目的不是为了使用 Angular 1.x，这一层的精心构造也是有价值的。当做完这层之后，上层迁移到各种框架都基本只剩体力活了。」</p>
+<p><em>（本期完）</em><br><br></p>
+<p>第一期周刊《Vue.js 起手式》传送门：<a href="https://segmentfault.com/a/1190000006579616#ops">https://segmentfault.com/a/1190000006579616</a></p>
+<hr>
+<blockquote>
+<p><strong># SegmentFault 技术周刊 #</strong></p>
+<p>「技术周刊」是社区特别推出的技术内容系列，一周一主题。周刊筛选的每篇内容，是作者的独到见解，踩坑总结和经验分享。</p>
+<p>每周二更新，欢迎「<a href="https://segmentfault.com/blog/weekly">关注</a>」或者「<a href="https://segmentfault.com/feeds/blog/weekly">订阅</a>」。大家也可以在评论处留言自己感兴趣的主题，推荐主题相关的优秀文章。</p>
+</blockquote>

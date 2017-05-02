@@ -1,0 +1,99 @@
+pack打包优化</h1>
+<blockquote><p>使用webpack+vue+......，在打包代码的时候经常由于引入的模块太多，导致打包速度很慢，并且打包后的js文件很大。</p></blockquote>
+<h2>方案一：externals选项</h2>
+<p><strong>配置externals选项：</strong></p>
+<pre><code class="javascript">// webpack.prod.config.js
+// 多余代码省略
+module.exports = {
+    externals: {
+        'vue': 'window.Vue',
+        'vuex': 'window.Vuex',
+        'vue-router': 'window.VueRouter'
+        ...
+    }
+}
+
+// 配置externals之后，webpack不会把配置项中的代码打包进去，别忘了需要在外部引入cdn上的js文件
+// html
+&lt;body&gt;
+    &lt;script src="XXX/cdn/vue.min.js"&gt;&lt;/script&gt;
+    ......
+&lt;/body&gt;</code></pre>
+<h2>方案二：webpack.DLLplugin</h2>
+<p><strong>使用webpack.DLLplugin：</strong></p>
+<p><code>webpack.dll.config.js</code>：</p>
+<pre><code class="javascript">// webpack.dll.config.js
+
+// 需要打包到一起的js文件
+const vendors = [
+    'vue',
+    'vuex',
+    'vue-router',
+    'axios',
+    'moment',
+    'vue-echarts'
+];
+
+module.exports = {
+    // 也可以设置多个入口，多个vendor，就可以生成多个bundle
+    entry: {
+        vendor: vendors
+    },
+
+    // 输出文件的名称和路径
+    output: {
+        filename: '[name].bundle.js',
+        path: path.join(__dirname, '..', 'static'),
+        library: '[name]_[chunkhash]',
+    },
+
+    plugins: [
+        // 这时候打包需要设置环境为production，因为像vue之类在
+        // dev环境下会比prod环境多一些信息，在生产环境如果打包的是dev代码，
+        // vue也会给出警告
+        new webpack.DefinePlugin({
+            'process.env': {
+                NODE_ENV: '"production"'
+            }
+        }),
+        new webpack.DllPlugin({
+            path: path.join(__dirname, '..', 'static', '[name]-manifest.json'),
+            name: '[name]_[chunkhash]',
+            context: __dirname
+        }),
+        
+        // 压缩
+        new webpack.optimize.UglifyJsPlugin({
+            compress: {
+                warnings: false
+            },
+            sourceMap: true
+        }),
+
+        new webpack.LoaderOptionsPlugin({
+            minimize: true
+        }),
+        new webpack.optimize.OccurrenceOrderPlugin()
+    ]
+}
+</code></pre>
+<p>写好配置文件之后，执行命令：</p>
+<pre><code>webpack --config webpack.dll.config.js</code></pre>
+<p>之后就会在输出目录下看到两个文件：</p>
+<pre><code>// 打包后的js文件需要在页面中引入
+vendor.bundle.js
+
+// 这个依赖关系文件用于app打包
+vendor-manifest.json</code></pre>
+<p><code>webpack.prod.config.js</code>:</p>
+<pre><code class="javascript">// webpack.prod.config.js
+// 省略不必要的代码
+module.exports = {
+    plugins: [
+        new webpack.DllReferencePlugin({
+            context: __dirname,
+            manifest: require(path.join(__dirname, '..', 'static/vendor-manifest.json'))
+        })
+    ]
+}</code></pre>
+<p>之后再执行命令去打包app中的静态资源文件的时候，就不会把<code>vendor.bundle.js</code>中已有的文件与自己的逻辑文件打包到一起，能够有效减小体积，同时<code>manifest.json</code>提供的依赖关系和模块id号也可

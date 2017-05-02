@@ -1,0 +1,73 @@
+<p><img data-src="/img/remote/1460000007864459?w=586&amp;h=503" src="/img/remote/1460000007864459?w=586&amp;h=503.gif"></p>
+<p>前一周敢玩新版PC端上线，其中原创视频封面用的就是上图的效果，下面详细说一下怎么实现</p>
+<h2>起因</h2>
+<p>这个效果有着相对较好的用户体验，在 hover 的基础上又有了与用户交互的体验，仿佛用户一直在不同角度按压这张图片。</p>
+<p>当然这个效果早就有人在写并用于官网了，感兴趣可以去<a href="http://www.smartisan.com/">锤子官网</a>，看下轮播图的鼠标交互效果。</p>
+<h2>基本思路</h2>
+<p>单借助 CSS3 的 hover 不足以支配这个效果，JS 方案考虑以下步骤</p>
+<ol>
+<li><p>绑定鼠标事件（mouseover），绑定离开事件（mouseleave）</p></li>
+<li><p>判断鼠标相对于图片的位置</p></li>
+<li><p>计算出应该翻转（rotate）的角度，同时改变阴影的方向</p></li>
+<li><p>将图片复位</p></li>
+</ol>
+<p>这里涉及 CSS3 的一个比较少用的属性 <code>perspective</code></p>
+<blockquote><p>MDN: perspective 属性指定了观察者与 z = 0 平面的距离，使具有三维位置变换的元素产生透视效果。z &gt; 0 的三维元素比正常大，而 z &lt; 0 时则比正常小，大小程度由该属性的值决定。</p></blockquote>
+<p>深入了解去看这个文章<a href="http://www.alloyteam.com/2012/10/the-css3-transform-perspective-property/">CSS3 Transform 的 perspective 属性</a>，时间比较久但是很经典，除了兼容性描述有变其它描述很准确。</p>
+<h2>开始构建</h2>
+<p>html：</p>
+<pre><code class="html">&lt;div class="avatar"&gt;&lt;/div&gt;</code></pre>
+<p>css:</p>
+<pre><code class="css">.avatar {
+  width: 300px;
+  height: 300px;
+  margin: 50px auto;
+
+  background: url('http://7xr2s7.com1.z0.glb.clouddn.com/avatar.jpg');
+  background-size: contain;
+
+  transition: all .3s linear;
+  transform-origin: 50%;
+}</code></pre>
+<p>js:</p>
+<pre><code class="js">let el = document.querySelector('.avatar')
+
+el.addEventListener('mousemove', (e) =&gt; {
+  let thisPX = el.getBoundingClientRect().left
+  let thisPY = el.getBoundingClientRect().top
+  let boxWidth = el.getBoundingClientRect().width
+  let boxHeight = el.getBoundingClientRect().height
+
+  let mouseX = e.pageX - thisPX
+  let mouseY = e.pageY - thisPY
+  let X
+  let Y
+
+  X = mouseX - boxWidth / 2
+  Y = boxHeight / 2 - mouseY
+
+  el.style.transform = `perspective(300px) rotateY(${X / 10}deg) rotateX(${Y / 10}deg)`
+  el.style.boxShadow = `${-X / 20}px ${Y / 20}px 50px rgba(0, 0, 0, 0.3)`
+})
+
+
+el.addEventListener('mouseleave', () =&gt; {
+  el.style.transform = `perspective(300px) rotateY(0deg) rotateX(0deg)`
+  el.style.boxShadow = ''
+})</code></pre>
+<p>以上代码看似没什么问题，也许你在新版本浏览器（无需babel）已经顺利执行了，但是这里有一个坑。</p>
+<p>除非你能确定你的图片在一屏内，就是说你的 body 最大高度就是窗口高度，不然 <code>let mouseY = e.pageY - thisPY</code> 这句计算出来的不一定是真实的鼠标偏移量，而是加上滚动调偏移后的值。</p>
+<p>解决办法就是</p>
+<pre><code class="js">let scrollTop = document.documentElement.scrollTop + document.body.scrollTop  //计算滚动高度
+
+let mouseY = e.pageY - scrollTop - thisPY  //减去滚动高度</code></pre>
+<p>一般的项目考虑到这就可以了，如果你的项目存在 X 轴上的偏移计算原理相同，减去偏移量。</p>
+<h2>实例</h2>
+<p>我自己的代码放在了 codepen，如下</p>
+<p><a href="https://codepen.io/orangexc/pen/VmgoVX/">https://codepen.io/orangexc/p...</a></p>
+<p>另外最近发现在 codepen 上的一个项目，在热门榜单上，基本思路是一样的只不过换了种方式去写，很不错的例子，对于需要多个元素循环绑定的情况很好用。</p>
+<p><a href="https://codepen.io/PavelDoGreat/pen/aBPRaX/">https://codepen.io/PavelDoGre...</a></p>
+<blockquote><p>注：此种方法规避了高度差计算的问题，因为是基于 offsetX（作用元素的偏移量），<strong>推荐使用</strong></p></blockquote>
+<h2>总结</h2>
+<p>JS 动画考虑的会相对多一些，可以获取宽高及鼠标位置（方法多样），根据鼠标位置可以计算出动画的对应效果，选择合适的且兼容性好的代码很关键</p>
+<blockquote><p>文章出自 orange 的 个人博客 <a href="http://orangexc.xyz/">http://orangexc.xyz/</a></p></blockquote>

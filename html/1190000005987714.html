@@ -1,0 +1,180 @@
+<blockquote><p>项目地址：<a href="https://github.com/jrainlau/filemap">链接描述</a><br>项目简介：<a href="https://segmentfault.com/a/1190000005968734">https://segmentfault.com/a/1190000005968734</a></p></blockquote>
+<p>关于项目的用法和介绍可以查看上面的两个链接，这篇文章主要内容是对<code>filemap.js</code>的代码进行一步一步的分析，详细介绍其运行原理和优化策略。</p>
+<h2>知识点准备：</h2>
+<ol>
+<li><p><code>NodeJS</code>的基本使用方法（主要是<code>fs</code>文件系统）；</p></li>
+<li><p><code>ES6</code>特性及语法（<code>let</code>, <code>const</code>, <code>for...of</code>, <code>arrow function</code>...）</p></li>
+<li><p><code>n叉树先序遍历算法</code>。</p></li>
+</ol>
+<p>知识点1和2请自行查阅资料，现在对知识点3进行分析。</p>
+<h2>N叉树先序遍历算法</h2>
+<p>首先明白什么是树。引用<a href="https://book.douban.com/subject/25945449/">数据结构与算法JavaScript描述</a>：</p>
+<blockquote><p>一个树结构包含一系列存在父子关系的节点。每个节点都有一个父节点（除了顶部的第一个节点）以及零个或多个子节点：<br><img data-src="/img/bVzhGh" src="/img/bVzhGh.jpeg"><br>位于树顶部的节点叫作根节点（11）。它没有父节点。树中的每个元素都叫作节点，节点分为内部节点和外部节点。至少有一个子节点的节点称为内部节点（7、5、9、15、13和20是内部节点）。没有子元素的节点称为外部节点或叶节点（3、6、8、10、12、14、18和25是叶节点）。<br>一个节点可以有祖先和后代。一个节点（除了根节点）的祖先包括父节点、祖父节点、曾祖父节点等。一个节点的后代包括子节点、孙子节点、曾孙节点等。例如，节点5的祖先有节点7和节点11，后代有节点3和节点6。<br>有关树的另一个术语是子树。子树由节点和它的后代构成。例如，节点13、12和14构成了上图中树的一棵子树。<br>节点的一个属性是深度，节点的深度取决于它的祖先节点的数量。比如，节点3有3个祖先节点（5、7和11），它的深度为3。<br>树的高度取决于所有节点深度的最大值。一棵树也可以被分解成层级。根节点在第0层，它的子节点在第1层，以此类推。上图中的树的高度为3（最大高度已在图中表示——第3层）。</p></blockquote>
+<p>对于一棵树的遍历，有<code>先序</code>，<code>中序</code>和<code>后序</code>三种遍历方式，在本例中使用的是<code>先序遍历</code>的方式。至于三种遍历方式的异同，请阅读<a href="https://book.douban.com/subject/25945449/">数据结构与算法JavaScript描述</a>，里面有详细的介绍。</p>
+<p>首先我们创建一棵树：</p>
+<pre><code>let treeObj = {
+    '1': [
+        { '2': [{ '5': [{ '11': '11' }, { '12': '12' }, { '13': '13' }, { '14': '14' }] }] },
+        { '3': [{ '6': '6' }, { '7': '7' }] },
+        { '4': [{ '8': '8' }, { '9': '9' }, { '10': '10' }] }
+    ]
+}</code></pre>
+<p>为了简单方便，我把它的key和value都设置成了相同的值。在例子中我们使用的都是key值。<br>然后分析<code>先序遍历</code>的原理：<br><img data-src="/img/bVzbdS" src="/img/bVzbdS.jpeg"><br>虚线为遍历顺序，可以看出<code>先序遍历</code>可以得到整棵树的结构，这正是我们所需要的。接下来看代码如何实现。先看完整代码：</p>
+<pre><code>let traverseNode = (node, deep) =&gt; {
+    if (typeof node !== 'string') {
+        let key = Object.keys(node)
+        console.log(key, deep)
+        for (let i = 0; i &lt; node[key].length; i++) {
+            traverseNode(node[key][i], deep + 1)
+        }
+    }
+}
+
+traverseNode(treeObj, 1)</code></pre>
+<p>我们创建了一个<code>traverseNode()</code>函数，它接收两个对象作为参数。<code>node</code>参数为传入的节点，<code>deep</code>参数为节点的起始深度。<br>首先使用<code>Object.keys(obj)</code>方法取得节点的key值，同时输出深度值：</p>
+<pre><code>let key = Object.keys(node)
+console.log(key, deep)</code></pre>
+<p>运行，在控制台将会输出<code>[ '1' ] 1</code>。接下来我们使用递归来重复这个过程，进行完整的遍历运算：</p>
+<pre><code>for (let i = 0; i &lt; node[key].length; i++) {
+    traverseNode(node[key][i], deep + 1)
+}</code></pre>
+<p>这个递归就是我们前文一直在说的<code>先序遍历</code>。对于<code>二叉树</code>：</p>
+<blockquote><p>先序遍历是以优先于后代节点的顺序访问每个节点的。先序遍历的一种应用是打印一个结构化的文档。<br>先序遍历会先访问节点本身，然后再访问它的左侧子节点，最后是右侧子节点。<br><img data-src="/img/bVzhIi" src="/img/bVzhIi.jpeg"></p></blockquote>
+<p>在理解完上面这段话以后，不难把<code>先序遍历</code>的思路扩展到<code>n叉树</code>：先访问节点本身，然后从左到右访问它的n个子节点。<br>每一次完整的for循环都意味着“往下走一层”，所以只需要<code>deep + 1</code>即可知道每一个节点对应的深度。</p>
+<p>在本例子的遍历过程中，<code>node</code>都是一个个的对象而非字符串。如果检测到<code>node</code>为字符串，证明其已经到了最后一层，需要停止，否则会无限循环导致溢出，所以我们需要添加一个判断：</p>
+<pre><code>if (typeof node !== 'string')</code></pre>
+<p>大功告成，现在我们尝试运行一下：</p>
+<pre><code>[ '1' ] 1
+[ '2' ] 2
+[ '5' ] 3
+[ '11' ] 4
+[ '12' ] 4
+[ '13' ] 4
+[ '14' ] 4
+[ '3' ] 2
+[ '6' ] 3
+[ '7' ] 3
+[ '4' ] 2
+[ '8' ] 3
+[ '9' ] 3
+[ '10' ] 3</code></pre>
+<p>完美。</p>
+<h2>filemap.js原理</h2>
+<p><code>filemap.js</code>通过遍历一个文件夹内部的所有子文件和子文件夹，输出其目录结构。我们使用<code>fs</code>文件系统来进行。</p>
+<pre><code>const fs = require('fs')</code></pre>
+<p>然后来构造核心部分代码：</p>
+<pre><code>// 判断类型。若该路径对应的是文件夹则返回true，否则返回false
+let isDic = (url) =&gt; fs.statSync(url).isDirectory()
+
+const traverseFiles = (path, deep) =&gt; {
+  let files = fs.readdirSync(path)
+  for (let i = 0, len = files.length; i &lt; len; i++) {
+    if (files[i] !== 'filemap.js') console.log(deep, files[i], '\n') // 忽略filemap.js本身
+    let dirPath = path + '\\' + files[i]
+    // 当且仅当是文件夹时才进行下一轮遍历
+    if (isDic(dirPath)) traverseFiles(dirPath, deep + 1)
+  }
+}</code></pre>
+<p>文件目录结构其实就是一棵典型的<code>n叉树</code>，通过前文的例子，不难明白这段代码的原理。首先通过<code>fs.readdirSync(path)</code>同步地获取某路径对应的所有文件（夹），然后进行递归。可以把它理解为从第二层开始遍历，所以在写法上和前文例子稍有不同。</p>
+<p>现在我们已经可以获取文件及其所在的深度了，接下来就是对这些信息进行格式化，使其输出更加直观。为了输出类似</p>
+<pre><code>|__folder
+    |__file1
+    |__file2</code></pre>
+<p>这样的树状结构，我们需要判断不同的深度对应的缩进，所以我们来定义一个<code>placeHolder()</code>函数：</p>
+<pre><code>const placeHolder = (num) =&gt; {
+  if (placeHolder.cache[num]) return placeHolder.cache[num] + '|__'
+  placeHolder.cache[num] = ''
+  for (let i = 0; i &lt; num; i++) {
+    placeHolder.cache[num] += '  '
+  }
+  return placeHolder.cache[num] + '|__'
+}
+placeHolder.cache = {}</code></pre>
+<p>这里涉及到一个<code>缓存函数执行结果</code>的优化策略。由于该函数多次被使用，如果每一次都是从头开始进行for循环，在性能上有着巨大的浪费。所以我们可以把它的执行结果缓存起来，当以后遇到相同情况时只需要取出缓存的结果即可，无需重新运算，大大提升了性能。</p>
+<p>现在我们把核心代码改写一下：</p>
+<pre><code>let isDic = (url) =&gt; fs.statSync(url).isDirectory()
+
+const traverseFiles = (path, deep) =&gt; {
+  let files = fs.readdirSync(path)
+  for (let i = 0, len = files.length; i &lt; len; i++) {
+    if (files[i] !== 'filemap.js') console.log(placeHolder(deep), files[i], '\n') // 忽略filemap.js本身
+    let dirPath = path + '\\' + files[i]
+    if (isDic(dirPath)) traverseFiles(dirPath, deep + 1)
+  }
+}
+
+traverseFiles('./', 1)</code></pre>
+<p>在根目录中运行<code>node filemap.js</code>，我们就能够得到完美的文件目录树状结构图了。</p>
+<h2>功能进一步扩展</h2>
+<p>现在是“无差别”地对所有文件夹进行展开。如果想要忽略某些文件夹，比如<code>.git</code>或者<code>node_modules</code>之类的文件夹，应该如何做呢？参考命令行输入参数的方法，这个需求不难实现。<br>首先获取需要忽略的文件夹名：</p>
+<pre><code>let ignoreCase = {}
+if(process.argv[2] === '-i'){
+    for (let i of process.argv.slice(3)) {
+      ignoreCase[i] = true
+    }
+}</code></pre>
+<p><code>ignoreCase</code>保存着需要忽略的文件夹名。这里使用对象而不是数组的原因是，当判断一个<code>item</code>是否被已经被保存的时候，<code>item.indexOf(Array)</code>的效率并没有<code>Object[item]</code>来得高。使用<code>for...of</code>循环能够直接取得对象。</p>
+<p>接下来我们可以在核心代码中多加一个判断：</p>
+<pre><code>let isDic = (url) =&gt; fs.statSync(url).isDirectory()
+
+const traverseFiles = (path, deep) =&gt; {
+  let files = fs.readdirSync(path)
+  let con = false
+  for (let i = 0, len = files.length; i &lt; len; i++) {
+    if (files[i] !== 'filemap.js') console.log(placeHolder(deep), files[i], '\n')
+    con = ignoreCase[files[i]] === undefined? true: false
+    let dirPath = path + '\\' + files[i]
+    if (isDic(dirPath) &amp;&amp; con) traverseFiles(dirPath, deep + 1)
+  }
+}</code></pre>
+<p>被忽略的文件夹将不会进行递归运算。<br>最后别忘了在退出进程：</p>
+<pre><code>process.exit()</code></pre>
+<p>至此，完整的<code>filemap.js</code>已经完成，其所有代码如下：</p>
+<pre><code>/**
+ * @author Jrain Lau
+ * @email jrainlau@163.com
+ * @date 2016-07-14
+ */
+ 
+'use strict'
+const fs = require('fs')
+
+let ignoreCase = {}
+if(process.argv[2] === '-i'){
+    for (let i of process.argv.slice(3)) {
+      ignoreCase[i] = true
+    }
+}
+
+console.log('\n\nThe files tree is:\n=================\n\n')
+
+const placeHolder = (num) =&gt; {
+  if (placeHolder.cache[num]) return placeHolder.cache[num] + '|__'
+  placeHolder.cache[num] = ''
+  for (let i = 0; i &lt; num; i++) {
+    placeHolder.cache[num] += '  '
+  }
+  return placeHolder.cache[num] + '|__'
+}
+placeHolder.cache = {}
+
+let isDic = (url) =&gt; fs.statSync(url).isDirectory()
+
+const traverseFiles = (path, deep) =&gt; {
+  let files = fs.readdirSync(path)
+  let con = false
+  for (let i = 0, len = files.length; i &lt; len; i++) {
+    if (files[i] !== 'filemap.js') console.log(placeHolder(deep), files[i], '\n')
+    con = ignoreCase[files[i]] === undefined? true: false
+    let dirPath = path + '\\' + files[i]
+    if (isDic(dirPath) &amp;&amp; con) traverseFiles(dirPath, deep + 1)
+  }
+}
+
+traverseFiles('./', 1)
+
+process.exit()</code></pre>
+<p>使用时只需要带上参数<code>-i 文件夹1 文件夹2 ...</code>即可控制文件夹的展开与否。</p>
+<h2>后记</h2>
+<p>在学习<a href="https://book.douban.com/subject/25945449/">数据结构与算法JavaScript描述</a>的过程中，有时候真的觉得特别困，后来发挥自己喜欢折腾的个性，想办法把枯燥的东西进行实践，不知不觉就会变得有趣了。在<code>filemap.js</code>的早期版本中有着许多bug和性能问题，比如不合理使用三元表达式，没有缓存函数执行结果，判断文件类型考虑不周等等情况。文中所涉及到的优化策略，有很多是来自他人的指点和一次次的修改才最终得出来的，在此非常感谢给予我帮助的人。</p>
+<p>最后感谢你的阅读。我是Jrain，欢迎关注<a href="https://segmentfault.com/blog/jrain">我的专栏</a>，将不定期分享自己的学习体验，开发心得，搬运墙外的干货。下次见啦！</p>

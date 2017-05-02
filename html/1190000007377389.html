@@ -1,0 +1,85 @@
+<p>本文摘录自《Nodejs学习笔记》，更多章节及更新，请访问 <a href="https://github.com/chyingp/nodejs-learning-guide">github主页地址</a>。</p></blockquote>
+<h2>概览</h2>
+<p>做过web性能优化的同学，对性能优化大杀器<strong>gzip</strong>应该不陌生。浏览器向服务器发起资源请求，比如下载一个js文件，服务器先对资源进行压缩，再返回给浏览器，以此节省流量，加快访问速度。</p>
+<p>浏览器通过HTTP请求头部里加上<strong>Accept-Encoding</strong>，告诉服务器，“你可以用gzip，或者defalte算法压缩资源”。</p>
+<blockquote><p>Accept-Encoding:gzip, deflate</p></blockquote>
+<p>那么，在nodejs里，是如何对资源进行压缩的呢？答案就是<strong>Zlib</strong>模块。</p>
+<h2>入门实例：简单的压缩/解压缩</h2>
+<h3>压缩的例子</h3>
+<p>非常简单的几行代码，就完成了本地文件的gzip压缩。</p>
+<pre><code class="javascript">var fs = require('fs');
+var zlib = require('zlib');
+
+var gzip = zlib.createGzip();
+
+var inFile = fs.createReadStream('./extra/fileForCompress.txt');
+var out = fs.createWriteStream('./extra/fileForCompress.txt.gz');
+
+inFile.pipe(gzip).pipe(out);</code></pre>
+<h3>解压的例子</h3>
+<p>同样非常简单，就是个反向操作。</p>
+<pre><code class="javascript">var fs = require('fs');
+var zlib = require('zlib');
+
+var gunzip = zlib.createGunzip();
+
+var inFile = fs.createReadStream('./extra/fileForCompress.txt.gz');
+var outFile = fs.createWriteStream('./extra/fileForCompress1.txt');
+
+inFile.pipe(gunzip).pipe(outFile);</code></pre>
+<h2>服务端gzip压缩</h2>
+<p>代码超级简单。首先判断 是否包含 <strong>accept-encoding</strong> 首部，且值为<strong>gzip</strong>。</p>
+<ul>
+<li><p>否：返回未压缩的文件。</p></li>
+<li><p>是：返回gzip压缩后的文件。</p></li>
+</ul>
+<pre><code class="javascript">var http = require('http');
+var zlib = require('zlib');
+var fs = require('fs');
+var filepath = './extra/fileForGzip.html';
+
+var server = http.createServer(function(req, res){
+    var acceptEncoding = req.headers['accept-encoding'];
+    var gzip;
+    
+    if(acceptEncoding.indexOf('gzip')!=-1){    // 判断是否需要gzip压缩
+        
+        gzip = zlib.createGzip();
+        
+        // 记得响应 Content-Encoding，告诉浏览器：文件被 gzip 压缩过
+        res.writeHead(200, {
+            'Content-Encoding': 'gzip'
+        });
+        fs.createReadStream(filepath).pipe(gzip).pipe(res);
+    
+    }else{
+
+        fs.createReadStream(filepath).pipe(res);
+    }
+
+});
+
+server.listen('3000');</code></pre>
+<h2>服务端字符串gzip压缩</h2>
+<p>代码跟前面例子大同小异。这里采用了<strong>slib.gzipSync(str)</strong>对字符串进行gzip压缩。</p>
+<pre><code class="javascript">var http = require('http');
+var zlib = require('zlib');
+
+var responseText = 'hello world';
+
+var server = http.createServer(function(req, res){
+    var acceptEncoding = req.headers['accept-encoding'];
+    if(acceptEncoding.indexOf('gzip')!=-1){
+        res.writeHead(200, {
+            'content-encoding': 'gzip'
+        });
+        res.end( zlib.gzipSync(responseText) );
+    }else{
+        res.end(responseText);
+    }
+
+});
+
+server.listen('3000');</code></pre>
+<h2>写在后面</h2>
+<p>deflate压缩的使用也差不多，这里就不赘述。更多详细用法可参考<a href="https://nodejs.org/api/zlib.html#zlib_class_options"

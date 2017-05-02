@@ -1,0 +1,148 @@
+<h2>简介</h2>
+<p><a href="http://alloyteam.github.io/AlloyTouch/transformjs/">transformjs</a>在非react领域用得风生水起，那么react技术栈的同学能用上吗？答案是可以的。junexie童鞋已经造了个<a href="https://github.com/AlloyTeam/AlloyTouch/blob/master/transformjs/react/transform.react.js">react版本</a>。</p>
+<h2>动画实现方式</h2>
+<p><strong>传统 web 动画的两种方式</strong>：</p>
+<ol>
+<li><p>纯粹的CSS3 ：如：transition/animation+transform（大名鼎鼎的animate.css）</p></li>
+<li><p>JS + CSS3 transition或者animation：这里第一种一样，只是通过js里add class和remove class去增加或者移除对应的动画</p></li>
+<li><p>纯粹JS控制时间轴：第一和第二种都是自带时间轴，使用 setInterval / setTimeout / requestAnimationFrame 不断地修改 DOM 的 style 属性产生动画</p></li>
+</ol>
+<p><strong>对应在react中</strong>：</p>
+<p>使用CSS3</p>
+<ul>
+<li><p>使用 ReactCSSTransitionGroup 来实现</p></li>
+<li>
+<p>相关动画的class都有对应的state，修改state相当于增加或者移除class，也就相当于js里add class和remove class去增加或者移除对应的动画</p>
+<p>纯粹JS控制时间轴</p>
+</li>
+<li><p>仍然使用 setInterval / setTimeout / requestAnimationFrame，修改某个 state 值，然后映射到 component 的 style 上。</p></li>
+</ul>
+<p>这里很明显，方案1和方案2可应对简单场景（如没有prop change 回调等），方案3可编程性最大，最灵活，可以适合复杂的动画场景或者承受复杂的交互场景。</p>
+<h2>安装</h2>
+<pre><code class="js">npm install css3transform-react</code></pre>
+<h2>API</h2>
+<pre><code class="js">//set "translateX", "translateY", "translateZ", "scaleX", "scaleY", "scaleZ", "rotateX", "rotateY", "rotateZ", "skewX", "skewY", "originX", "originY", "originZ"
+render() {
+    return (
+        &lt;Transform
+          translateX={100}
+          scaleX={0.5}
+          originX={0.5}&gt;
+          &lt;div&gt;sth&lt;/div&gt;
+        &lt;/Transform&gt;
+    );
+}
+
+// you can also use other porps, such as "className" or "style"
+render() {
+    return (
+        &lt;Transform
+          translateX={100}
+          className="ani"
+          style={{width: '100px', background: 'red'}}
+          &lt;div&gt;sth&lt;/div&gt;
+        &lt;/Transform&gt;
+    );
+}</code></pre>
+<p>通过上面的声明，就可以设置或者读取"translateX", "translateY", "translateZ", "scaleX", "scaleY", "scaleZ", "rotateX", "rotateY", "rotateZ", "skewX", "skewY", "originX", "originY", "originZ"！</p>
+<p>方便吧！</p>
+<h2>使用姿势</h2>
+<pre><code class="js">import React, { Component } from 'react';
+import { render } from 'react-dom';
+
+import Transform from '../../transform.react.js';
+
+class Root extends Component {
+
+  constructor(props, context) {
+    super(props, context);
+
+    this.state = {
+      el1: {rotateZ: 0},
+      el2: {rotateY: 0}
+    };
+
+    this.animate = this.animate.bind(this);
+  }
+
+  animate() {
+    this.setState({
+      el1: {rotateZ: this.state.el1.rotateZ + 1},
+      el2: {rotateY: this.state.el2.rotateY + 1}
+    }, () =&gt; {
+      requestAnimationFrame(this.animate);
+    });
+
+  }
+
+  componentDidMount() {
+    setTimeout(this.animate, 500);
+  }
+
+  render() {
+    return (
+      &lt;div&gt;
+        &lt;Transform rotateZ={this.state.el1.rotateZ} className="test" style={{'backgroundColor': 'green'}}&gt;
+          transformjs
+        &lt;/Transform&gt;
+
+        &lt;Transform rotateY={this.state.el2.rotateY} className="test" style={{'backgroundColor': 'red', 'left': '200px'}}&gt;
+          transformjs
+        &lt;/Transform&gt;
+
+      &lt;/div&gt;
+    );
+  }
+}
+
+render(
+    &lt;Root /&gt;,
+    document.getElementById('root')
+);</code></pre>
+<p>更加复杂的详细的使用代码可以看这里：<a href="https://github.com/AlloyTeam/AlloyTouch/blob/master/transformjs/react/example/src/index.jsx">https://github.com/AlloyTeam/AlloyTouch/blob/master/transformjs/react/example/src/index.jsx</a></p>
+<h2>在线演示</h2>
+<p><a href="http://alloyteam.github.io/AlloyTouch/transformjs/react/example/">http://alloyteam.github.io/AlloyTouch/transformjs/react/example/</a></p>
+<h2>性能对比</h2>
+<p>因为react版本会有diff过程，然后apply diff to dom的过程，state改变不会整个innerHTML全部替换，所以对浏览器渲染来说还是很便宜，但是在js里diff的过程的耗时还是需要去profiles一把，如果耗时严重，不在webworker里跑还是会卡住UI线程导致卡顿，交互延缓等。所以要看一看CPU的耗时还是很有必要的。<br>主要是那上面的演示和传统的<a href="http://alloyteam.github.io/AlloyTouch/transformjs/example/all.html">直接操作dom的方式</a>对比。就是下面这种传统的方式：</p>
+<pre><code class="js">var element1 = document.querySelector("#test1");
+Transform(element1);
+...
+...
+function animate() {
+    element1.rotateZ++;
+    ...
+    requestAnimationFrame(animate);
+}
+
+animate();</code></pre>
+<p>对两种方式使用chrome profiles了一把。<br><strong>先看总耗时对比</strong>：</p>
+<p>react：<br><img data-src="/img/remote/1460000007845524?w=535&amp;h=121" src="/img/remote/1460000007845524?w=535&amp;h=121.png"></p>
+<p>传统方式：<br><img data-src="/img/remote/1460000007845525?w=453&amp;h=150" src="/img/remote/1460000007845525?w=453&amp;h=150.png"></p>
+<ul>
+<li><p>react在8739秒内CPU耗时花费了近似<strong>1686ms</strong></p></li>
+<li><p>传统方式在9254ms秒内CPU耗时花费近似<strong>700ms</strong></p></li>
+</ul>
+<p>在不进行profiles就能想象到react是一定会更慢一些，因为state的改变要走把react生命周期走一遍，但是可以看到react的耗时还是在可以接受的范围。但是，我们还是希望找到拖慢的函数来。<br>那么在使用transformjs react版本中，哪个函数拖了后腿？展开profiles tree可以看到：</p>
+<p><img data-src="/img/remote/1460000007845526?w=311&amp;h=364" src="/img/remote/1460000007845526?w=311&amp;h=364.png"></p>
+<p>就是它了。</p>
+<pre><code class="js">/**
+       * Reconciles the properties by detecting differences in property values and
+       * updating the DOM as necessary. This function is probably the single most
+       * critical path for performance optimization.
+       *
+       * TODO: Benchmark whether checking for changed values in memory actually
+       *       improves performance (especially statically positioned elements).
+       * TODO: Benchmark the effects of putting this at the top since 99% of props
+       *       do not change for a given reconciliation.
+       * TODO: Benchmark areas that can be improved with caching.
+       *
+       * @private
+       * @param {object} lastProps
+       * @param {object} nextProps
+       * @param {?DOMElement} node
+       */
+      _updateDOMProperties: function (lastProps, nextProps, transaction) {</code></pre>
+<p>打开对应的代码可以看到。注释里已经写了这是优化重点。</p>
+<h2>开始使用吧</h2>
+<p>官方网站：<a href="http://alloyteam.github.io/AlloyTouch/transformjs/">http://alloyteam.github.io/AlloyTouch/transformjs/</a></p>
+<p>Github地址：<a href="https://github.com/AlloyTeam/AlloyTouch/tree/master/transformjs">https://github.com/AlloyTeam/AlloyTouch/tree/master/transformjs</a><br>任何问题和意见欢迎<a href="https://github.com/AlloyTeam/AlloyTouch/issues">new issue</a>给我们。</p>

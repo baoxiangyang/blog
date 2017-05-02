@@ -1,0 +1,241 @@
+a href="https://github.com/xiaoyu2er/blog/issues/3">github</a></p>
+<p>承接上篇 <a href="https://github.com/xiaoyu2er/blog/issues/1">44个 Javascript 变态题解析 (上)</a></p>
+<h2>第23题</h2>
+<pre><code>[1 &lt; 2 &lt; 3, 3 &lt; 2 &lt; 1]</code></pre>
+<p>这个题也还可以.</p>
+<p>这个题会让人误以为是 <code>2 &gt; 1 &amp;&amp; 2 &lt; 3</code> 其实不是的.</p>
+<p>这个题等价于</p>
+<pre><code> 1 &lt; 2 =&gt; true;
+ true &lt; 3 =&gt;  1 &lt; 3 =&gt; true;
+ 3 &lt; 2 =&gt; false;
+ false &lt; 1 =&gt; 0 &lt; 1 =&gt; true;</code></pre>
+<p>答案是  <code>[true, true]</code></p>
+<h2>第24题</h2>
+<pre><code>// the most classic wtf
+2 == [[[2]]]</code></pre>
+<p>这个题我是猜的. 我猜的 <code>true</code>, 至于为什么.....</p>
+<p><code>both objects get converted to strings and in both cases the resulting string is "2"</code> 我不能信服...</p>
+<h2>第25题</h2>
+<pre><code>3.toString()
+3..toString()
+3...toString()</code></pre>
+<p>这个题也挺逗, 我做对了 :) 答案是 <code>error, '3', error</code></p>
+<p>你如果换一个写法就更费解了</p>
+<pre><code>var a = 3;
+a.toString()</code></pre>
+<p>这个答案就是 <code>'3'</code>;</p>
+<p>为啥呢?</p>
+<p>因为在 js 中 <code>1.1</code>, <code>1.</code>, <code>.1</code> 都是合法的数字. 那么在解析 <code>3.toString</code> 的时候这个 <code>.</code> 到底是属于这个数字还是函数调用呢? 只能是数字, 因为<code>3.</code>合法啊!</p>
+<h2>第26题</h2>
+<pre><code>          
+(function(){
+  var x = y = 1;
+})();
+console.log(y);
+console.log(x);</code></pre>
+<p>答案是 <code>1, error</code></p>
+<p>y 被赋值到全局. x 是局部变量. 所以打印 x 的时候会报 <code>ReferenceError</code></p>
+<h2>第27题</h2>
+<pre><code>var a = /123/,
+    b = /123/;
+a == b
+a === b</code></pre>
+<p>即使正则的字面量一致, 他们也不相等.</p>
+<p>答案 <code>false, false</code></p>
+<h2>第28题</h2>
+<pre><code>var a = [1, 2, 3],
+    b = [1, 2, 3],
+    c = [1, 2, 4]
+a ==  b
+a === b
+a &gt;   c
+a &lt;   c</code></pre>
+<p>字面量相等的数组也不相等.</p>
+<p>数组在比较大小的时候按照字典序比较</p>
+<p>答案 <code>false, false, false, true</code></p>
+<h2>第29题</h2>
+<pre><code>var a = {}, b = Object.prototype;
+[a.prototype === b, Object.getPrototypeOf(a) === b]</code></pre>
+<p>知识点:</p>
+<ul><li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/getPrototypeOf">Object/getPrototypeOf</a></p></li></ul>
+<p>只有 Function 拥有一个 prototype 的属性. 所以 <code>a.prototype</code> 为 <code>undefined</code>.</p>
+<p>而 <code>Object.getPrototypeOf(obj)</code> 返回一个具体对象的原型(该对象的内部<code>[[prototype]]</code>值)</p>
+<p>答案 <code>false, true</code></p>
+<h2>第30题</h2>
+<pre><code>function f() {}
+var a = f.prototype, b = Object.getPrototypeOf(f);
+a === b</code></pre>
+<p>f.prototype is the object that will become the parent of any objects created with new f while Object.getPrototypeOf returns the parent in the inheritance hierarchy.</p>
+<p>f.prototype 是使用使用 new 创建的 f 实例的原型. 而 Object.getPrototypeOf 是 f 函数的原型.</p>
+<p>请看:</p>
+<pre><code>
+a === Object.getPrototypeOf(new f()) // true
+b === Function.prototype // true</code></pre>
+<p>答案 <code>false</code></p>
+<h2>31</h2>
+<pre><code>function foo() { }
+var oldName = foo.name;
+foo.name = "bar";
+[oldName, foo.name]</code></pre>
+<p>答案 <code>['foo', 'foo']</code></p>
+<p>知识点:</p>
+<ul><li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name">Function/name</a></p></li></ul>
+<p>因为<strong>函数的名字不可变</strong>.</p>
+<h2>第32题</h2>
+<pre><code>"1 2 3".replace(/\d/g, parseInt)</code></pre>
+<p>知识点:</p>
+<ul><li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace#Specifying_a_function_as_a_parameter">String/replace#Specifying_a_function_as_a_parameter</a></p></li></ul>
+<p><code>str.replace(regexp|substr, newSubStr|function)</code></p>
+<p>如果replace函数传入的第二个参数是函数, 那么这个函数将接受如下参数</p>
+<ul>
+<li><p>match 首先是匹配的字符串</p></li>
+<li><p>p1, p2 .... 然后是正则的分组</p></li>
+<li><p>offset match 匹配的index</p></li>
+<li><p>string 整个字符串</p></li>
+</ul>
+<p>由于题目中的正则没有分组, 所以等价于问</p>
+<pre><code>parseInt('1', 0)
+parseInt('2', 2)
+parseInt('3', 4)</code></pre>
+<p>答案: <code>1, NaN, 3</code></p>
+<h2>第33题</h2>
+<pre><code>function f() {}
+var parent = Object.getPrototypeOf(f);
+f.name // ?
+parent.name // ?
+typeof eval(f.name) // ?
+typeof eval(parent.name) //  ?</code></pre>
+<p>先说以下答案 <code>'f', 'Empty', 'function', error</code> 这个答案并不重要.....</p>
+<p>这里第一小问和第三小问很简单不解释了.</p>
+<p>第二小问笔者在自己的浏览器测试的时候是 <code>''</code>, 第四问是 <code>'undefined'</code></p>
+<p>所以应该是平台相关的. 这里明白 <code>parent === Function.prototype</code> 就好了.</p>
+<h2>第34题</h2>
+<pre><code>var lowerCaseOnly =  /^[a-z]+$/;
+[lowerCaseOnly.test(null), lowerCaseOnly.test()]</code></pre>
+<p>知识点:</p>
+<ul><li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/test">RegExp/test</a></p></li></ul>
+<p>这里 test 函数会将参数转为字符串. <code> 'nul'</code>, <code>'undefined'</code> 自然都是全小写了</p>
+<p>答案: <code>true, true</code></p>
+<h2>第35题</h2>
+<pre><code>[,,,].join(", ")</code></pre>
+<p><code>[,,,] =&gt; [undefined × 3]</code></p>
+<p>因为javascript 在定义数组的时候允许最后一个元素后跟一个<code>,</code>, 所以这是个长度为三的稀疏数组(这是长度为三, 并没有 0, 1, 2三个属性哦)</p>
+<p>答案: <code>", , "</code></p>
+<h2>第36题</h2>
+<pre><code>var a = {class: "Animal", name: 'Fido'};
+a.class</code></pre>
+<p>这个题比较流氓.. 因为是浏览器相关, <code>class</code>是个保留字(现在是个关键字了)</p>
+<p>所以答案不重要, 重要的是自己在取属性名称的时候尽量避免保留字. 如果使用的话请加引号  <code>a['class']</code></p>
+<h2>第37题</h2>
+<pre><code>var a = new Date("epoch")</code></pre>
+<p>知识点:</p>
+<ul>
+<li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a></p></li>
+<li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/parse">Date/parse</a></p></li>
+</ul>
+<p>简单来说, 如果调用 Date 的构造函数传入一个字符串的话需要符合规范, 即满足 Date.parse 的条件.</p>
+<p>另外需要注意的是 如果格式错误 构造函数返回的仍是一个Date 的实例 <code>Invalid Date</code>.</p>
+<p>答案 <code>Invalid Date</code></p>
+<h2>第38题</h2>
+<pre><code>var a = Function.length,
+    b = new Function().length
+a === b</code></pre>
+<p>我们知道一个function(Function 的实例)的 <code>length</code> 属性就是函数签名的参数个数, 所以 b.length == 0.</p>
+<p>另外 Function.length 定义为1......</p>
+<p>所以不相等.......答案 <code>false</code></p>
+<h2>第39题</h2>
+<pre><code>var a = Date(0);
+var b = new Date(0);
+var c = new Date();
+[a === b, b === c, a === c]</code></pre>
+<p>还是关于Date 的题, 需要注意的是</p>
+<ul>
+<li><p>如果不传参数等价于当前时间.</p></li>
+<li><p>如果是函数调用 返回一个字符串.</p></li>
+</ul>
+<p>答案 <code>false, false, false</code></p>
+<h2>第40题</h2>
+<pre><code>var min = Math.min(), max = Math.max()
+min &lt; max</code></pre>
+<p>知识点:</p>
+<ul>
+<li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/min">Math/min</a></p></li>
+<li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max">Math/max</a></p></li>
+</ul>
+<p>有趣的是, Math.min 不传参数返回 <code>Infinity</code>, Math.max 不传参数返回 <code>-Infinity</code> 😆 </p>
+<p>答案: <code>false</code></p>
+<h2>第41题</h2>
+<pre><code>function captureOne(re, str) {
+  var match = re.exec(str);
+  return match &amp;&amp; match[1];
+}
+var numRe  = /num=(\d+)/ig,
+    wordRe = /word=(\w+)/i,
+    a1 = captureOne(numRe,  "num=1"),
+    a2 = captureOne(wordRe, "word=1"),
+    a3 = captureOne(numRe,  "NUM=2"),
+    a4 = captureOne(wordRe,  "WORD=2");
+[a1 === a2, a3 === a4]</code></pre>
+<p>知识点:</p>
+<ul><li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/exec">RegExp/exec</a></p></li></ul>
+<p>通俗的讲</p>
+<p>因为第一个正则有一个 g 选项 它会‘记忆’他所匹配的内容, 等匹配后他会从上次匹配的索引继续, 而第二个正则不会</p>
+<p>举个例子</p>
+<pre><code>var myRe = /ab*/g;
+var str = 'abbcdefabh';
+var myArray;
+while ((myArray = myRe.exec(str)) !== null) {
+  var msg = 'Found ' + myArray[0] + '. ';
+  msg += 'Next match starts at ' + myRe.lastIndex;
+  console.log(msg);
+}
+// Found abb. Next match starts at 3
+// Found ab. Next match starts at 9</code></pre>
+<p>所以 a1 = '1'; a2 = '1'; a3 = null; a4 = '2'</p>
+<p>答案 <code>[true, false]</code></p>
+<h2>第42题</h2>
+<pre><code>var a = new Date("2014-03-19"),
+    b = new Date(2014, 03, 19);
+[a.getDay() === b.getDay(), a.getMonth() === b.getMonth()]
+</code></pre>
+<p>这个....</p>
+<blockquote><p>JavaScript inherits 40 years old design from C: days are 1-indexed in C's struct tm, but months are 0 indexed. In addition to that, getDay returns the 0-indexed day of the week, to get the 1-indexed day of the month you have to use getDate, which doesn't return a Date object.</p></blockquote>
+<pre><code>a.getDay()
+3
+b.getDay()
+6
+a.getMonth()
+2
+b.getMonth()
+3</code></pre>
+<p>都是套路!</p>
+<h2>第43题</h2>
+<pre><code>if ('http://giftwrapped.com/picture.jpg'.match('.gif')) {
+  'a gif file'
+} else {
+  'not a gif file'
+}</code></pre>
+<p>知识点:</p>
+<ul><li><p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match">String/match</a></p></li></ul>
+<p>String.prototype.match 接受一个正则, 如果不是, 按照 <code>new RegExp(obj)</code> 转化. 所以 <code>.</code> 并不会转义<br>那么 <code>/gif</code> 就匹配了 /.gif/ </p>
+<p>答案: <code>'a gif file'</code></p>
+<h2>第44题</h2>
+<pre><code>function foo(a) {
+    var a;
+    return a;
+}
+function bar(a) {
+    var a = 'bye';
+    return a;
+}
+[foo('hello'), bar('hello')]</code></pre>
+<p>在两个函数里, a作为参数其实已经声明了, 所以 <code>var a; var a = 'bye'</code> 其实就是 <code>a; a ='bye'</code></p>
+<p>所以答案 <code>'hello', 'bye'</code></p>
+<p>全部结束!</p>
+<p>==================</p>
+<h1>总结</h1>
+<p>由于笔者水平有限, 如果解释有误, 还望指出 😄 </p>
+<p>通过整理, 笔者发现绝大部分题目都是因为自己对于基础知识或者说某个 API 的参数理解偏差才做错的.</p>
+<p>笔者的重灾区在原型那一块, 所以这次被虐和整理还是很有意义呀.</p>
+<p>笔者相信 坚实的基础是深入编程的前提. 所以基础书还是要常看啊 🐹 </p>
+<p>最后这些变态

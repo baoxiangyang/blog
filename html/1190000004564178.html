@@ -1,0 +1,430 @@
+<p>开发离线Web应用需要几个步骤:</p></blockquote>
+<ol>
+<li><p>首先确保应用知道设备是否能上网。</p></li>
+<li><p>应用必须能访问一定的资源(图像,Javascript,CSS)，这样才能正常工作。</p></li>
+</ol>
+<h2>离线检测</h2>
+<h3>navigator.onLine</h3>
+<blockquote><p>HTML5新定义的属性，这个属性值为true表示设备能上网，值为false表示离线设备。这个属性的关键是浏览器必须知道设备能否访问网络，从而返回正确的值。</p></blockquote>
+<h3>相关事件类型:online和offline</h3>
+<blockquote><p>HTML5还定义了两个事件:online和offline。</p></blockquote>
+<p>当网络从离线变为在线或者从在线变为离线，分别触发着两个事件。</p>
+<p><a href="http://caniuse.com/#search=onLine">兼容性</a></p>
+<h2>应用缓存</h2>
+<blockquote><p>HTML5的应用缓存，或者简称为appcache,是专门为开发离线Web应用而设计的。Appcache就是从浏览器缓存中分出来的一块缓存区。</p></blockquote>
+<p>要想在这个缓存中保存数据，可以使用一个描述文件(manifest file),列出要下载和缓存的资源。即使用户在离线状态下按了刷新按钮，您的应用也会正常加载和运行。</p>
+<p>使用缓存接口可为您的应用带来以下三个优势：</p>
+<ul>
+<li><p>离线浏览 - 用户可在离线时浏览您的完整网站</p></li>
+<li><p>速度 - 缓存资源为本地资源，因此加载速度较快。</p></li>
+<li><p>服务器负载更少 - 浏览器只会从发生了更改的服务器下载资源。</p></li>
+</ul>
+<h3>清单文件</h3>
+<blockquote><p>清单文件必须以 text/cache-manifest MIME 类型提供</p></blockquote>
+<h5>清单文件格式</h5>
+<pre><code>CACHE MANIFEST
+# 2010-06-18:v2
+
+# Explicitly cached 'master entries'.
+CACHE:
+/favicon.ico
+index.html
+stylesheet.css
+images/logo.png
+scripts/main.js
+
+# Resources that require the user to be online.
+NETWORK:
+login.php
+/myapi
+http://api.twitter.com
+
+# static.html will be served if main.py is inaccessible
+# offline.jpg will be served in place of all images in images/large/
+# offline.html will be served in place of all other .html files
+FALLBACK:
+/main.py /static.html
+images/large/ images/offline.jpg
+*.html /offline.html</code></pre>
+<p>清单可包括以下三个不同部分：CACHE、NETWORK 和 FALLBACK。</p>
+<ol>
+<li><p>CACHE： 这是条目的默认部分。系统会在首次下载此标头下列出的文件（或紧跟在 CACHE MANIFEST 后的文件）后显式缓存这些文件。</p></li>
+<li><p>NETWORK：<br>此部分下列出的文件是需要连接到服务器的白名单资源。无论用户是否处于离线状态，对这些资源的所有请求都会绕过缓存。可使用通配符。</p></li>
+<li><p>FALLBACK：<br>此部分是可选的，用于指定无法访问资源时的后备网页。其中第一个 URI 代表资源，第二个代表后备网页。两个 URI 必须相关，并且必须与清单文件同源。可使用通配符。</p></li>
+</ol>
+<p><strong>NOTE</strong>这些部分可按任意顺序排列，且每个部分均可在同一清单中重复出现。</p>
+<h5>引用清单文件</h5>
+<pre><code>&lt;html manifest="example.appcache"&gt;
+  ...
+&lt;/html&gt;
+</code></pre>
+<p><strong>NOTE:</strong></p>
+<ul>
+<li><p><code>CACHE MANIFEST</code> 字符串应在第一行，且必不可少。</p></li>
+<li><p>网站的缓存数据量不得超过 <code>5</code> MB。</p></li>
+<li><p>HTTP 缓存标头以及对通过 SSL 提供的网页设置的缓存限制将被替换为缓存清单(也就是加了密的网站<a href="http://stackoverflow.com/questions/499591/are-https-urls-encrypted#comment315173_499594">Are https URLs encrypted</a>)。因此，通过 https 提供的网页可实现离线运行。</p></li>
+<li><p>如果您要编写的是针对 Chrome 网上应用店的应用，可使用 <code>unlimitedStorage</code> 取消该限制。<br>如果清单文件或其中指定的资源无法下载，就无法进行整个缓存更新进程。在这种情况下，浏览器将继续使用原应用缓存。</p></li>
+</ul>
+<h3>applicationCache对象</h3>
+<blockquote><p>applicationCache对象有一个status属性，属性的值是常量，表示应用缓存的状态。</p></blockquote>
+<h4><code>applicationCache.status</code></h4>
+<ul>
+<li><p>0:无缓存，即没有与页面相关的应用缓存</p></li>
+<li><p>1:闲置，即应用缓存未得到更新</p></li>
+<li><p>2:检查中，即正在下载描述文件并检查更新</p></li>
+<li><p>3:下载中，即应用缓存正在下载描述文件中指定的资源</p></li>
+<li><p>4:更新完成，即应用缓存已经更新了资源，而且所有资源都已下载完毕，可以通过<code>swapCache()</code>来使用了</p></li>
+<li><p>5:废弃，即应用缓存的描述文件已经不存在了，因此页面无法再访问应用缓存</p></li>
+</ul>
+<h4>相关事件类型</h4>
+<ul>
+<li><p>checking:在浏览器为应用缓存查找更新时触发</p></li>
+<li><p>error:在检查更新或下载资源期间发生错误时触发</p></li>
+<li><p>noupdate:在检查描述文件无变化时粗放</p></li>
+<li><p>downloading:在开始下载应用缓存时资源时触发</p></li>
+<li><p>progress:在文件下载应用缓存资源时粗放</p></li>
+<li><p>updateready:在页面新的应用缓存下载完毕，而且可以通过swapCache()时触发。</p></li>
+</ul>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Using_the_application_cache">兼容性</a></p>
+<h2>Cookie</h2>
+<blockquote><p>HTTP cookie，通常叫做cookie，最初是在客户端用于存储会话信息的。该标准要求服务器的任意HTTP请求发送Set-Cookie HTTP头部作为响应的一部分，其中包含会话信息。</p></blockquote>
+<pre><code>// HTTP响应
+HTTP/1.1 200 OK
+Content-type: text/html
+Set-cookie: name=value
+Other-header: other-header-value 
+
+// HTTP请求
+GET /index.html HTTP/1.1
+Cookie: name=value
+Other-header: other-header-value</code></pre>
+<p><strong>第一段会话过程</strong><br>服务器:设置name=value的cookie,并将其作为响应头部的一部分，发送给浏览器。<br>浏览器:储存name=value的cookie并将其作为请求头的一部分，发送给服务器。</p>
+<p><strong>NOTE:</strong></p>
+<ol>
+<li><p>会话过程的名称和值都是经过URL编码的。</p></li>
+<li><p>每个域的cookie总数是有限的，不同浏览器之间各有不同。当超过单个域名限制之后还有再设置cookie，浏览器就会清除以前的cookie。</p></li>
+<li><p>cookie在性质上是绑定在特定域名下的。当设定一个cookie后，再给创建它的域名发送请求时，都会包含这个cookie。</p></li>
+</ol>
+<h3>cookie构造</h3>
+<pre><code>// HTTP响应
+HTTP/1.1 200 OK
+Content-type: text/html
+Set-cookie: name=value; expires=Mon, 22-JAN-07 07:10:24 GMT; domain=.wrox.com;path=/;secure
+Other-header: other-header-value 
+
+// HTTP请求
+GET /index.html HTTP/1.1
+Cookie: name=value
+Other-header: other-header-value</code></pre>
+<ul>
+<li><p>名称(name):一个唯一确定cookie的名称，cookie的名称必须是经过 <strong>URL编码</strong>的。</p></li>
+<li><p>值(value):储存在cookie的字符串值，值必须被 <strong>URL编码</strong>。</p></li>
+<li><p>域:cookie对于那个域是有效的。所有向该域发送的请求中都会包含这个cookie信息。如果没有明确设定，那么这个域会被认作来自设置cookie的那个域。</p></li>
+<li><p>路径:对于指定域中的那个路径，应该向服务器发送cookie</p></li>
+<li><p>失效时间:表示cookie应该被删除的那个时间戳</p></li>
+<li><p>安全标志:指定后，cookie只能在SSL的连接时，才能发送到服务器</p></li>
+</ul>
+<p><strong>第二段会话过程</strong><br>服务器:设置name=value的cookie,同时告诉浏览器</p>
+<ol>
+<li><p>它会在格林威治时间2007年1月22日7:20:24失效。</p></li>
+<li><p>对于所有wrox.com的子域和域名下(由path参数指定的)都有效</p></li>
+<li><p>同时通过SSL连接才能传输。 <br>并将其作为响应头部的一部分，发送给浏览器。</p></li>
+</ol>
+<p>浏览器:储存name=value的cookie并将其作为请求头的一部分，发送给服务器。</p>
+<p><strong>Note</strong>:后四个，域/路径/失效时间/安全标志都是 <strong>服务器给浏览器的指示</strong>。以指定何时该发送cookie。这些参数并不会作为发送到服务器的标志，名值对才会被发送。只有cookie的名字和值是必须的。</p>
+<h3>document.cookie</h3>
+<h5>读</h5>
+<blockquote><p>用来获取属性值时，<code>document.cookie</code>返回当前页面可用的(根据cookie的域，路径，失效时间和安全设置)所有的cookie的字符串。</p></blockquote>
+<p>[]()</p>
+<h5>写</h5>
+<blockquote><p>当用来设置值得时候，<code>document.cookie</code>可以用来设置新的cookie字符串。这个cookie字符串会用来解释并添加到现有的cookie中。设置的值并不会覆盖cookie，除非设置的值已经存在。</p></blockquote>
+<pre><code>var cookieUtil = {
+
+    get: function ( name ) {
+
+        var cookieName = encodeURIComponent( name ) + '=',
+            cookieStart = document.cookie.indexOf(cookieName),
+            cookieValue = null;
+
+        if( cookieStart &gt; -1 ) {
+            var cookieEnd = document.cookie.indexOf(';',cookieStart);
+            if( cookieEnd === -1 ) {
+                cookieEnd = document.length;
+            }
+            cookieValue = decodeURIComponent( document.cookie ).substring(cookieStart+cookieName.length, cookieEnd)
+        }
+
+        return cookieValue;
+    },
+    
+    set: function ( name, value, expires, path, domain, secure ) {
+        var cookieText = encodeURIComponent(name) + '=' + encodeURIComponent(value);
+
+        if( expires instanceof Date ) {
+            cookieText += "; expires=" + expires.toGMTString();
+        }
+
+        if( path ) {
+            cookieText += '; path=' + path; 
+        }
+
+        if( domain ) {
+            cookieText += '; domain=' + domain;
+        }
+
+        if( secure ) {
+            cookieText += '; secure';
+        }
+
+        document.cookie = cookieText;
+    },
+
+    unset: function ( name, path, domain, secure ) {
+
+        this.set( name, '' , new Date(0), path, domain, secure)
+    }
+}
+</code></pre>
+<h3>子cookie</h3>
+<blockquote><p>为了绕开 <strong>浏览器</strong> 的单域名下的cookie数限制，一种开发人员使用了一种称为子cookie(subcookie)的概念。子cookie是存放在单个cookie中的更小段的数据。也就是使用cookie值来储存多个名称值对儿。</p></blockquote>
+<p>子cookie一般以查询字符串的格式进行格式化。然后这些值可以使用单个cookie进行储存和访问<br><code>name=name1=value1&amp;name2=value2&amp;name3=value3</code></p>
+<p>上面展示了如何写入，读取和删除cookie，下面展示操作子cookie的方法。</p>
+<pre><code>var SubCookieUtil = {
+
+    get: function ( name, subName ) {
+
+        var cookieValue = this.getAll( name );
+
+        if( subName ) {
+
+            return result[subName];
+        }
+        else {
+
+            return null;
+        }
+    },
+
+    getAll: function ( name ) {
+
+        var cookieName  = encodeURIComponent( name ) + '=',
+            cookieStart = document.cookie.indexOf( cookieName ),
+            cookieValue = null,
+            cookieEnd,
+            result      = {};
+
+        if( cookieStart &gt; -1 ) {
+
+            cookieEnd = document.cookie.indexOf( ';', cookieStart );
+
+            if( cookieEnd === -1 ) {
+
+                cookieEnd = document.cookie.length;
+            }
+        }
+
+        cookieValue = document.cookie.substring( cookieStart+cookieName.length, cookieEnd );
+
+        decodeURIComponent( cookieValue );
+
+        if( cookieValue.length &gt; 0 ) {
+
+            subCookies = cookieValue.split( '&amp;' );
+
+            for( var i = 0; i &lt; subCookies.length; i++  ) {
+
+                var parts = subCookies[i].split( '=' );
+
+                result[parts[0]] = parts[1];
+
+            }
+
+            return result;
+        }
+        else {
+
+            return null;
+        }
+    },
+
+    set: function ( name, subName, value, expires, path, domain, secure ) {
+
+        var subCookies = this.getAll( name ) || {};
+
+        subCookies[subName] = value;
+        this.setAll( name, subCookies, expires, path, domain, secure );
+    },
+
+    setAll: function ( name, subCookies, expires, path, domain, secure ) {
+
+        var cookieText = encodeURIComponent( name ) + '=',
+            subCookiesParts = [],
+            subName;
+
+        for( subName in subCookies ) {
+
+            if( subCookies.hasOwnProperty( subName ) ) {
+
+                subCookiesParts.push( encodeURIComponent(subName) + '=' + encodeURIComponent(subCookies[subName]) );
+            }
+        }
+
+        if( subCookiesParts.length &gt; 0 ) {
+
+            cookieText += subCookiesParts.join('&amp;');
+
+            if( expires instanceof Date ) {
+
+                cookieText += '; expires=' + expires.toGMTString(); 
+            }
+
+            if( path ) {
+
+                cookieText += '; path=' + path;
+            }
+
+            if( domain ) {
+
+                cookieText += '; domain=' + domain;
+            }
+
+            if( secure ) {
+
+                cookieText += '; secure'
+            }
+
+        } else {
+
+            cookieText += '; expires=' + (new Date(0).toGMTString());
+        }
+
+
+        document.cookie = cookieText;
+
+    },
+
+    unsetAll: function ( name, subCookies, expires, path, domain, secure ) {
+
+        this.set( name, null, new Date(0), path, domain, secure );
+    },
+
+    unset: function ( name, subName, expires, path, domain, secure ) {
+
+        var subCookies = this.get( name );
+
+        if( subCookies ) {
+
+            delete subCookies[subName]
+            this.setAll( name, subCookies, expires, path, domain, secure );
+        }
+
+    }
+}
+</code></pre>
+<h3>关于cookie的性能与安全</h3>
+<ol>
+<li><p>由于所有的cookie都会由浏览器作为请求头发送，所以在cookie中存储大量信息会影响到特定域的请求性能。cookie信息越大，完成对服务器请求的时间也就越长。</p></li>
+<li><p>cookie数据并非存储在一个安全环境中，其中包含的任何数据都可被他人访问。所以一定不要在cookie中储存重要和敏感的数据。</p></li>
+</ol>
+<h2>IE用户数据</h2>
+<blockquote><p>在IE5.0中，微软通过一个自定义行为引入了持久化用户数据的概念。用户数据允许每个文档最多128KB数据，每个域名最多1MB数据。要使用持久化用户数据，首先，必须如下所示，使用CSS在某个元素上指定userData行为。</p></blockquote>
+<pre><code>`&lt;div style="behavior:url(#default#userData)" id="dataStore"&gt;&lt;/div&gt;`
+</code></pre>
+<pre><code>var dataStore = getElementById('dataStore');
+// 写入数据
+dataStore.setAttribute('name','Nicholas');
+dataStore.setAttribute('book','Professional Javascript');
+dataStore.save('BookInfo');
+
+// 获取数据
+dataStore.load('BookInfo'); 
+// 访问数据
+console.log(dataStore.getAttribute('name'));
+console.log(dataStor.getAttribute('book'));
+
+// 删除数据
+dataStore.removeAttribute( 'name' );
+dataStore.removeAttribute( 'book' );
+dataStore.save('BookInfo');
+</code></pre>
+<p><strong>Note:</strong></p>
+<ul>
+<li><p>和cookie一样，IE用户数据并非安全的，所有不能存放敏感信息。</p></li>
+<li><p>用户数据默认是可以跨越会话持久存在的，同时也不会过期</p></li>
+<li><p>要访问某个数据空间，脚本运行的页面必须来自于同一个域名，路径并使用与进行存储的脚本同样的协议。</p></li>
+</ul>
+<h2>Web存储机制</h2>
+<blockquote><p>Web Storage的两个主要目标是</p></blockquote>
+<ul>
+<li><p>提供一种在cookie之外存储会话数据的途径</p></li>
+<li><p>提供一种存储大量可以跨会话存在的数据的机制。</p></li>
+</ul>
+<p><a href="http://caniuse.com/#search=storage">兼容性</a></p>
+<p><strong>Note:</strong>与其他客户端储存方案相比，WebStorage同样也有限制，这些限制因浏览器围而异。一般来说，对存储空间大小的限制都是以每个来源(协议，域名，端口号)为单位的。换句话说，每个来源都要固定大小的空间用于保存自己的数据。考虑到这个限制，就要注意分析和控制每个来源中有多少页面需要保存数据。</p>
+<p><a href="http://dev-test.nemikor.com/web-storage/support-test/">webStorage限制测试</a></p>
+<h3>Storage类型</h3>
+<blockquote><p>Storage提供最大的空间(因浏览器而异)来储存名值对。</p></blockquote>
+<pre><code>sessionStorage instanceof Storage // true
+localStorage instanceof Storage// true
+
+localStorage.__proto__ === Storage.prototype // true
+sessionStorage.__proto__ === Storage.prototype // true</code></pre>
+<p>由上可知，<code>sessionStorage对象</code>与<code>localStorage对象</code>都为Storge类型的实例。因此它们都可以访问到Storage类型的原型对象上的方法。有如下这些方法。</p>
+<ul>
+<li><p><code>clear()</code>:删除所有值;Firefox中没有实现</p></li>
+<li><p><code>getItem(name)</code>:根据指定的名字name获取对应的值</p></li>
+<li><p><code>key(index)</code>:获得index位置处的值得名字</p></li>
+<li><p><code>removeItem(name)</code>:删除由name指定的名值对</p></li>
+<li><p><code>setItem(nname, value)</code>:为指定的name设置一个对应的值</p></li>
+</ul>
+<p>同时可以使用length属性判断Storage对象中有多少名值对。但无法判断对象中所有数据的大小，不过IE8提供了一个<code>remainingSpace</code>属性，用于获取还可以使用的存储空间的字节数。</p>
+<p><strong>Note:</strong>Storge类型只能存储字符串。非字符串的数据在存储之前会被转换为字符串。</p>
+<h3>sessionStorage对象</h3>
+<blockquote><p>为每一个给定的源（given origin）维持一个独立的存储区域，该存储区域在页面会话期间可用（即只要浏览器处于打开状态，包括页面重新加载和恢复）。</p></blockquote>
+<p>sessionStorage对象主要用于仅针对会话的小段数据的存储。它储存特定于某个会话的数据，也就是该数据只保持到浏览器关闭。这个对象就像会话cookie，也会在浏览器关闭后消失。</p>
+<ol>
+<li><p>存储在sessionStorage中的数据可以跨越页面而存在，同时如果浏览器支持，浏览器崩溃重启后依然可用(Firefox和Webkit都支持，IE不行)。</p></li>
+<li><p>sessionStorage对象绑定于某个服务器会话，所有当文件在本地运行的时候是不可用的。</p></li>
+<li><p>存储在sessionStorage的数据只能由最初给对象储存数据的的页面访问到，所以对多页面应用有限制。</p></li>
+</ol>
+<pre><code>// 写入数据
+sessionStorage.setItem( 'name', 'Nicholas' );
+
+// 访问数据
+sessionStorage.getItem( 'name' );
+
+// 迭代数据
+for( var i = 0,len = sessionStorage.length; i &lt; len; i++ ) {
+    
+    var key = sessionStorge.key( i );
+    var value = sessionStorage.getItem( key );
+    console.log( key + '=' + value );
+}
+for(key in sessionStorage) {
+
+    var value = sessionStorage.getItem( key );
+    console.log( key + '=' + value );
+}
+
+// 删除数据
+sessionStorage.removeItem( 'name' );</code></pre>
+<p><strong>Note:</strong>不同浏览器写入数据的方法略有不同。Firefox和Webkit实现了同步写入，所有添加到储存空间的数据是立刻被提交的。而IE的实现是异步写入数据，所以在设置数据和将数据写入磁盘之间可能有一些延迟。对于少量数据而言，这个差异是可以忽略的。对于大量数据，你会发现IE比其他浏览器更快的恢复执行，因为它会跳过实际的磁盘写入过程。<br>在IE8中可强制把数据写入磁盘，如下。</p>
+<pre><code>// 防止代码执行的时候，不会发生其他磁盘写入操作
+sessionStorage.begin();
+
+sessionStorage.name = 'Nicholas';
+
+// 确保name的值在调用commit()之后立刻写入磁盘
+sessionStorage.commit();</code></pre>
+<h3>localStorage对象</h3>
+<blockquote><p>localStorage 同样的功能，但是在浏览器关闭，然后重新打开后数据仍然存在。</p></blockquote>
+<p>localStorage实现跨越会话存储数据，在HTML5规范中作为持久保存客户端数据的方案取代了globalStorage。<br>规则:要访问同一个localStorage对象，页面必须来自于同一个域名(子域名无效)，使用同一种协议，在同一个端口上。</p>
+<p>因为localStorage是Storage的实例，所有可以像使用sessionStorage一样来使用它。</p>
+<h3>storage事件</h3>
+<blockquote><p>对Storage对象进行任何修改，都会在文档上触发storage事件。</p></blockquote>
+<p><strong>storge事件对象</strong></p>
+<ul>
+<li><p><code>domain</code>:发生变化的储存空间的域名</p></li>
+<li><p><code>key</code>:设置或者删除的键名</p></li>
+<li><p><code>newVaule</code>:如果是设置值，则为新值；如果是删除键，则为null</p></li>
+<li><p><code>oldValue</code>:键被更改之前的值<

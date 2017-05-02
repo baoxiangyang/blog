@@ -1,0 +1,432 @@
+<h2>块级格式上下文（Block formatting context）</h2>
+<ol>
+<li>
+<p>普通流(Normal Flow)</p>
+<pre><code>
+在普通流中，元素按照其在 HTML 中的先后位置至上而下布局，在这个过程中，行内元素水平排列，直到当行被占满然后换行，块级元素则会被渲染为完整的一个新行， 除非另外指定，否则所有元素默认都是普通流定位，也可以说，普通流中元素的位置由该元素在 HTML 文档中的位置决定。
+</code></pre>
+</li>
+<li>
+<p>浮动 (Floats)</p>
+<pre><code>在浮动布局中，元素首先按照普通流的位置出现，然后根据浮动的方向尽可能的向左边或右边偏移，其效果与印刷排版中的文本环绕相似。
+</code></pre>
+</li>
+<li>
+<p>绝对定位 (Absolute Positioning)</p>
+<pre><code>在绝对定位布局中，元素会整体脱离普通流，因此绝对定位元素不会对其兄弟元素造成影响（如果看了上文的童鞋，会发现这点与浮动元素会影响兄弟元素是不同的），而元素具体的位置由绝对定位的坐标决定。
+</code></pre>
+</li>
+</ol>
+<p>BFC 正是属于普通流的，因此它对兄弟元素也不会造成什么影响。</p>
+<h3>什么是BFC?</h3>
+<blockquote><p>块格式化上下文（block formatting context） 是页面 CSS 视觉渲染的一部分。它是用于决定块盒子的布局及浮动相互影响的一个区域。 --<a href="https://developer.mozilla.org/zh-CN/docs/Web/Guide/CSS/Block_formatting_context">MDN 块格式上下文</a></p></blockquote>
+<p>我的理解是，BFC是一个环境，在这个环境中的元素不会影响到其他环境中的布局，也就是说，处于不同BFC中的元素是不会互相干扰的。</p>
+<h3>BFC的触发条件</h3>
+<ul>
+<li><p>根元素或其它包含它的元素</p></li>
+<li><p>浮动元素，float除none以外的值</p></li>
+<li><p>绝对定位元素 (元素的 position 为 absolute 或 fixed)</p></li>
+<li><p>display为以下其中之一的值：inline-block,table-cell,table-caption</p></li>
+<li><p>overflow 的值不为 visible的元素</p></li>
+<li><p>弹性盒子 flex boxes (元素的 display: flex 或 inline-flex)</p></li>
+</ul>
+<p>其中，最常见的就是overflow:hidden、float:left/right、position:absolute。也就是说，每次看到这些属性的时候，就代表了该元素以及创建了一个BFC了。</p>
+<h3>BFC的特性</h3>
+<ol>
+<li><p>内部的盒会在垂直方向一个接一个排列（可以看作BFC中有一个的常规流）；</p></li>
+<li><p>处于同一个BFC中的元素相互影响，可能会发生margin collapse；</p></li>
+<li><p>每个元素的margin box的左边，与容器块border box的左边相接触(对于从左往右的格式化，否则相反)。即使存在浮动也是如此；</p></li>
+<li><p>BFC就是页面上的一个隔离的独立容器，容器里面的子元素不会影响到外面的元素，反之亦然；</p></li>
+<li><p>计算BFC的高度时，考虑BFC所包含的所有元素，连浮动元素也参与计算；</p></li>
+<li><p>浮动盒区域不叠加到BFC上；</p></li>
+</ol>
+<h3>BFC有什么用？</h3>
+<ol>
+<li>
+<p>阻止外边距折叠</p>
+<p>两个相连的块级元素在垂直上的外边距会发生叠加，有些把这种情况看作是bug，但我觉得可能是出于段落排版的考虑，为了令行间距一致才有的这一特性。我们先来看看例子：</p>
+<pre><code class="html">&lt;p&gt;first&lt;/p&gt;
+&lt;p&gt;second&lt;/p&gt;</code></pre>
+<pre><code class="css">*{margin: 0px;padding: 0px}
+p {
+    color: red;
+    background: #eee;
+    width: 100px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+    margin: 10px;
+    border: solid 1px red;
+}</code></pre>
+<p><img data-src="/img/remote/1460000006760336" src="/img/remote/1460000006760336.png"></p>
+<p>从上面可以看出，我们给两个p元素都设置<code>margin</code>,但中间的间距却发生了折叠。然后举个BFC的例子：</p>
+<pre><code class="css">.ele{
+    overflow: hidden;
+    border: solid 1px red;
+}</code></pre>
+<pre><code class="html">&lt;div class="ele"&gt;
+    &lt;p&gt;first&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="ele"&gt;
+    &lt;p&gt;second&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+<p><img data-src="/img/remote/1460000006760337" src="/img/remote/1460000006760337.png"></p>
+<p>从上面可以看出，我们为每个div元素设置<code>overflow</code>的值为<code>hidden</code>,产生一个块级格式上下文，因为外边距不会相互重叠。</p>
+</li>
+<li>
+<p>BFC可以包含浮动的元素</p>
+<pre><code class="html">//html
+&lt;div class = "box"&gt;
+    &lt;div class= "floatL"&gt;float&lt;/div&gt;
+    &lt;div class= "floatL"&gt;float&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;br style="clear:both"&gt;
+&lt;div class = "box BFC"&gt;
+    &lt;div class= "floatL"&gt;float&lt;/div&gt;
+    &lt;div class= "floatL"&gt;float&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+<pre><code class="css">*{margin: 0px;padding: 0px}
+.floatL{
+    float: left;
+    width: 100px;
+    height: 100px;
+    background-color: red;
+    text-align: center;
+    line-height: 100px;
+}
+.box{
+    border: 1px solid red;
+    width: 300px;
+    margin: 100px;
+    padding: 20px;
+}
+.BFC{
+    overflow: hidden;
+    *zoom: 1;
+}</code></pre>
+<p><img data-src="/img/remote/1460000006760338" src="/img/remote/1460000006760338.png"></p>
+<p>从运行结果可以看出，如果块级元素里面包含着浮动元素会发生高度塌陷，但是将它变成一个BFC后，BFC在计算高度时会自动将浮动元素计算在内。</p>
+</li>
+<li>
+<p>BFC可以阻止元素被浮动元素覆盖</p>
+<pre><code class="html">&lt;div class="box1"&gt;box1&lt;/div&gt;
+&lt;div class="box2"&gt;box2&lt;/div&gt;</code></pre>
+<pre><code class="css">*{margin: 0px; padding: 0px}
+
+.box1{
+    width: 100px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+    background-color: rgba(0, 0, 255, 0.5);
+    border: 1px solid #000;
+    float: left;
+}
+.box2{
+    width: 200px;
+    height: 200px;
+    line-height: 100px;
+    text-align: center;
+    background-color: rgba(255, 0, 0, 0.5);
+    border: 1px solid #000;
+    /* overflow: hidden; */
+    /* *zoom: 1; */
+}</code></pre>
+<p><img data-src="/img/remote/1460000006760339" src="/img/remote/1460000006760339.png"></p>
+<p>从上面看出，当元素浮动后，会与后面的块级元素产生相互覆盖。那怎么解决这个问题，只要为后面的元素创建一个BFC。添加<code>overflow</code>属性到<code>box2</code>上。</p>
+<pre><code class="css">overflow: hidden;
+*zoom: 1;</code></pre>
+<p><img data-src="/img/remote/1460000006760340" src="/img/remote/1460000006760340.png"></p>
+<p>这样子阻止了浮动元素重叠的问题。</p>
+</li>
+</ol>
+<h3>BFC与<code>hasLayout</code>
+</h3>
+<p>除了使用 <code>overflow: hidden</code> 触发 BFC 外，还使用了一个 <code>*zomm: 1</code> 的属性，这是 IEhack ，因为 IE6-7 并不支持 W3C 的 BFC ，而是使用私有属性 <code>hasLayout</code> 。从表现上来说，<code>hasLayout </code>跟 BFC 很相似，只是 <code>hasLayout</code> 自身存在很多问题，导致了 IE6-7 中一系列的 bug 。触发 hasLayout 的条件与触发 BFC 有些相似，推荐为元素设置 IE 特有的 CSS 属性 <code>zoom: 1</code> 触发 <code>hasLayout</code> ，<code>zoom</code> 用于设置或检索元素的缩放比例，值为“1”即使用元素的实际尺寸，使用 <code>zoom: 1</code> 既可以触发 hasLayout 又不会对元素造成其他影响，相对来说会更为方便。</p>
+<p>拓展阅读：</p>
+<p><a href="http://www.cnblogs.com/MockingBirdHome/p/3365346.html">Block formatting context(块级格式化上下文)</a></p>
+<p><a href="http://mp.weixin.qq.com/s?src=3&amp;timestamp=1470323942&amp;ver=1&amp;signature=Y72Cy9gjrTcOj6VGI7-BPdSdo5Zi6iSCYmISpw274JuHSaCizBF6Qik-sGs-dxvXrHGtLoaKnuIjjCGlp30YMWyYSq">学习块格式化上下文</a></p>
+<p><a href="http://www.cnblogs.com/pigtail/archive/2013/01/23/2871627.html">BFC与hasLayout</a></p>
+<h2>清除浮动</h2>
+<p>经典的清除浮动：</p>
+<pre><code class="css">//利用伪元素清除浮动
+.clearfix:after {
+     content:"."; 
+     display:block; 
+     height:0; 
+     visibility:hidden; 
+     clear:both; 
+}
+.clearfix { 
+    *zoom:1; 
+}</code></pre>
+<p>拓展阅读：<br><a href="http://www.cnblogs.com/lhb25/p/story-of-clear-float.html">那些年一起清除过的浮动</a></p>
+<h2>认识圣杯布局和双飞翼布局</h2>
+<p>各种各样的布局，无非就是用了浮动 float，负边距，相对定位，通过这三者的巧妙组合跟拼凑来实现的。用好这些，布局就会很简单。</p>
+<p>还没学会布局时，就听到有圣杯布局和双飞翼布局，这布局都有这么风骚的名字，就觉得很酷，事实也如此，了解了圣杯布局和双飞翼布局，才发现挺深奥的。</p>
+<p>传统的布局中，当我们需要改变两栏的互换，就会很麻烦。因为还要涉及到 HTML 代码的修改，不能完全从 CSS 上更改，这叫 HTML 和 CSS 的耦合。而圣杯布局跟双飞翼布局就是能够不考虑主体的位置，能够只通过 CSS 代码就改变相应的布局，这也是优点之一。</p>
+<h3>圣杯布局</h3>
+<p>试试这样的HTML结构：</p>
+<pre><code class="html">&lt;div class="header"&gt;header&lt;/div&gt;
+&lt;div class="container"&gt;
+    &lt;div class="main"&gt;main&lt;/div&gt;
+    &lt;div class="sub"&gt;sub&lt;/div&gt;
+    &lt;div class="extra"&gt;extra&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="footer"&gt;footer&lt;/div&gt;</code></pre>
+<p>给它加上CSS样式：</p>
+<pre><code class="css">body{ margin: 0; padding: 0; font-size: 1.5em; font-weight: bold; min-width: 500px;}
+.header,.footer{ text-align: center;}
+.header{ height: 50px; background-color: #76ffff;}
+.footer{ height: 50px; background-color: #ff7676;}
+.main{ background-color: #666;}
+.sub{ background-color: #44fa44;}
+.extra{ background-color: #3dbdff;}
+/*start*/
+.main{
+    width: 100%;
+    float: left;
+}
+.sub{
+    width: 100px;
+    float: left;
+    margin-left: -100%;
+}
+.extra{
+    width: 200px;
+    float: left;
+    margin-left: -200px;
+}
+.container{
+    overflow: hidden;
+}</code></pre>
+<p>结果如下：<br><img data-src="/img/remote/1460000006760341" src="/img/remote/1460000006760341.png"></p>
+<p>会发现，main的位置不正确，所以再给<code>container</code>加上 <code>padding: 0 200px 0 100px</code>;</p>
+<p><img data-src="/img/remote/1460000006760342" src="/img/remote/1460000006760342.png"></p>
+<p>虽然 main 的位置正确了，可是 sub 和 extra 位置优点不对，所以我们再用上相对定位，为 <code>sub</code> 和 <code>extra</code> 加上如下代码：</p>
+<pre><code class="css">.sub{
+    position: relative;;
+    left: -100px;
+}
+.extra{
+    position: relative;
+    right: -200px;
+}</code></pre>
+<p>效果就出来了，<br><img data-src="/img/remote/1460000006760343" src="/img/remote/1460000006760343.png"></p>
+<p>噢耶，这就是圣杯布局。如果在圣杯布局的基础上，给它一个多余的标签，把 mian 包起来，这就是双飞翼布局。</p>
+<h3>双飞翼布局</h3>
+<p>HTML结构：</p>
+<pre><code class="html">&lt;div class="header"&gt;header&lt;/div&gt;
+&lt;div class="container"&gt;
+    &lt;div class="main"&gt;
+        &lt;div class="main-wrap"&gt;main&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="sub"&gt;sub&lt;/div&gt;
+    &lt;div class="extra"&gt;extra&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="footer"&gt;footer&lt;/div&gt;</code></pre>
+<p>CSS结构：</p>
+<pre><code class="css">body{ margin: 0; padding: 0; font-size: 1.5em; font-weight: bold; min-width: 500px;}
+.header,.footer{ text-align: center;}
+.header{ height: 50px; background-color: #76ffff;}
+.footer{ height: 50px; background-color: #ff7676;}
+.main{ background-color: #666;}
+.sub{ background-color: #44fa44;}
+.extra{ background-color: #3dbdff;}
+/*start*/
+.main{
+    width: 100%;
+    height: 100px;
+    float: left;
+}
+.sub{
+    width: 100px;
+    height: 100px;
+    float: left;
+    margin-left: -100%;
+}
+.extra{
+    width: 200px;
+    height: 100px;
+    float: left;
+    margin-left: -200px;
+}
+.main-wrap{
+    margin: 0 200px 0 100px;
+}
+.container{
+    height: 100px;
+    overflow: hidden;
+    *zoom: 1;
+}</code></pre>
+<p>可以看到，只要为包住 main-wrap 设置 margin，连相对定位都没用到，效果就出来了。<br><img data-src="/img/remote/1460000006760344" src="/img/remote/1460000006760344.png"></p>
+<blockquote><p>如果把三栏布局比作一只大鸟，可以把main看成是鸟的身体，sub和extra则是鸟的翅膀。这个布局的实现思路是，先把最重要的身体部分放好，然后再将翅膀移动到适当的地方。因此请容许我给这个布局实现取名为双飞翼布局（Flying Swing Layout）.<br>就如上图中的鸟有各种姿势一样，利用双飞翼布局，我们也可以实现各种布局。这里有个尝试页面，利用双飞翼，实现了一套栅格化布局系统。</p></blockquote>
+<p>优点：</p>
+<ul>
+<li><p>实现了内容与布局的分离，这是渐进式增强布局的思想，从内容出发，不考虑布局。</p></li>
+<li><p>main部分是自适应宽度的，很容易在定宽布局和流体布局中切换。</p></li>
+<li><p>任何一栏都可以是最高栏，不会出问题。</p></li>
+<li><p>需要的hack非常少（就一个针对ie6的清除浮动hack:_zoom: 1;）<br>在浏览器上的兼容性非常好，IE5.5以上都支持。</p></li>
+</ul>
+<p>缺点：</p>
+<ul><li><p>main需要一个额外的包裹层。</p></li></ul>
+<h2>normalize.css和reset.css</h2>
+<p>normalize 的理念则是尽量保留浏览器的默认样式，不进行太多的重置。</p>
+<p>reset 的目的，是将所有的浏览器的自带样式重置掉，这样更易于保持各浏览器渲染的一致性。</p>
+<pre><code class="css">/* reset */
+html,body,h1,h2,h3,h4,h5,h6,div,dl,dt,dd,ul,ol,li,p,blockquote,pre,hr,figure,table,caption,th,td,form,fieldset,legend,input,button,textarea,menu{margin:0;padding:0;}
+header,footer,section,article,aside,nav,hgroup,address,figure,figcaption,menu,details{display:block;}
+table{border-collapse:collapse;border-spacing:0;}
+caption,th{text-align:left;font-weight:normal;}
+html,body,fieldset,img,iframe,abbr{border:0;}
+i,cite,em,var,address,dfn{font-style:normal;}
+[hidefocus],summary{outline:0;}
+li{list-style:none;}
+h1,h2,h3,h4,h5,h6,small{font-size:100%;}
+sup,sub{font-size:83%;}
+pre,code,kbd,samp{font-family:inherit;}
+q:before,q:after{content:none;}
+textarea{overflow:auto;resize:none;}
+label,summary{cursor:default;}
+a,button{cursor:pointer;}
+h1,h2,h3,h4,h5,h6,em,strong,b{font-weight:bold;}
+del,ins,u,s,a,a:hover{text-decoration:none;}
+body,textarea,input,button,select,keygen,legend{font:12px/1.14 arial,\5b8b\4f53;color:#333;outline:0;}
+body{background:#fff;}
+a,a:hover{color:#333;}</code></pre>
+<p>以上reset来自<a href="http://nec.netease.com/framework/css-reset.html">NEC</a>的css reset。</p>
+<p>拓展阅读：<br><a href="https://segmentfault.com/q/1010000000117189">Normalize.css 和 Reset CSS 有什么本质区别？</a></p>
+<h2>IE条件注释</h2>
+<p>IE条件注释是一种特殊的HTML注释，这种注释只有IE5.0及以上版本才能理解。比如普通的HTML注释是：</p>
+<pre><code class="html">&lt;!--This is a comment--&gt;
+　　而只有IE可读的IE条件注释是：
+&lt;!--[if IE]&gt; &lt;![endif]--&gt;
+　　“非IE条件注释”：
+&lt;!--[if !IE]&gt;--&gt; non-IE HTML Code &lt;!--&lt;![endif]--&gt;
+　　“非特定版本IE条件注释”（很少用到）：
+&lt;!--[if ! lt IE 7]&gt;
+&lt;![IGNORE[--&gt;&lt;![IGNORE[]]&gt;
+Code for browsers that match the if condition
+&lt;!--&lt;![endif]--&gt;</code></pre>
+<p>简而言之，除了“Windows上的IE”之外的所有浏览器都会认为条件注释只是一段普通的HTML注释。你不能在CSS代码中使用条件注释。IE条件注释是很有用的对IE隐藏或者展现特定代码的方法，比起在CSS中用诡异的_/制造bug，利用IE条件注释来写CSS “hacks”是更合理的方法。通俗点，条件注释就是一些if判断，但这些判断不是在脚本里执行的，而是直接在html代码里执行的。</p>
+<ol>
+<li><p>条件注释的基本结构和HTML的注释(&lt;!– –&gt;)是一样的。因此IE以外的浏览器将会把它们看作是普通的注释而完全忽略它们。</p></li>
+<li><p>IE将会根据if条件来判断是否如解析普通的页面内容一样解析条件注释里的内容。</p></li>
+<li><p>条件注释使用的是HTML的注释结构，因此他们只能使用在HTML文件里，而不能在CSS文件中使用。</p></li>
+</ol>
+<p>从语法上看这是相当合法的普通HTML注释。任何浏览器都会认为&lt;!–和–&gt;之间的部分是注释从而忽略它。但是IE也会看到其中[if IE]&gt;，从而开始解释接下来的代码直到遇到&lt;![endif]。所以，下面这些代码不会显示在任何其他浏览器中面。</p>
+<p>通过“比较操作符”可以更灵活地对IE版本进行控制，用法是在IE前面加上“比较操作符”。合法的操作符如下：</p>
+<ul>
+<li><p>lte：就是Less than or equal to的简写，也就是小于或等于的意思。</p></li>
+<li><p>lt ：就是Less than的简写，也就是小于的意思。</p></li>
+<li><p>gte：就是Greater than or equal to的简写，也就是大于或等于的意思。</p></li>
+<li><p>gt ：就是Greater than的简写，也就是大于的意思。</p></li>
+<li><p>! ：就是不等于的意思，跟javascript里的不等于判断符相同</p></li>
+</ul>
+<pre><code class="html">&lt;!–[if gt IE 5.5]&gt; / 如果IE版本大于5.5 /
+&lt;!–[if lte IE 6]&gt; / 如果IE版本小于等于6 /
+&lt;!–[if !IE]&gt; / 如果浏览器不是IE /</code></pre>
+<p>常用的IE条件注释</p>
+<pre><code class="html">&lt;!--[if !IE]&gt;除IE外都可识别&lt;![endif]--&gt;
+&lt;!--[if IE]&gt; 所有的IE可识别 &lt;![endif]--&gt;
+&lt;!--[if IE 5.0]&gt; 只有IE5.0可以识别 &lt;![endif]--&gt;
+&lt;!--[if IE 5]&gt; 仅IE5.0与IE5.5可以识别 &lt;![endif]--&gt;
+&lt;!--[if gt IE 5.0]&gt; IE5.0以及IE5.0以上版本都可以识别 &lt;![endif]--&gt;
+&lt;!--[if IE 6]&gt; 仅IE6可识别 &lt;![endif]--&gt;
+&lt;!--[if lt IE 6]&gt; IE6以及IE6以下版本可识别 &lt;![endif]--&gt;
+&lt;!--[if gte IE 6]&gt; IE6以及IE6以上版本可识别 &lt;![endif]--&gt;
+&lt;!--[if IE 7]&gt; 仅IE7可识别 &lt;![endif]--&gt;
+&lt;!--[if lt IE 7]&gt; IE7以及IE7以下版本可识别 &lt;![endif]--&gt;
+&lt;!--[if gte IE 7]&gt; IE7以及IE7以上版本可识别 &lt;![endif]--&gt;</code></pre>
+<h2>水平垂直居中的各种方案</h2>
+<h3>行内元素的水平居中</h3>
+<p>要实现行内元素的水平居中,只需把行内元素包裹在块级父层元(<code>&lt;div&gt;、&lt;li&gt;、&lt;p&gt;</code>等)中，并且在父层元素CSS设置如下：</p>
+<pre><code class="css">.container{
+  text-align: center;
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/xOoZxK">demo</a><br><img data-src="/img/remote/1460000006760345" src="/img/remote/1460000006760345.png"></p>
+<h3>块状元素的水平居中</h3>
+<p>要实现块状元素（display:block）的水平居中，我们只需要将它的左右外边距margin-left和margin-right设置为auto，即可实现块状元素的居中，要水平居中的块状元素CSS设置如下：</p>
+<pre><code class="css">.container{
+    margin: 0 auto;
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/XKLGwG">demo</a><br><img data-src="/img/remote/1460000006760346" src="/img/remote/1460000006760346.png"></p>
+<h3>已知高度宽度元素的水平垂直居中</h3>
+<h4>1. 利用绝对定位与负边距实现。</h4>
+<p>利用绝对定位，将元素的top和left属性都设为50%，再利用margin边距，将元素回拉它本身高宽的一半，实现垂直居中。核心CSS代码如下：</p>
+<pre><code class="css">.container{
+    position: relative;
+}
+.center{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -50px 0 0 -50px;
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/ZOdkGP">demo</a></p>
+<h4>2. 利用绝对定位和margin</h4>
+<pre><code class="css">.container{
+  position: relative;
+}
+.center{
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/NAkmxY">demo</a></p>
+<p><img data-src="/img/remote/1460000006760347" src="/img/remote/1460000006760347.png"></p>
+<h3>未知高度和宽度元素的水平垂直居中</h3>
+<h4>1. 被居中的元素是<code>inline</code>或者<code>inline-block</code>元素</h4>
+<p>可以巧妙的将父级容器设置为<code>display:table-cell</code>，配合<code>text-align:center</code>和<code>vertical-align:middle</code>即可以实现水平垂直居中。</p>
+<pre><code class="css">.container{
+  width: 600px;
+  height: 600px;
+  background: #eee;
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+}
+.center{
+  background: blue; 
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/QEXPNx?editors=1100">demo</a></p>
+<h4>2. 利用CSS3的transform的属性</h4>
+<p>利用C3的transform，可以轻松的在未知元素的高宽的情况下实现元素的垂直居中。</p>
+<pre><code class="css">.container{
+  width: 100%;
+  height: 400px;
+  background: #eee;
+  position: relative;
+}
+.center{
+  background: blue;
+  position:absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/mEkgAm?editors=0100">demo</a></p>
+<h4>3. flex布局</h4>
+<p>使用flex布局，无需绝对定位等改变布局的操作，可以轻松实现元素的水平垂直居中。</p>
+<pre><code class="css">.container{
+  width: 100%;
+  height: 400px;
+  background: #eee;
+  /* flex 布局解决水平居中 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.center{
+  width: 100px;
+  height: 100px;
+  background: blue;
+  text-align: center;
+}</code></pre>
+<p><a href="http://codepen.io/allinlin/pen/vKqryg?editors=1100">demo</a><br><img data-src="/img/remote/1460000006760348" src="/img/remote/1460000006760348.png"></p>
+<pre><code>
+notes：CSS3的transform和flex有兼容性问题。ie11+才支持flexbox布局。</code></pre>

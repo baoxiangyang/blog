@@ -1,0 +1,515 @@
+？</h2>
+<p>平时项目的开发难免遇到大量的逻辑判断，于是我将一些常用的判断封装成了一个js类库，<code>judge.js</code>是我用业余时间写的一个<code>js</code>判断类库，可以用来判断数据类型（<code>isFunction，isObject,isJson,isArray</code>等），判断浏览器内核，判断移动和PC端浏览器名称，判断用户设备类型（安卓设备，iOS设备等），判断安卓IOS系统版本和做一些存在性信息校验（邮箱，邮编，电话，手机等等），还可以用于断言。他的特点有：</p>
+<ul>
+<li><p>没有任何依赖</p></li>
+<li><p>支持 <code>AMD</code> &amp; <code>CommonJS</code></p></li>
+<li><p>轻量级（10kb）</p></li>
+</ul>
+<h2>
+<code>judge.js</code>一个用来做判断的js类库</h2>
+<ul>
+<li><p>没有任何依赖</p></li>
+<li><p>支持 <code>AMD</code> &amp; <code>CommonJS</code></p></li>
+<li><p>轻量级（10kb）</p></li>
+</ul>
+<pre><code class="js">$ npm install  
+$ gulp compress  </code></pre>
+<blockquote><p>DEMO:<a href="http://hawx1993.github.io/judge/examples/">http://hawx1993.github.io/judge/examples...</a></p></blockquote>
+<h2>开始</h2>
+<blockquote><p>使用<code>npm</code>安装<code>judgejs</code>：</p></blockquote>
+<pre><code class="js">$ npm install judgejs </code></pre>
+<blockquote><p>使用<code>bower</code> 安装<code>judgejs</code></p></blockquote>
+<pre><code class="js">$ bower install judgejs  </code></pre>
+<h1>目录</h1>
+<ul>
+<li><p><a>使用方法</a></p></li>
+<li><p><a>数据类型判断</a></p></li>
+<li><p><a>平台判断</a></p></li>
+<li><p><a>设备判断</a></p></li>
+<li><p><a>存在性和信息校验</a></p></li>
+</ul>
+<h3>使用方法</h3>
+<pre><code class="js">var judge = require('judgejs');
+
+judge.version
+
+=&gt;0.7.0</code></pre>
+<p>可以用<code>$</code>来代替<code>judge</code>。例如：</p>
+<pre><code class="js">require('../judge.js')
+
+$.version;
+=&gt; 0.7.0</code></pre>
+<h1>API</h1>
+<h4>数据类型判断</h4>
+<blockquote><p><code>judge.isArray(value)</code></p></blockquote>
+<pre><code class="js">judge.isArray(['foo','bar',{'name':'trigkit4'}])
+
+=&gt; true</code></pre>
+<blockquote><p><code>judge.isInt(num)</code></p></blockquote>
+<pre><code class="js">var num = 3.14;
+judge.isInt(num);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.isError(value)</code></p></blockquote>
+<p>判断给定值是否是<code>Error</code></p>
+<blockquote><p><code>judge.isJson(json)</code></p></blockquote>
+<p>判断给定值是否是<code>json</code>格式</p>
+<pre><code class="js"> var str = '{"name":"jack"}';
+ judge.isJson(str);//false
+ var json = JSON.parse(str);
+ judge.isJson(json);//true</code></pre>
+<blockquote><p><code>judge.isFunction()</code></p></blockquote>
+<p>判断给定值是否是函数：</p>
+<pre><code class="js">var fn = new Function ();
+judge.isFunction(fn);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isString()</code></p></blockquote>
+<p>判断一个给定的值是否是字符串，返回布尔值</p>
+<blockquote><p><code>judge.isObject()</code></p></blockquote>
+<p>判断一个给定的值是否是对象，返回布尔值;其中：<br><code>array,object,number,string,null,function,boolean</code>被视为对象，空字符串和<code>undefined</code>为非对象。</p>
+<pre><code class="js">var obj = Object.create(null);
+judge.isObject(obj);//true
+
+judge.isObject(undefined);//false</code></pre>
+<blockquote><p><code>judge.isObjectLike(value)</code></p></blockquote>
+<p>判断参数value是否是<code>object-like</code>：</p>
+<pre><code class="js">judge.isObjectLike([NaN]);
+
+=&gt;true
+
+judge.isObjectLike(null);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.type()</code></p></blockquote>
+<p>判断值的类型，包括：</p>
+<p><code>array,object,number,string,null,undefined,function,boolean</code></p>
+<pre><code class="js">var arr = new Array;
+judge.type(arr);//array
+
+var obj = {};
+judge.type(obj);//object
+
+var num = Number(1);
+judge.type(num);//number
+
+var str = '123';
+judge.type(str);//string
+
+var n = null;
+judge.type(n);//null
+
+
+var u = undefined;
+judge.type(u);//undefined
+
+var fn = function () {};
+judge.type(fn);//function
+
+var bool = Boolean();
+judge.type(bool);//boolean
+
+var proto = Object.prototype;
+judge.type(proto);//object
+
+function Person(){}
+var p1 = new Person();
+judge.type(p1);//object</code></pre>
+<blockquote><p><code>judge.isEqual()</code></p></blockquote>
+<p>判断两个给定值是否是严格相等：</p>
+<pre><code class="js">var judge = require('judgejs');
+var str = Boolean(true);
+var str2 = !!true;
+var str3 = true;
+
+var obj1 = {};
+var obj2 = new Object();
+var obj4 = Object.create(null);
+
+var foo = {name:'trigkit4'};
+var bar = {age:23};
+var baz = Object.assign(foo,bar);
+var obj3 = {
+    name: 'trigkit4',
+    age: 23
+};
+ 
+judge.isEqual(str,str2,str3);//true
+judge.isEqual(obj1,obj2,obj4);//false
+judge.isEqual(str,str2,str3);//true
+judge.isEqual(baz,obj3);//false,refer address different</code></pre>
+<blockquote><p><code>judge.isChar()</code></p></blockquote>
+<p>判断给定值是否是字符</p>
+<blockquote><p><code>judge.isRegExp(reg)</code></p></blockquote>
+<p>判断给定值是否是RegExp对象：</p>
+<pre><code class="js">var reg = /^(a,z)/i;
+judge.isRegExp(reg);
+
+=&gt; true
+
+judge.isRegExp('/[a-z]/');
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.isLength(value)</code></p></blockquote>
+<p>判断<code>value</code>是否是有效的类数组长度</p>
+<pre><code class="js">judge.isLength(Infinity);
+
+=&gt;false
+
+var arr = Number([]);
+judge.isLength(arr);
+
+&gt;true</code></pre>
+<blockquote><p><code>judge.isWindow(obj)</code></p></blockquote>
+<p>判断是否是window对象。</p>
+<blockquote><p><code>judge.isDocument()</code></p></blockquote>
+<p>判断是否是Document对象</p>
+<blockquote><p><code>judge.isPlainObject(obj)</code></p></blockquote>
+<p>判断<code>obj</code>是否是纯粹的对象，纯粹的对象是通过<code>{}</code>创建或者通过<code>new Object()</code>创建</p>
+<pre><code class="js">judge.isPlainObject(window);
+
+=&gt;false
+
+var arr = Number([]);
+judge.isPlainObject(arr);
+
+=&gt;false
+
+judge.isPlainObject(new Date());
+
+=&gt;false
+
+judge.isPlainObject({});//true</code></pre>
+<blockquote><p><code>judge.isArrayLike(obj)</code></p></blockquote>
+<p>判断<code>obj</code>是否是类数组对象（类数组对象被限定为拥有非负整数属性的对象，NodeList,arguments，Array等）：</p>
+<pre><code class="js">judge.isArrayLike(document.body.children);
+
+=&gt;true
+
+var obj = [{name:'null'}];
+judge.isArrayLike(obj);
+
+=&gt;true
+
+judge.isArrayLike(null);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.isArrayLikeObject(value)</code></p></blockquote>
+<p>和<code>judge.isArrayLike</code>类似，但<code>isArrayLikeObject</code>会检测<code>value</code>是否是对象</p>
+<pre><code class="js">judge.isArrayLikeObject('abcd');//false
+judge.isArrayLikeObject(document.body.children);//true</code></pre>
+<blockquote><p><code>judge.isArguments(value)</code></p></blockquote>
+<p>判断参数value是否是一个<code>arguments</code>对象：</p>
+<pre><code class="js">judge.isArguments(function(){ return arguments;}())
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isSet(value)</code></p></blockquote>
+<p>判断给定值是否不为<code>null</code>和<code>undefined</code></p>
+<blockquote><p><code>judge.idNumber(id)</code></p></blockquote>
+<p>判断你的身份证号码是否符合规范，其中X不区分大小写：</p>
+<pre><code class="js">var id = '35050019970323505x';
+judge.idNumber(id);
+
+=&gt; true</code></pre>
+<blockquote><p><code>judge.isOdd(num)</code></p></blockquote>
+<p>判断给定值是否是奇数，返回布尔值</p>
+<blockquote><p><code>judge.min(a,b)</code></p></blockquote>
+<p>判断给定的数值中谁是最小值，并返回最小值</p>
+<pre><code class="js">judge.min(0,-1);
+=&gt;-1</code></pre>
+<blockquote><p><code>judge.isEven(num)</code></p></blockquote>
+<p>判断一个给定的值是否是偶数，返回布尔值</p>
+<pre><code class="js">$.isEven(null);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.isNull(value)</code></p></blockquote>
+<pre><code class="js">judge.isNull(void 0);
+
+=&gt;true
+
+judge.isNull(null);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isUndefined(value)</code></p></blockquote>
+<pre><code class="js">judge.isUndefined(null);
+
+=&gt;false
+
+judge.isUndefined(void 0);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isNumber(num)</code></p></blockquote>
+<pre><code class="js">judge.isNumber(Infinity);
+
+=&gt;true</code></pre>
+<h4>平台判断</h4>
+<blockquote><p><code>judge.kernel()</code></p></blockquote>
+<p>用于检测当前浏览器的内核（排版引擎），可以检测的类型如下：</p>
+<p><code>webkit</code>,<code>gecko</code>,<code>trident</code>,<code>edge</code>,<code>opera</code><br>浏览器的内核分别用于检测Chrome浏览器，Firefox浏览器，IE浏览器，Edge浏览器和Opera浏览器</p>
+<pre><code class="js">if(judge.kernel() == 'webkit'){...} //引号处不能出现空格等不规范写法
+</code></pre>
+<blockquote><p><code>judge.platform()</code></p></blockquote>
+<p>检测用户当前设备，可以检测的类型如下：</p>
+<p><code>android</code>,<code>iPad</code>,<code>ios</code>,<code>windowsPhone</code>,<code>mac</code>,<code>windows</code>,<code>linux</code>,<code>blackBerry</code>，<code>androidTablet</code></p>
+<pre><code class="js">if(judge.platform() == "androidTablet"){...}</code></pre>
+<p>参数也如上所示，千万不能写错，不然检测就会出现错误。参数采用驼峰命名法</p>
+<blockquote><p><code>judge.browser()</code></p></blockquote>
+<p>检测当前浏览器类型，可以检测的类型如下：</p>
+<pre><code class="js">"IE6","IE7","IE8", "IE9", "IE10", "IE11","firefox","edge","sougou","liebao","liebao mobile","weixin","uc","mobile uc","baidu browser","mobile baidu","mobile qqbrowser","qqbrowser","opera","miui browser","oppo browser","mobile safari","android chrome", "ios chrome","chrome", "safari","ios safari","Mbile IE各个版本"</code></pre>
+<p>如需匹配不同平台的浏览器，需用<code>judge.platform()</code>再做一次匹配，使用场景可以是：</p>
+<p>1.如果没有传入参数，则返回浏览器的名称，如：</p>
+<pre><code class="js">judge.browser();//你的浏览器是Chrome的话
+
+=&gt;Chrome</code></pre>
+<p>2.传入参数的情况下，返回布尔值，如:</p>
+<pre><code class="js">judge.browser("isChrome");
+
+=&gt;true</code></pre>
+<blockquote><p>参数如下所示，采用驼峰命名法：</p></blockquote>
+<pre><code class="js">"isFirefox","isIosChrome","isIpadSafari", "isEdge", "isSougou","isLiebao",
+"isLiebaoMobile","isWeiXin","isUC", "isUCMobile", "isBaidu",
+"isBaiduMobile", "isQQMobile","isQQBrowser", "isOpera", "isMiuiBrowser",
+"isOppoBrowser","isAndroidChrome","isChrome","isIosSafari","isSafari"
+
+其中UC浏览器采用固定大写的写法。由于有的移动端浏览器采用和浏览器不同的ua，所以不能共用（无法单纯加一个`judge.isMobile()` or `judge.platform()=='android'`）。
+
+//IE
+"isIE","isMobileIE+数字（如：isMobileIE10）"，"isIE+数字(6~11)，如isIE10"
+
+//for example
+judge.browser("isIE11");//true,如果你的浏览器是IE11的话
+</code></pre>
+<blockquote><p><code>judge.iosVersion()</code></p></blockquote>
+<p>判断<code>iOS </code>系统版本号，返回数字形式的版本号：</p>
+<pre><code>judge.iosVersion();
+
+=&gt;9.0.2</code></pre>
+<blockquote><p><code>judge.androidVersion()</code></p></blockquote>
+<p>同上</p>
+<blockquote><p><code>judge.isChromium()</code></p></blockquote>
+<p>判断用户的浏览器是否是套着<code>chrome</code>内核的浏览器，返回布尔值</p>
+<h4>设备判断</h4>
+<blockquote><p><code>judge.isMobile()</code></p></blockquote>
+<p>判断用户设备是否是移动设备(ipad,iphone,ipod,android)</p>
+<blockquote><p><code>judge.isPc()</code></p></blockquote>
+<p>判断用户设备是否是PC</p>
+<blockquote><p><code>judge.iosDevice()</code></p></blockquote>
+<p>检测<code>iPhone</code>手机设备类型，可以检测如下类型的<code>iPhone</code>手机：</p>
+<pre><code class="js">iphone4(s) ,iphone5(s), iphone6(s),iphone6(s)Plus
+
+if(judge.iosDevice=='iphone6Plus'){...}</code></pre>
+<p>参数为：<code>iphone4,iphone5,iphone6,iphone6Plus</code></p>
+<pre><code class="js">$.iosDevice();//if your ios device is iphone6
+
+=&gt;iphone6 </code></pre>
+<blockquote><p><code>judge.androidDevice()</code></p></blockquote>
+<p>检测安卓设备，现在只支持:mi4,魅族metal(mz-metal),魅族mx5，魅族mx3</p>
+<p>TODO：准备支持更多安卓手机设备</p>
+<blockquote><p><code>judge.isTouchDevice()</code></p></blockquote>
+<p>判断用户当前设备是否是触屏设备，返回布尔值Boolean</p>
+<h3>存在性和信息校验</h3>
+<blockquote><p><code>judge.isExist(value)</code></p></blockquote>
+<pre><code class="js">var str =  null;
+judge.isExist(str)
+=&gt;false
+
+var str = '';
+judge.isExist(str)
+=&gt;false</code></pre>
+<blockquote><p><code>judge.lt(val1,val2)</code></p></blockquote>
+<p>判断<code>val1</code>是否小于val2：</p>
+<pre><code class="js">judge.lt(1,-2);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.inArray(val,arr)</code></p></blockquote>
+<p>判断参数<code>val</code>是否存在<code>arr</code>数组内：</p>
+<pre><code class="js">var val = [{'name':'huang'},123],
+    arr = [val,456];
+judge.inArray(val,arr);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.email(em)</code></p></blockquote>
+<p>判断是否符合<code>Email</code>规范：</p>
+<pre><code class="js">var email = 'hwx.trigkit4@163.com';
+judge.email(email);
+
+=&gt;true
+
+var email2 = 'hwx.trigkit.@gmail.com';
+judge.email(email2);
+=&gt;false</code></pre>
+<blockquote><p><code>judge.hasLowerCase()</code></p></blockquote>
+<p>判断是否含有小写字母：</p>
+<pre><code class="js">var str ='trigkit4';
+judge.hasLowerCase(str);</code></pre>
+<blockquote><p><code>judge.hasNumber()</code></p></blockquote>
+<p>判断给定值是否含有数字：</p>
+<pre><code class="js">var num ='trigkit4';
+judge.hasNumber(num);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.hasCaptial()</code></p></blockquote>
+<p>判断是否含有大写字母：</p>
+<pre><code class="js">var str ='trigkit4';
+judge.hasCapital(str);</code></pre>
+<blockquote><p><code>judge.isBrowser()</code></p></blockquote>
+<p>判断当前客户端是否是浏览器，返回布尔值</p>
+<blockquote><p><code>judge.size(val)</code></p></blockquote>
+<p>判断给定值的大小，返回数值：</p>
+<pre><code class="js">var val = '琅琊榜lyb';
+judge.size(val);
+
+=&gt;6</code></pre>
+<blockquote><p><code>judge.isHttps()</code></p></blockquote>
+<p>判断当前站点是否是HTTPS，返回布尔值</p>
+<blockquote><p><code>judge.isUnique()</code></p></blockquote>
+<p>判断一个给定数组的元素的值是否唯一：</p>
+<pre><code class="js">var a = [1,2];
+var arr = [1,2,3,4,a];//[1,2,3,4,[1,2]];
+judge.isUnique(arr);//true
+
+var arary = ['1',1];
+judge.isUnique(array);//true</code></pre>
+<blockquote><p><code>judge.hasClass()</code></p></blockquote>
+<p>判断给定值是否有class</p>
+<blockquote><p><code>judge.qqNumber()</code></p></blockquote>
+<p>判断给定值是否符合QQ号规范，返回布尔值：</p>
+<pre><code class="js">var qq = 345812345;
+judge.qqNumber(qq);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.phoneNumber</code></p></blockquote>
+<p>判断给定值是否符合手机号规范：</p>
+<pre><code class="js">var num = 17755503789;
+judge.phoneNumber(num);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.telPhone(num)</code></p></blockquote>
+<p>判断电话号码是否符合规范</p>
+<blockquote><p><code>judge.includeChinese</code></p></blockquote>
+<p>判断给定值是否含有中文字符：</p>
+<pre><code class="js">var ch = 'js脚本';
+judge.includeChinese(ch);
+
+=&gt; true</code></pre>
+<blockquote><p><code>judge.onlyChinese(ch)</code></p></blockquote>
+<p>判断给定字符是否仅有中文字符：</p>
+<pre><code>var ch = 'zh中国';
+judge.onlyChinese(ch);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.onlyNumber()</code></p></blockquote>
+<p>判断给定值是否只含有数字：</p>
+<pre><code class="js">var s = '233';
+judge.onlyNumber(s);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isElement(element)</code></p></blockquote>
+<p>判断给定元素是否是DOM元素，返回布尔值</p>
+<pre><code class="js">var div = document.createElement('div');
+judge.isElement(div);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.assert(value,desc)</code></p></blockquote>
+<p>你可以使用<code>judge.assert</code> 去断言你想要断言的值，如果该值通过断言，描述不符将变为绿色，否则变为红色；</p>
+<pre><code class="js">function add(a,b){
+    return a + b;
+}
+var a = 1,b=2;
+
+judge.assert(add(1,2) === 3,'true');
+judge.assert(add(2,3) === 6,'false');
+</code></pre>
+<p>在参数<code>desc</code> 部分去填写你的测试描述</p>
+<blockquote><p><code>judge.hasHash(url)</code></p></blockquote>
+<p>判断一个给定的url是否有哈希值</p>
+<pre><code class="js">var url = 'www.baidu.com#w';
+judge.hasHash(url);
+
+=&gt; true</code></pre>
+<blockquote><p><code>judge.has(obj,key)</code></p></blockquote>
+<p>判断<code>obj</code>是否有包含给定的键（key）</p>
+<pre><code class="js">
+var obj ={
+    name:'trigkit4'
+};
+judge.has(obj,'name');
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isUrl(url)</code></p></blockquote>
+<p>判断一个给定的值是否是URL</p>
+<pre><code class="js">
+var url = 'www.jd.d';
+judge.isUrl(url);
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.zipCode(code)</code></p></blockquote>
+<p>判断给定值是否符合邮编规范：</p>
+<pre><code class="js">var zipcode = 362014;
+judge.zipCode(zipcode);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.include(str,substr)</code></p></blockquote>
+<pre><code class="js">var str =  'microsoft';
+var substr = 'soft';
+judge.include(str,substr);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isOnline()</code></p></blockquote>
+<p>可用于判断设备是否联网，判断断网可用<code>judge.isOnline==false</code>，返回true，即断网</p>
+<blockquote><p><code>judge.hasSpecialChar()</code></p></blockquote>
+<p>判断是否含有特殊字符，除了大小写字母、数字和汉字以外的字符都被视为特殊字符</p>
+<pre><code class="js">var char = 'a!@#$%';
+judge.hasSpecialChar(char);
+
+=&gt;true</code></pre>
+<blockquote><p><code>judge.isEmpty()</code></p></blockquote>
+<p>判断给定值是否为空，<code>null</code>和<code>undefined</code>被视为空，<br>数字<code>0</code>被视为<code>非空</code></p>
+<pre><code class="js">var arr = [];//judge.isEmpty(arr); =&gt; true
+var n = null;//judge.isEmpty(n); =&gt; true
+var u = undefined;//judge.isEmpty(u); =&gt; true
+var num = 0;//judge.isEmpty(num); =&gt; false
+var obj = Object.create(null);//judge.isEmpty(obj); =&gt; true
+var str = '';//judge.isEmpty(str); =&gt; true</code></pre>
+<blockquote><p><code>judge.position(element,parent)</code></p></blockquote>
+<p>判断DOM元素位置，若只传入<code>element</code>参数，则返回其距离浏览器窗口的位置；<br>若传入<code>parent</code>参数，则返回其距离父元素的位置。兼容IE浏览器</p>
+<p><code>@{param}:parent</code> 可选</p>
+<pre><code class="js">judge.position(element).top ;//判断元素距离顶部位置
+judge.position(element,parent).left;//判断元素距离父元素左边的位置</code></pre>
+<blockquote><p><code>judge.isNativeFn(fn)</code></p></blockquote>
+<p>判断<code>fn</code>是否是原生方法,不能有括号</p>
+<pre><code class="js">judge.isNativeFn(Object.assign);
+
+=&gt;true
+
+
+var fn = new Function();
+judge.isNativeFn(fn);
+
+=&gt;false
+
+
+judge.isNativeFn(Array.prototype.filter)
+
+=&gt;true
+
+var obj = {
+        fn: function () {}
+ };
+ 
+judge.isNativeFn(obj.fn)
+
+=&gt;false</code></pre>
+<blockquote><p><code>judge.isIE8Plus(boolean)</code></p></blockquote>
+<p>判断当前浏览器是否是IE8+ (包含IE8)，直接返回布尔值</p>
+<p>参数如下：</p>
+<ul><li><p>true:包含IE8</p></li></ul>
+<pre><code class="js">judge.isIE8Plus(true);//include IE8</code></pre>
+<ul><li><p>false:不包含IE8</p></li></ul>
+<pre><code class="js">
+judge.isIE8Plus(false);//exclude IE8</code></pre>
+<p>没有参数，默认包含IE8</p>
+<blockquote><p><code>judge.strLength(str)</code></p></blockquote>
+<p>判断字符长度，返回数字。一个中文字符被视为2，一个英文字符为视为1：</p>
+<pre><code class="js">judge.strLength('你好China');//9</code></pre>
+<blockquote><p><code>judge.isLeapYear(year)</code></p></blockquote>

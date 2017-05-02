@@ -1,0 +1,52 @@
+<p>之前我在 SF 上回答过「<a href="http://segmentfault.com/q/1010000002391424">html5 canvas绘制图片模糊的问题</a>」，但是可能是由于我给出的答案过于简略，加上答案中的 demo 链接已经失效，很多人反映这种办法并不好使。但是我在给出答案之前是在小米2 和 iPhone 上测试过的，没有任何问题。下面我会一步一步地描述具体的步骤。</p></blockquote>
+<h2>前提条件</h2>
+<p>假设我们要在 canvas 中绘制一张 <code>300 x 90</code> 的图片，并且要保证它在高清屏中不模糊。那么我们首先要准备一张 <code>600 x 180</code> 的图片，处理过高清屏的同学应该会有这方面的经验。</p>
+<h2>问题重现</h2>
+<p>OK，我们先把问题重现一下，以便有一个更直观的了解。下面是相关的代码（为了简单起见，我把代码都写在了 HTML 文档里面）：</p>
+<pre><code>&lt;!-- 通过 img 标签引入图片，以便绘制到 canvas 中 --&gt;
+&lt;img src="html5rocks.png" alt="" width="300" height="90"&gt;
+
+&lt;!-- canvas --&gt;
+&lt;canvas width="300" height="90"&gt;&lt;/canvas&gt;
+
+&lt;script&gt;
+    function init() {
+        var canvas = document.querySelector('canvas');
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(document.querySelector('img'), 0, 0, 300, 90);
+    }
+    window.onload = init;
+&lt;/script&gt;</code></pre>
+<p>代码很简单，没有做任何处理，具体的效果和完整的代码可以查看这个 <a href="http://happycoder.net/demo/canvas-retina/demo-normal.html">DEMO</a>，这个 demo 在高清屏的手机中会出现的问题：canvas 中的图片变模糊了！。</p>
+<p>至于为什么会变模糊，这和浏览器处理 canvas 的方式有关，相关的文章可以参考这篇 <a href="http://www.html5rocks.com/en/tutorials/canvas/hidpi/">High DPI Canvas</a>，这里不作深入介绍。</p>
+<h2>解决问题</h2>
+<h3>首先，引入 <a href="https://github.com/jondavidjohn/hidpi-canvas-polyfill">hidpi-canvas-polyfill</a>
+</h3>
+<p>其实，不只是绘制图片时会出现模糊的问题，正常情况下，在高清屏的设备中，任何绘制在 canvas 中的图形（包括文字）都会出现模糊的问题。上面这个 polyfill 就是为了解决这个问题，但是它没有处理图片。</p>
+<h3>接下来，修改绘制图片的代码</h3>
+<p>将 <code>init</code> 函数修改成下面这样：</p>
+<pre><code class="js">function init() {
+    var canvas = document.querySelector('canvas');
+    var ctx = canvas.getContext('2d');
+
+    // polyfill 提供了这个方法用来获取设备的 pixel ratio
+    var getPixelRatio = function(context) {
+        var backingStore = context.backingStorePixelRatio ||
+            context.webkitBackingStorePixelRatio ||
+            context.mozBackingStorePixelRatio ||
+            context.msBackingStorePixelRatio ||
+            context.oBackingStorePixelRatio ||
+            context.backingStorePixelRatio || 1;
+    
+        return (window.devicePixelRatio || 1) / backingStore;
+    };
+
+    var ratio = getPixelRatio(ctx);
+    
+    // 注意，这里的 width 和 height 变成了 width * ratio 和 height * ratio
+    ctx.drawImage(document.querySelector('img'), 0, 0, 300 * ratio, 90 * ratio);
+}</code></pre>
+<p>可以点击<a href="http://happycoder.net/demo/canvas-retina/demo-retina.html">这里</a>查看完整的代码和效果，在高清屏的设备中打开，看看 cavans 中的图片是否完美显示。</p>
+<h2>说明</h2>
+<p>这个解决方案本质上和 <a href="/u/baiyi">@白一梓</a> 的答案是一样的：先放大 canvas，再用 CSS 将其限制回原始大小。</p>
+<p>如果你看了 polyfill 的代码就会明白其中的原理了，这个 polyfill 的代码十分简短明了，它做了两件事：一是将 canvas 的高和宽分别乘以 ratio 将其放大，然后又用 CSS 将高和宽限制成初始的大小；二是 hack canvas 中常用的函数，如：<code>fillRect</code>, <code>clearRect</code>, <code>lineTo</code>, <code>arc</code> 等，将它们的参数都乘以 ratio，以方便我们可以像以前那样使用这些方法，而不用在传参的时候手

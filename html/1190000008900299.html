@@ -1,0 +1,452 @@
+<blockquote><p>更新内容：新增视频教程 - WEB系统测试、PHP的HTTP协议、okhttp框架解析与应用、走进Requests库、接口测试基础入门篇、JMeter之HTT<br>P协议接口性能测试； 更新时间：2017-04-03</p></blockquote>
+<p>为了方便有兴趣的朋友一起维护HTTP资源大全，我把资源放到了 <a href="https://github.com/semlinker/http-resources">Github</a> 上。希望大家多多推荐哈，谢谢大家！</p>
+<h2>B/S 结构定义</h2>
+<blockquote><p><strong>浏览器-服务器（Browser/Server）结构</strong>，简称<a href="https://zh.wikipedia.org/wiki/B/S%E7%BB%93%E6%9E%84">B/S结构</a>，与<a href="https://zh.wikipedia.org/wiki/C/S%E7%BB%93%E6%9E%84">C/S结构</a>不同，其客户端不需要安装专门的<a href="https://zh.wikipedia.org/wiki/%E8%BD%AF%E4%BB%B6">软件</a>，只需要<a href="https://zh.wikipedia.org/wiki/%E6%B5%8F%E8%A7%88%E5%99%A8">浏览器</a>即可，浏览器通过<a href="https://zh.wikipedia.org/wiki/Web">Web</a><a href="https://zh.wikipedia.org/wiki/%E6%9C%8D%E5%8A%A1%E5%99%A8">服务器</a>与<a href="https://zh.wikipedia.org/wiki/%E6%95%B0%E6%8D%AE%E5%BA%93">数据库</a>进行交互，可以方便的在不同平台下工作；服务器端可采用高性能<a href="https://zh.wikipedia.org/wiki/%E8%AE%A1%E7%AE%97%E6%9C%BA">计算机</a>，并安装<a href="https://zh.wikipedia.org/wiki/Oracle">Oracle</a>、<a href="https://zh.wikipedia.org/wiki/Sybase">Sybase</a>、<a href="https://zh.wikipedia.org/w/index.php?title=Informix&amp;action=edit&amp;redlink=1">Informix</a>等大型数据库。B/S结构简化了客户端的工作，它是随着<a href="https://zh.wikipedia.org/wiki/Internet">Internet</a>技术兴起而产生的，对C/S技术的改进，但该结构下服务器端的工作较重，对服务器的性能要求更高。—— 维基百科</p></blockquote>
+<p><img data-src="/img/bVLvwv?w=467&amp;h=160" src="/img/bVLvwv?w=467&amp;h=160.jpeg"></p>
+<h2>URI (统一资源标志符)</h2>
+<blockquote><p>在<a href="https://zh.wikipedia.org/wiki/%E9%9B%BB%E8%85%A6">电脑</a>术语中，<strong>统一资源标识符</strong>（英语：Uniform Resource Identifier，或<strong>URI</strong>)是一个用于<a href="https://zh.wikipedia.org/wiki/%E6%A0%87%E8%AF%86">标识</a>某一<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91">互联网</a><a href="https://zh.wikipedia.org/wiki/%E8%B5%84%E6%BA%90">资源</a>名称的<a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E7%AC%A6%E4%B8%B2">字符串</a>。 该种标识允许用户对网络中（一般指<a href="https://zh.wikipedia.org/wiki/%E4%B8%87%E7%BB%B4%E7%BD%91">万维网</a>）的资源通过特定的<a href="https://zh.wikipedia.org/wiki/%E5%8D%8F%E8%AE%AE">协议</a>进行交互操作。URI的最常见的形式是<a href="https://zh.wikipedia.org/wiki/%E7%BB%9F%E4%B8%80%E8%B5%84%E6%BA%90%E5%AE%9A%E4%BD%8D%E7%AC%A6">统一资源定位符</a>（URL），经常指定为非正式的网址。更罕见的用法是<a href="https://zh.wikipedia.org/wiki/%E7%BB%9F%E4%B8%80%E8%B5%84%E6%BA%90%E5%90%8D%E7%A7%B0">统一资源名称</a>（URN），其目的是通过提供一种途径。用于在特定的<a href="https://zh.wikipedia.org/wiki/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4">命名空间</a>资源的标识，以补充网址。—— 维基百科</p></blockquote>
+<h3>URI 文法</h3>
+<blockquote><p>URI文法由<a href="https://zh.wikipedia.org/w/index.php?title=URI%E5%8D%8F%E8%AE%AE&amp;action=edit&amp;redlink=1">URI协议</a>名（例如“<a href="https://zh.wikipedia.org/wiki/%E8%B6%85%E6%96%87%E6%9C%AC%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AE"><code>http</code></a>”，“<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E4%BC%A0%E8%BE%93%E5%8D%8F%E8%AE%AE"><code>ftp</code></a>”，“<a href="https://zh.wikipedia.org/wiki/%E7%94%B5%E5%AD%90%E9%82%AE%E4%BB%B6"><code>mailto</code></a>”或“<code>file</code>”），一个<a href="https://zh.wikipedia.org/wiki/%E5%86%92%E5%8F%B7">冒号</a>，和协议对应的内容所构成。特定的协议定义了协议内容的语法和<a href="https://zh.wikipedia.org/wiki/%E8%AF%AD%E4%B9%89">语义</a>，而所有的协议都必须遵循一定的URI文法通用规则，亦即为某些专门目的保留部分特殊字符。—— 维基百科</p></blockquote>
+<p>下面展示了 URI 例子及它们的组成部分：</p>
+<pre><code class="shell">                       权限                 路径
+        ┌───────────────┴───────────────┐┌───┴────┐
+  abc://username:password@example.com:123/path/data?key=value&amp;key2=value2#fragid1
+  └┬┘   └───────┬───────┘ └────┬────┘ └┬┘           └─────────┬─────────┘ └──┬──┘
+  协议        用户信息         主机名    端口                  查询参数          片段</code></pre>
+<h2>MIME</h2>
+<blockquote><p>MIME(Multipurpose Internet Mail Extensions)多用途互联网邮件扩展类型。是设定某种<a href="http://baike.baidu.com/item/%E6%89%A9%E5%B1%95%E5%90%8D">扩展名</a>的<a href="http://baike.baidu.com/item/%E6%96%87%E4%BB%B6">文件</a>用一种<a href="http://baike.baidu.com/item/%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F">应用程序</a>来打开的方式类型，当该扩展名文件被访问的时候，<a href="http://baike.baidu.com/item/%E6%B5%8F%E8%A7%88%E5%99%A8">浏览器</a>会自动使用指定应用程序来打开。多用于指定一些<a href="http://baike.baidu.com/item/%E5%AE%A2%E6%88%B7%E7%AB%AF">客户端</a><a href="http://baike.baidu.com/item/%E8%87%AA%E5%AE%9A%E4%B9%89">自定义</a>的<a href="http://baike.baidu.com/item/%E6%96%87%E4%BB%B6%E5%90%8D">文件名</a>，以及一些媒体文件打开方式。 —— 百度百科</p></blockquote>
+<h3>文件格式</h3>
+<p>每个 MIME 类型由两部分组成，前面是数据的大类别，例如声音audio、图象image等，后面定义具体的种类。</p>
+<p>常见的 MIME 类型有：</p>
+<table>
+<thead><tr>
+<th>资源名称</th>
+<th>后缀</th>
+<th>类型</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>超文本标记语言文本</td>
+<td>.html</td>
+<td>text/html</td>
+</tr>
+<tr>
+<td>xml文档</td>
+<td>.xml</td>
+<td>text/xml</td>
+</tr>
+<tr>
+<td>普通文本</td>
+<td>.txt</td>
+<td>text/plain</td>
+</tr>
+<tr>
+<td>PNG图像</td>
+<td>.png</td>
+<td>image/png</td>
+</tr>
+<tr>
+<td>PDF文档</td>
+<td>.pdf</td>
+<td>application/pdf</td>
+</tr>
+</tbody>
+</table>
+<p>了解更多的 MIME 类型 - <a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E5%AA%92%E4%BD%93%E7%B1%BB%E5%9E%8B">互联网媒体类型</a></p>
+<h2>HTTP 协议</h2>
+<blockquote><p><strong>超文本传输协议</strong>（<a href="https://zh.wikipedia.org/wiki/%E8%8B%B1%E6%96%87">英文</a>：<strong>HyperText Transfer Protocol</strong>，<a href="https://zh.wikipedia.org/wiki/%E7%B8%AE%E5%AF%AB">缩写</a>：<strong>HTTP</strong>）是<a href="https://zh.wikipedia.org/wiki/%E7%B6%B2%E9%9A%9B%E7%B6%B2%E8%B7%AF">互联网</a>上应用最为广泛的一种<a href="https://zh.wikipedia.org/wiki/%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE">网络协议</a>。设计HTTP最初的目的是为了提供一种发布和接收<a href="https://zh.wikipedia.org/wiki/HTML">HTML</a>页面的方法。通过HTTP或者HTTPS协议请求的资源由<a href="https://zh.wikipedia.org/wiki/%E7%B5%B1%E4%B8%80%E8%B3%87%E6%BA%90%E6%A8%99%E8%AD%98%E7%AC%A6">统一资源标识符</a>（Uniform Resource Identifiers，URI）来标识。—— 维基百科</p></blockquote>
+<p>HTTP 协议是基于请求与相应，具体如下图所示：</p>
+<p><img data-src="/img/bVLvwD?w=1564&amp;h=420" src="/img/bVLvwD?w=1564&amp;h=420.png"></p>
+<h3>HTTP 协议主要特点</h3>
+<ul>
+<li><p>简单快速：当客户端向服务器端发送请求时，只是简单的填写请求路径和请求方法即可，然后就可以通过浏览器或其他方式将该请求发送就行了</p></li>
+<li><p>灵活：HTTP 协议允许客户端和服务器端传输任意类型任意格式的数据对象</p></li>
+<li><p>无连接：无连接的含义是限制每次连接只处理一个请求。服务器处理完客户的请求，并收到客户的应答后，即断开连接，采用这种方式可以节省传输时间。(当今多数服务器支持Keep-Alive功能，使用服务器支持长连接，解决无连接的问题)</p></li>
+<li><p>无状态：无状态是指协议对于事务处理没有记忆能力，服务器不知道客户端是什么状态。即客户端发送HTTP请求后，服务器根据请求，会给我们发送数据，发送完后，不会记录信息。(使用 cookie 机制可以保持 session，解决无状态的问题)</p></li>
+</ul>
+<h2>HTTP 请求报文</h2>
+<p>HTTP 请求报文由<strong>请求行</strong>、<strong>请求头</strong>、<strong>空行</strong> 和 <strong>请求体(请求数据)</strong> 4 个部分组成，如下图所示：</p>
+<p><img data-src="/img/bVLvw6?w=770&amp;h=324" src="/img/bVLvw6?w=770&amp;h=324.png"></p>
+<h3>请求报文示例</h3>
+<pre><code>GET / HTTP/1.1
+Host: www.baidu.com
+Connection: keep-alive
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.110 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Accept-Encoding: gzip, deflate, sdch, br
+Accept-Language: zh-CN,zh;q=0.8,en;q=0.6,id;q=0.4
+Cookie: PSTM=1490844191; BIDUPSID=2145FF54639208435F60E1E165379255; BAIDUID=CFA344942EE2E0EE081D8B13B5C847F9:FG=1;</code></pre>
+<h3>请求行</h3>
+<p>请求行由请求方法、URL 和 HTTP 协议版本组成，它们之间用空格分开。</p>
+<pre><code class="shell">GET / HTTP/1.1</code></pre>
+<h3>请求头</h3>
+<p>请求头由 <code>key-value</code> 对组成，每行一对，key (键) 和 value (值)用英文冒号 <code>:</code> 分隔。请求头通知服务器有关于客户端请求的信息，典型的请求头有：</p>
+<ul>
+<li><p>User-Agent：用户代理信息 - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 ...</p></li>
+<li><p>Accept：客户端可识别的内容类型列表 - text/html,application/xhtml+xml,application/xml</p></li>
+<li><p>Accept-Language：客户端可接受的自然语言 -  zh-CN,zh;q=0.8,en;q=0.6,id;q=0.4</p></li>
+<li><p>Accept-Encoding：客户端可接受的编码压缩格式 - gzip, deflate, sdch, br</p></li>
+<li><p>Host：请求的主机名，允许多个域名同处一个IP地址，即虚拟主机 - <code>www.baidu.com</code></p></li>
+<li>
+<p>connection：连接方式</p>
+<ul>
+<li><p>close：告诉WEB服务器或代理服务器，在完成本次请求的响应后，断开连接</p></li>
+<li><p>keep-alive：告诉WEB服务器或代理服务器。在完成本次请求的响应后，保持连接，以等待后续请求</p></li>
+</ul>
+</li>
+<li><p>Cookie：存储于客户端扩展字段，向同一域名的服务端发送属于该域的cookie - PSTM=1490844191; BIDUPSID=2145FF54639208435F60E1E165379255;</p></li>
+</ul>
+<h3>空行</h3>
+<p>最后一个请求头之后是一个空行，发送回车符和换行符，通知服务器以下不再有请求头。</p>
+<h3>请求体</h3>
+<p>请求数据不在 GET 方法中使用，而是在 POST 方法中使用。与请求数据相关的最常使用的请求头是 Content-Type和 Content-Length。</p>
+<h2>HTTP 响应报文</h2>
+<p>HTTP响应报文由<strong>状态行、响应头、空行和响应体</strong>4 个部分组成，如下图所示：</p>
+<p><img data-src="/img/bVLvxk?w=759&amp;h=286" src="/img/bVLvxk?w=759&amp;h=286.png"></p>
+<h3>响应报文示例</h3>
+<pre><code>HTTP/1.1 200 OK
+Server: bfe/1.0.8.18
+Date: Thu, 30 Mar 2017 12:28:00 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Cache-Control: private
+Expires: Thu, 30 Mar 2017 12:27:43 GMT
+Set-Cookie: BDSVRTM=0; path=/</code></pre>
+<h3>状态行</h3>
+<p>状态行格式： HTTP-Version Status-Code Reason-Phrase CRLF</p>
+<ul>
+<li><p>HTTP-Version - HTTP 协议版本</p></li>
+<li><p>Status-Code - 状态码</p></li>
+<li><p>Reason-Phrase - 状态码描述</p></li>
+<li><p>CRLF - 回车/换行符</p></li>
+</ul>
+<h3>响应头</h3>
+<p>响应头由 <code>key-value</code> 对组成，每行一对，key (键) 和 value (值)用英文冒号 <code>:</code> 分隔。响应头域允许服务器传递不能放在状态行的附加信息，这些域主要描述服务器的信息和Request-URI进一步的信息，典型的响应头有：</p>
+<ul>
+<li><p>Server：包含处理请求的原始服务器的软件信息</p></li>
+<li><p>Date：服务器日期</p></li>
+<li><p>Content-Type：返回的资源类型 (MIME)</p></li>
+<li>
+<p>Connection：连接方式</p>
+<ul>
+<li><p>close：连接已经关闭</p></li>
+<li><p>keep-alive：连接已保持，在等待本次连接的后续请求</p></li>
+</ul>
+</li>
+<li><p>Cache-Control：缓存控制</p></li>
+<li><p>Expires：设置过期时间</p></li>
+<li><p>Set-Cookie：设置 Cookie 信息</p></li>
+</ul>
+<h3>空行</h3>
+<p>最后一个响应头之后是一个空行，发送回车符和换行符，通知浏览器以下不再有响应头。</p>
+<h3>响应体</h3>
+<p>服务器返回给浏览器的响应信息，下面是百度首页的响应体片段：</p>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;!--STATUS OK--&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;meta http-equiv="content-type" content="text/html;charset=utf-8"&gt;
+    &lt;meta http-equiv="X-UA-Compatible" content="IE=Edge"&gt;
+    &lt;link rel="icon" sizes="any" mask href="//www.baidu.com/img/baidu.svg"&gt;
+    &lt;title&gt;百度一下，你就知道&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  ...
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<h2>HTTP Methods</h2>
+<p>HTTP 协议的请求方法有：GET、POST、HEAD、PUT、DELETE、OPTIONS、TRACE、CONNECT、PATCH、HEAD</p>
+<p>HTTP 常用的请求方法：</p>
+<ul>
+<li>
+<p>GET - 获取资源，使用 URL 方式传递参数，大小为 2KB</p>
+<ul><li><p><code>http://www.example.com/users</code> - 获取所有用户</p></li></ul>
+</li>
+<li>
+<p>POST - 传输资源，HTTP Body, 大小默认8M</p>
+<ul><li><p><code>http://www.example.com/users/a-unique-id </code> - 新增用户</p></li></ul>
+</li>
+<li>
+<p>PUT - 资源更新</p>
+<ul><li><p><code>http://www.example.com/users/a-unique-id</code> - 更新用户</p></li></ul>
+</li>
+<li>
+<p>DELETE - 删除资源</p>
+<ul><li><p><code>http://www.example.com/users/a-unique-id</code> - 删除用户</p></li></ul>
+</li>
+</ul>
+<h2>HTTP Status Code</h2>
+<p>状态代码由三位数字组成，第一个数字定义了响应的类别，且有五种可能取值：</p>
+<ul>
+<li><p>1xx：指示信息 – 表示请求已接收，继续处理</p></li>
+<li><p>2xx：成功 – 表示请求已被成功接收</p></li>
+<li><p>3xx：重定向 – 要完成请求必须进行更进一步的操作</p></li>
+<li><p>4xx：客户端错误 – 请求有语法错误或请求无法实现</p></li>
+<li><p>5xx：服务器错误 – 服务器未能实现合法的请求</p></li>
+</ul>
+<p>常见状态代码、状态描述的说明如下：</p>
+<ul>
+<li><p>200 OK：客户端请求成功</p></li>
+<li><p>204 No Content：没有新文档，浏览器应该继续显示原来的文档</p></li>
+<li><p>206 Partial Content：客户发送了一个带有Range头的GET请求，服务器完成了它</p></li>
+<li><p>301 Moved Permanently：所请求的页面已经转移至新的url</p></li>
+<li><p>302 Found：所请求的页面已经临时转移至新的url</p></li>
+<li><p>304 Not Modified：客户端有缓冲的文档并发出了一个条件性的请求，服务器告诉客户，原来缓冲的文档还可以继续使用。</p></li>
+<li><p>400 Bad Request：客户端请求有语法错误，不能被服务器所理解</p></li>
+<li><p>401 Unauthorized：请求未经授权，这个状态代码必须和WWW-Authenticate报头域一起使用</p></li>
+<li><p>403 Forbidden：对被请求页面的访问被禁止</p></li>
+<li><p>404 Not Found：请求资源不存在</p></li>
+<li><p>500 Internal Server Error：服务器发生不可预期的错误</p></li>
+<li><p>503 Server Unavailable：请求未完成，服务器临时过载或当机，一段时间后可能恢复正常</p></li>
+</ul>
+<h2>HTTP Cookie &amp; Session</h2>
+<ul>
+<li><p><a href="http://www.jianshu.com/p/1e28fe8125dc">简书 - 全面解读 HTTP Cookie</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/a6d9a7f06955">简书 - Cookie 机制</a></p></li>
+<li><p><a href="http://javascript.ruanyifeng.com/bom/cookie.html#toc1">阮一峰 - JavaScript 标准参考教程 - Cookie</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000004556040">segmentfault - 聊一聊 Cookie</a></p></li>
+<li><p><a href="https://www.zhihu.com/question/19786827">知乎 - COOKIE和SESSION有什么区别？</a></p></li>
+</ul>
+<h2>HTTP Cache(缓存)</h2>
+<ul>
+<li><p><a href="http://www.alloyteam.com/2012/03/web-cache-1-web-cache-overview/">alloyteam - Web 缓存机制系列</a></p></li>
+<li><p><a href="http://imweb.io/topic/5795dcb6fb312541492eda8c">imweb前端社区 - HTTP 缓存控制小结</a></p></li>
+<li><p><a href="http://insights.thoughtworkers.org/trilogy-of-apply-http-cache-to-front-end/">在前端性能优化中应用HTTP缓存的三部曲</a></p></li>
+<li><p><a href="http://mp.weixin.qq.com/s/qOMO0LIdA47j3RjhbCWUEQ">彻底弄懂 Http 缓存机制 - 基于缓存策略三要素分解法</a></p></li>
+<li><p><a href="http://huziketang.com/blog/posts/detail?postId=58b77935204d50674934c3ad">胡子大哈 - 掌握 HTTP 缓存——从请求到响应过程的一切（上）</a></p></li>
+<li><p><a href="http://huziketang.com/blog/posts/detail?postId=58bd4dd1204d50674934c3b0">胡子大哈 - 掌握 HTTP 缓存——从请求到响应过程的一切（下）</a></p></li>
+</ul>
+<h2>HTTP CORS (跨域资源共享)</h2>
+<ul>
+<li><p><a href="https://developer.mozilla.org/zh-CN/docs/Web/Security/Same-origin_policy">MDN - 浏览器同源策略</a></p></li>
+<li><p><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS">MDN - HTTP CORS</a></p></li>
+<li><p><a href="http://www.ruanyifeng.com/blog/2016/04/cors.html">阮一峰 - 跨域资源共享 CORS 详解</a></p></li>
+</ul>
+<h2>HTTPS</h2>
+<ul>
+<li><p><a href="http://imweb.io/topic/56d67baaca5e865230c1d4fa">imweb前端社区 - HTTPS科普扫盲贴</a></p></li>
+<li><p><a href="http://showme.codes/2017-02-20/understand-https/">也许，这样理解HTTPS更容易</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/abb8ea2e26ac">一篇文章为你深度解析HTTPS 协议</a></p></li>
+<li><p><a href="http://www.ruanyifeng.com/blog/2016/08/migrate-from-http-to-https.html">阮一峰 - HTTPS 升级指南</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000004199917">全站 HTTPS 来了</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000003801450">扒一扒HTTPS网站的内幕</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/072a657337ae">简书 - 九个问题从入门到熟悉HTTPS</a></p></li>
+<li><p><a href="http://mp.weixin.qq.com/s/7ImZolr7m3tUuyOgMJeFYg">理解HTTPS为什么安全前，先看看这些东西</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/0d8575b132a8">HTTPS为什么安全 &amp;分析 HTTPS 连接建立全过程</a></p></li>
+<li><p><a href="https://juejin.im/entry/589d44dd61ff4b006b3896d0">HTTPS 免费证书申请教程</a></p></li>
+<li><p><a href="https://juejin.im/entry/58aba456128fe1006a4f3393">掘金 - 升级 Https 的那些事</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/9e944688fab9">简书 - Android 使用 HTTPS</a></p></li>
+<li><p><a href="https://zhuanlan.zhihu.com/p/22749689">知乎专栏 - iOS开发中的HTTPS</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/6b9c8bd5005a">简书 - iOS开发HTTPS实现之信任SSL证书和自签名证书</a></p></li>
+</ul>
+<h2>HTTP/2</h2>
+<ul>
+<li><p><a href="https://segmentfault.com/a/1190000002765886">segmentfault - HTTP/2 新特性浅析</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/565a69f574a8">简书 - 未来已到——HTTP/2</a></p></li>
+<li><p><a href="https://juejin.im/entry/57fa127d816dfa0056b7d710">掘金 - HTTP 2.0 的那些事</a></p></li>
+<li><p><a href="https://coyee.com/article/10917-journey-to-http-2">HTTP/2 发展历程</a></p></li>
+<li><p><a href="https://juejin.im/entry/56ce7d1a1532bc005372a7fa">掘金 - Web 开发者的 HTTP/2 性能优化指南</a></p></li>
+<li><p><a href="https://aotu.io/notes/2016/03/17/http2-char/?o2src=juejin&amp;o2layout=compat">前端开发与 HTTP/2 的羁绊——安利篇</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/68ef142c7ee2">简书 - 让你的网站升级到HTTP/2</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/83551b91e9a2">简书 - HTTP/2 流量调试</a></p></li>
+<li><p><a href="https://www.gitbook.com/book/ye11ow/http2-explained/details">GitBook - http2 讲解</a></p></li>
+</ul>
+<h2>HTTP 安全</h2>
+<ul>
+<li><p><a href="http://www.jianshu.com/p/6dcebd54fb24">Web 安全入门-书籍及建议</a></p></li>
+<li><p><a href="https://github.com/FallibleInc/security-guide-for-developers">Github - 实用性开发人员安全须知</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000008629001">segmentfault - 阿里聚安全2016年报</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000004086946">segmentfault - web权限验证方法说明</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000006758679">HTTP的识别,认证与安全——《HTTP权威指南》系列</a></p></li>
+<li><p><a href="http://www.freebuf.com/articles/web/129527.html">HTTP认证的底层技术简析与揭秘</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000007492381">SegmentFault 技术周刊 Vol.12 - Web 安全指南（上）</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000007564080">SegmentFault 技术周刊 Vol.13 - Web 安全指南（下）</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/15fece7e1a3e">简书 - Web前端攻防，一不小心就中招了</a></p></li>
+<li><p><a href="http://blog.720ui.com/2016/security_web/">如何防范常见的Web攻击</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/436917dfa8df">简书 - Web安全之SQL注入攻击技巧与防范</a></p></li>
+</ul>
+<h2>HTTP 面试</h2>
+<ul>
+<li><p><a href="https://www.zhihu.com/question/53226983">知乎 - 怎么回答面试官的题目：你是怎么理解 http？</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000006879700">segmentfault - 前端经典面试题: 从输入URL到页面加载发生了什么?</a></p></li>
+<li><p><a href="http://www.alloyteam.com/2016/07/httphttp2-0spdyhttps-reading-this-is-enough/">alloy - HTTP,HTTP2.0,SPDY,HTTPS你应该知道的一些事</a></p></li>
+<li><p><a href="https://hit-alibaba.github.io/interview/basic/network/HTTP.html">github.io - HTTP 协议 (笔试面试知识整理)</a>  - <strong>资料很全面</strong></p></li>
+<li><p><a href="https://juejin.im/post/5872309261ff4b005c4580d4">掘金 - 面试 - 网络 HTTP</a></p></li>
+<li><p><a href="http://blog.csdn.net/zhangliangzi/article/details/51336564">csdn - HTTP 必知必会 — 常见面试题总结</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/6e7521041e92">简书 - TCP/IP（六）：HTTP 与 HTTPS 简介</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/52d86558ca57">简书 - 面试时如何优雅的谈论HTTP／1.0／1.1／2.0</a></p></li>
+<li><p><a href="https://github.com/kaiye/kaiye.github.com/issues/3">猫哥网络编程系列：详解 BAT 面试题</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000004014583">segmentfault - GET请求和POST请求的区别</a></p></li>
+<li><p><a href="https://www.oschina.net/news/77354/http-get-post-different">开源中国 - 99%的人理解错 HTTP 中 GET 与 POST 的区别</a></p></li>
+</ul>
+<h2>HTTP 爬虫文章</h2>
+<h3>Resources</h3>
+<ul>
+<li><p><a href="https://zhuanlan.zhihu.com/p/25250739">知乎 - 爬虫学习资源整理</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/53948b9c5f9b">简书 - 2016年，我对爬虫的总结</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/fbdad6f77d0c">简书 - 一篇文章了解爬虫技术现状</a></p></li>
+<li><p><a href="https://www.anotherhome.net/2920">女朋友的微博情绪监控</a></p></li>
+</ul>
+<h3>Node.js</h3>
+<ul><li><p><a href="https://juejin.im/post/58db9371a22b9d00647d5aff">掘金 - nodeJS实现基于Promise爬虫 定时发送信息到指定邮件</a></p></li></ul>
+<h3>Java</h3>
+<ul>
+<li><p><a href="http://z77z.oschina.io/2016/12/29/java-spring-mybatis%E6%95%B4%E5%90%88%E5%AE%9E%E7%8E%B0%E7%88%AC%E8%99%AB%E4%B9%8B%E3%80%8A%E4%BB%8A%E6%97%A5%E5%A4%B4%E6%9D%A1%E3%80%8B%E6%90%9E%E7%AC%91%E5%8A%A8%E6%80%81%E5%9B%BE%E7%89%87%E7%88%AC%E5%8F%96/">java-spring-mybatis整合实现爬虫之《今日头条》搞笑动态图片爬取</a></p></li>
+<li><p><a href="https://juejin.im/post/58974ae91b69e600599486a9">掘金 - 重构：抓取一个视频网站上 2016 年所有电影的下载链接</a></p></li>
+<li><p><a href="https://my.oschina.net/z707z/blog/829662">开源中国 - SpringBoot+SpringMVC+MybatisPlus框架整合练习之美女图片爬虫---图文详细流程</a></p></li>
+</ul>
+<h3>PHP</h3>
+<ul><li><p><a href="https://segmentfault.com/a/1190000004357994">segmentfault - php爬虫：知乎用户数据爬取和分析</a></p></li></ul>
+<h3>Python</h3>
+<ul>
+<li><p><a href="http://python.jobbole.com/82633/">伯乐在线 - Python 爬虫的工具列表</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/5c239bcd05a3">简书 - Python爬虫库-Beautiful Soup的使用</a></p></li>
+<li><p><a href="https://www.figotan.org/2016/08/10/pyspider-as-a-web-crawler-system/">漫谈Pyspider网络爬虫的实践</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/5a8dd8a100b7">简书 - 500 行 Python 代码构建一个轻量级爬虫框架</a></p></li>
+<li><p><a href="http://mp.weixin.qq.com/s/g82o4DgJ-2McztVBzSnGew">Python爬虫一步步抓取房产信息</a></p></li>
+<li><p><a href="https://foofish.net/python-auto-login-zhihu.html">Python爬虫之模拟知乎登录</a></p></li>
+<li><p><a href="http://www.crazyant.net/2076.html">怎样借助Python爬虫给宝宝起个好名字</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/c1704b4dc04d">简书 - Python爬虫-用Scrapy框架实现漫画的爬取</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/c9b64ea3ecab">简书 - 使用python抓取美女福利图片</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/d67b1d4b99ad">简书 - Python 福利小爬虫，爬取今日头条街拍美女图</a></p></li>
+<li><p><a href="https://juejin.im/post/589d1dac1b69e60059ba1017">掘金 - Python 爬虫：把廖雪峰的教程转换成 PDF 电子书</a></p></li>
+</ul>
+<h2>HTTP 资源</h2>
+<h3>文章</h3>
+<ul>
+<li><p><a href="http://www.ruanyifeng.com/blog/2016/08/http.html">阮一峰 - HTTP 协议入门</a></p></li>
+<li><p><a href="http://mp.weixin.qq.com/s/27zpNIGhVbx-on9FDs_6dw">HTTP 协议详解</a></p></li>
+<li><p><a href="http://mrpeak.cn/blog/http-constitution/">扒一扒HTTP的构成</a></p></li>
+<li><p><a href="http://cizixs.com/2016/12/12/restful-api-design-guide">跟着 Github 学习 Restful HTTP API 设计</a></p></li>
+<li><p><a href="http://imweb.io/topic/554c5879718ba1240cc1dd8a">imweb前端社区 - HTTP1.1与前端性能</a></p></li>
+<li><p><a href="https://segmentfault.com/a/1190000003852910">关于 Web 安全，99% 的网站都忽略了这些</a></p></li>
+</ul>
+<h3>视频</h3>
+<ul>
+<li><p><a href="https://www.chuanke.com/v2858504-166873-765686.html">百度传课 - WEB系统测试 - HTTP协议详解</a></p></li>
+<li><p><a href="http://www.imooc.com/learn/758">慕课网 - PHP中的HTTP协议</a></p></li>
+</ul>
+<h2>HTTP 抓包工具及教程</h2>
+<h3>工具</h3>
+<ul>
+<li><p><a href="https://developer.mozilla.org/zh-CN/docs/Learn/Discover_browser_developer_tools">Browser Develop Tools</a> - 浏览器开发者工具</p></li>
+<li><p><a href="http://www.telerik.com/fiddler">Fiddler for Windows</a> - Fiddler是一个 HTTP 协议调试代理工具</p></li>
+<li><p><a href="https://www.charlesproxy.com/">Charles for Mac</a>  Mac下HTTP 协议调试代理工具</p></li>
+<li><p><a href="http://www.telerik.com/fiddler/add-ons">Fiddler-AddOns</a> - Fiddler 插件地址</p></li>
+<li><p><a href="https://www.wireshark.org/">Wireshark</a> - 是一个网络封包分析软件，网络封包分析软件的功能是撷取网络封包，并尽可能显示出最为详细的网络封包资料</p></li>
+<li><p><a href="https://mitmproxy.org/">mitmproxy</a> - 一款可交互式的命令行抓包工具</p></li>
+</ul>
+<h3>教程</h3>
+<ul>
+<li><p><a href="http://www.cnblogs.com/constantince/category/712675.html">博客园 - Chrome开发者工具不完全指南</a></p></li>
+<li><p><a href="http://www.telerik.com/docs/default-source/fiddler/addons/fiddlercertmaker.exe?sfvrsn=2">Fiddler CertMaker for iOS and Android</a> - HTTPS 证书生成插件</p></li>
+<li><p><a href="http://www.jianshu.com/p/66e6e5a76bea">简书 - HTTPS以及Fiddler抓取HTTPS协议</a> - APP HTTPS 抓包</p></li>
+<li><p><a href="http://www.jianshu.com/p/4a8dae519efe">简书 - 抓包工具 Fiddler 相关知识总结</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/99b6b4cd273c">简书 - Fiddler 教程</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/4d99babf63a1">简书 - 抓包工具Wireshark基本介绍和学习TCP三次握手</a></p></li>
+<li><p><a href="http://tmq.qq.com/2016/12/https_from_wireshark/">TMQ - 从wireshark抓包开始学习https</a></p></li>
+<li><p><a href="https://juejin.im/post/584b711d8e450a006c586ca6">掘金 - 一步一步教你 HTTPS 抓包 (mitmproxy)</a></p></li>
+</ul>
+<h2>Chrome HTTP 插件</h2>
+<ul>
+<li><p>Proxy SwitchyOmega - 轻松快捷地管理和切换多个代理设置</p></li>
+<li><p>CORS Toggle - 允许跨域请求</p></li>
+<li><p>Postman - 功能超级强大 HTTP Client</p></li>
+</ul>
+<h2>HTTP 平台资源库</h2>
+<h3>Browser</h3>
+<ul>
+<li><p><a href="https://jquery.com/">jQuery</a></p></li>
+<li><p><a href="https://github.com/defunkt/jquery-pjax">jquery-pjax</a></p></li>
+<li><p><a href="http://zeptojs.com/">zepto</a></p></li>
+<li><p><a href="https://github.com/github/fetch">fetch</a></p></li>
+<li><p><a href="https://github.com/mzabriskie/axios">axios</a></p></li>
+<li><p><a href="http://mockjs.com/">mockjs</a></p></li>
+</ul>
+<h3>Node.js</h3>
+<ul>
+<li><p><a href="https://www.npmjs.com/package/request">request</a> - Request is designed to be the simplest way possible to make http calls</p></li>
+<li><p><a href="https://www.npmjs.com/package/axios">axios</a>- Promise based HTTP client for the browser and node.js</p></li>
+<li><p><a href="https://www.npmjs.com/package/http-proxy">http-proxy</a> - It is an HTTP programmable proxying library that supports websockets</p></li>
+<li><p><a href="https://www.npmjs.com/package/superagent">superagent</a> - SuperAgent is a small progressive <strong>client-side</strong> HTTP request library</p></li>
+<li><p><a href="https://www.npmjs.com/package/morgan">morgan</a> - HTTP request logger middleware for node.js</p></li>
+</ul>
+<h3>Java</h3>
+<ul><li><p><a href="http://hc.apache.org/downloads.cgi">HttpClient</a></p></li></ul>
+<h3>Android</h3>
+<ul><li>
+<p><a href="https://github.com/square/okhttp">okhttp</a></p>
+<ul><li><p><a href="http://www.imooc.com/learn/732">慕课网 - okhttp框架解析与应用</a></p></li></ul>
+</li></ul>
+<h3>Python</h3>
+<ul>
+<li><p><a href="https://docs.python.org/2/library/urllib.html#urllib.urlencode">urllib</a></p></li>
+<li><p><a href="https://docs.python.org/2/library/urllib2.html#urllib2.Request">urllib2</a></p></li>
+<li><p><a href="https://docs.python.org/2/library/httplib.html">httplib</a></p></li>
+<li>
+<p><a href="http://docs.python-requests.org/en/master/">Requests</a></p>
+<ul><li><p><a href="http://www.imooc.com/learn/736">慕课网 - 走进Requests库</a></p></li></ul>
+</li>
+</ul>
+<p><strong>若只使用python3.X, 下面可以不看了, 记住有个urllib的库就行了</strong></p>
+<p>python2.X 有这些库名可用: <a href="https://docs.python.org/2/library/urllib.html#urllib.urlencode">urllib</a>, <a href="https://docs.python.org/2/library/urllib2.html#urllib2.Request">urllib2</a>, urllib3, <a href="https://docs.python.org/2/library/httplib.html">httplib</a>, httplib2, requests</p>
+<p>python3.X 有这些库名可用: urllib, urllib3, httplib2, requests</p>
+<p>两者都有的urllib3和requests, 它们不是标准库. urllib3 提供线程安全连接池和文件post支持,与urllib及urllib2的关系不大. <a href="http://docs.python-requests.org/en/latest/index.html">requests</a> 自称HTTP for Humans, 使用更简洁方便。</p>
+<p>详细信息请参考 - <a href="https://my.oschina.net/sukai/blog/611451">开源中国 - python中 urllib, urllib2, httplib, httplib2 几个库的区别</a></p>
+<h2>HTTP 压力测试</h2>
+<h3>工具</h3>
+<ul>
+<li><p>LoadRunner</p></li>
+<li><p>SoapUI</p></li>
+<li><p>Jmeter</p></li>
+<li><p>http_load</p></li>
+<li><p>webbench</p></li>
+<li><p>ab</p></li>
+<li><p>siege</p></li>
+</ul>
+<h3>教程</h3>
+<ul>
+<li><p><a href="http://www.51testing.com/zhuanti/LoadRunner.html">51testing - 性能自动化测试工具</a></p></li>
+<li><p><a href="http://www.cnblogs.com/TankXiao/p/4059378.html">博客园 - Jmeter教程 简单的压力测试</a></p></li>
+<li><p><a href="http://www.imooc.com/learn/738">慕课网 - 接口测试基础入门篇</a></p></li>
+<li><p><a href="http://www.imooc.com/learn/791">慕课网 - JMeter之HTTP协议接口性能测试</a></p></li>
+<li><p><a href="http://www.qixing318.com/article/introduce-a-few-web-server-performance-pressure-testing-tools.html">介绍几款Web服务器性能压力测试工具</a></p></li>
+</ul>
+<h2>HTTP 代理服务器</h2>
+<h3>产品</h3>
+<ul>
+<li><p>Nginx</p></li>
+<li><p>Squid</p></li>
+<li><p>Privoxy</p></li>
+<li><p>Varnish</p></li>
+<li><p>Polipo</p></li>
+<li><p>Tinyproxy</p></li>
+<li><p>HAProxy</p></li>
+<li><p>ATS</p></li>
+</ul>
+<h3>文章</h3>
+<ul>
+<li><p><a href="https://www.zhihu.com/question/24723688">知乎 - 反向代理为何叫反向代理?</a></p></li>
+<li><p><a href="http://z00w00.blog.51cto.com/515114/1031287">51cto - 图解正向代理、反向代理、透明代理</a></p></li>
+<li><p><a href="http://www.cnblogs.com/Anker/p/6056540.html">Anker - 正向代理与反向代理总结</a></p></li>
+<li><p><a href="https://linux.cn/article-7119-1.html">五大开源 Web 代理服务器横评</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/4ed6144fe333">简书 - 反向代理服务器比较(Nginx，ATS，Squid等)</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/785597987dad">简书 - Apache vs Nginx：基于实践经验的比较</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/8aede64efb0d">简书 - 主机、服务器，代理服务器，反向代理服务器理解（自用）</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/215b5575107c">简书- 大型网站架构系列：负载均衡详解</a></p></li>
+<li><p><a href="http://www.hawu.me/operation/852">使用squid搭建代理服务器</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/dff2c0497840">简书 - 实战Nginx笔记</a></p></li>
+<li><p><a href="http://www.jianshu.com/p/625c2b15dad5">简书 - Nginx Proxy Cache原理和最佳实践</a></p></li>
+</ul>
+<h2>HTTP 图书</h2>
+<ul>
+<li><p><a href="https://book.douban.com/subject/10746113/">豆瓣读书 - HTTP 权威指南</a></p></li>
+<li><p><a href="https://book.douban.com/subject/25863515/">豆瓣读书 - 图解 HTTP</a></p></li>
+</ul>
+<h2>参考资源</h2>
+<ul>
+<li><p><a href="http://www.kannng.com/http/2016/10/26/http-packets.html">HTTP请求报文和HTTP响应报文以及工作原理</a></p></li>
+<li><p><a href="http://baike.baidu.com/link?url=Z2p_PetqY7-ujWiMn15wvG6z4K7ORksVt8Dy47sWI2KF_p4VEZKZrN_7vfwuF1HLBfzLs_vJJNyyF-xAQ4AyuK#1">百度百科 - HTTP</a></p></li>
+</ul>
