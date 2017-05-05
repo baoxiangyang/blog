@@ -32,7 +32,8 @@
      h3 {
         margin-bottom: 5px;
         small {
-          	font-weight: 500;
+          font-weight: 500;
+          font-size: small;
 	        span {
 	           color: #009a61;
 	           margin-right: 10px;

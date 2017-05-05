@@ -1,8 +1,14 @@
 <template>
-  <div class="maxWidth articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
-    <link rel="stylesheet" href="https://static.segmentfault.com/v-58fb6746/global/css/global.css">
+  <article class="maxWidth articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
+    <section>
+      <h2>{{currentItem.title}}</h2>
+      <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in currentItem.label">{{item}}</el-tag>
+      作者：<strong class="author">{{currentItem.author}}</strong>
+      时间：<time :datetime="currentItem.time">{{currentItem.timeMsg}}</time>
+    </section>
     <div v-html="detail"></div>
-  </div>
+    <p><strong>转载地址</strong> <a :href="currentItem.address">{{currentItem.address}}</a></p>
+  </article>
 </template>
 <script type="text/javascript">
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
@@ -11,7 +17,8 @@
     data() {
       return {
         detailLoading: false,
-        detail: ''
+        detail: '',
+        typeArr: ['primary', 'success', 'warning', 'danger']
       };
     },
     created() {
@@ -22,7 +29,14 @@
         error: state => state.articleModule.error,
         errorMsg: state => state.articleModule.errorMsg,
         errorCode: state => state.articleModule.errorCode,
-      })
+        list: state => state.articleModule.list,
+      }),
+      currentItem: function() {
+        let id = this.$route.params.id;
+        return this.list.filter((item, index) => {
+          return item.id == id;
+        })[0];
+      }
     },
     methods: {
       ...mapMutations([
@@ -42,9 +56,11 @@
           this.detailLoading = false;
           this.set_articleStatus({error: true, errorMsg: '网络错误请重试！', errorCode: error.status});
         });
+      },
+      randomType(){
+        return parseInt(Math.random() * this.typeArr.length);
       }
     }
-
   };
 </script>
 <style lang="less">
@@ -52,5 +68,26 @@
     min-height: 500px;
     padding: 25px;
     box-sizing: border-box;
+    section {
+      h2 {
+        border: none;
+        padding-bottom: 5px
+      }
+      .el-tag {
+        margin-right: 5px;
+      }
+      .author {
+        color: #009a61;
+        margin-right: 10px;
+      }
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    a{
+      color: #009a61;
+    }
+    p strong {
+      color: #009a61;
+    }
   }
 </style>

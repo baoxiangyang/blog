@@ -1,5 +1,6 @@
 <template>
   <div class="articleList">
+    <link rel="stylesheet" href="https://static.segmentfault.com/v-58fb6746/global/css/global.css">
     <div class="articleHeader">
       <el-menu :default-active="activeIndex" :router="true" @select="handleSelect" class="articleNav maxWidth" mode="horizontal">
         <el-menu-item index="/article?type=all">全部</el-menu-item>
