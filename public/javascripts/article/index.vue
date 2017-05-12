@@ -16,7 +16,13 @@
         <el-input class="search" icon="search" v-model="search" :on-icon-click="handleSearchClick" placeholder="搜索" size="small" @change="handleInputChange"></el-input>
       </el-menu>
     </div>
-    <router-view></router-view>  
+    <div class="maxWidth barParent">
+      <router-view></router-view>  
+      <div class="bar">
+        <div class="childBar"></div>
+      </div>
+    </div>
+    
   </div>
 </template>
 <script type="text/javascript">
@@ -75,6 +81,22 @@
   .articleList {
     .articleHeader {
       background-color: #eef1f6;
+    }
+    .barParent {
+      position: relative;
+      .bar {
+        background-color: #F2F2F2;
+        height: 100%;
+        width: 7px;
+        position: absolute;
+        top:0; right: 4px;
+        .childBar {
+          width: 100%;
+          height: 100px;
+          background-color: #398FE6;
+          position: absolute;
+        }
+      }
     }
     .articleNav{
       li{

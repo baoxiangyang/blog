@@ -1,5 +1,5 @@
 <template>
-  <article class="maxWidth articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
+  <article class="articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
     <section>
       <h2>{{currentItem.title}}</h2>
       <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in currentItem.label">{{item}}</el-tag>
@@ -11,6 +11,7 @@
   </article>
 </template>
 <script type="text/javascript">
+  import router from '../router.js';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
   import { backToTop } from '../base.js';
   export default {
@@ -43,6 +44,10 @@
         'set_articleStatus'
       ]),
       getDetail() {
+        if(!this.$route.params.id){
+          router.push({name: 'article', query:{type: 'all'}});
+          return false;
+        }
         this.detailLoading = true;
         //获取文章信息
         this.$http.post('/api/articleDatails', this.$route.params).then(res => {

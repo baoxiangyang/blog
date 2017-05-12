@@ -1,5 +1,5 @@
 <template>
-  <el-row :gutter="20" class="articleLayout maxWidth" v-loading="loading"
+  <el-row :gutter="20" class="articleLayout" v-loading="loading"
     element-loading-text="拼命加载中">
     <el-col :span="20">
       <articleItem  v-for="item in list" key="item.id" :detailsData="item"></articleItem>
@@ -62,7 +62,7 @@
     beforeRouteEnter(to, from, next) {
       next(vm => {
         vm.set_articleStatus({type: (to.query.type || 'all')});
-        vm.handleCurrentChange(1);
+        if(!(vm.list && vm.list.length)) vm.handleCurrentChange(1);
         if(vm.type != 'all'){
           vm.set_articleStatus({activeIndex: to.fullPath});
         }
