@@ -35,9 +35,6 @@
         pageSize: state => state.articleModule.pageSize,
         total: state => state.articleModule.total,
         loading: state => state.articleModule.loading,
-        error: state => state.articleModule.error,
-        errorMsg: state => state.articleModule.errorMsg,
-        errorCode: state => state.articleModule.errorCode,
         type: state => state.articleModule.type,
         search: state => state.articleModule.search,
       }),
@@ -54,9 +51,8 @@
       ]),
       //点击分页
       handleCurrentChange(currentPage){
-        this.get_articleList({type: this.type, search: this.search, currentPage: currentPage}).then(() => {
-          backToTop();
-        });
+        backToTop();
+        this.get_articleList({type: this.type, search: this.search, currentPage: currentPage});
       }
     },
     beforeRouteEnter(to, from, next) {
@@ -90,7 +86,7 @@
 <style lang="less">
   .articleLayout {
     padding: 0 5px;
-    min-height: 1233px;
+    margin: 0 !important;
     .nodata {
       padding:12px 0;
       text-align: center;

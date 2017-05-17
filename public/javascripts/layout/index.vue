@@ -22,12 +22,7 @@
         </el-row>
       </el-menu>
     </header>
-    <div class="content">
-      <router-view></router-view>
-    </div>
-    <!-- <footer>
-      
-    </footer> -->
+    <router-view></router-view>
   </div>
 </template>
 <script type="text/javascript">
@@ -49,16 +44,9 @@
   };
 </script>
 <style lang="less">
-  html, body {
-    height: 100%;
-  }
   .main {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
     header {
       height: 60px;
-      flex-basis:60px;
       background-color: #324157;
       .el-menu-item {
         float: none !important;
@@ -93,11 +81,6 @@
           margin-right: 10px;
         }
       }
-    }
-    .content {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
     }
     a {
       color: #000;

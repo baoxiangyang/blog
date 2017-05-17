@@ -43,7 +43,7 @@ export function formatTime(v, nowDate, time){
 }
 // 回到顶部
 export function backToTop(){
-	let scrollTop = document.documentElement.scrollTop;
+	let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
 	if(scrollTop > 0){
 		let requestAnimFrame = window.requestAnimationFrame ||
           window.webkitRequestAnimationFrame ||
@@ -52,6 +52,7 @@ export function backToTop(){
             window.setTimeout(callback, 1000 / 60);
           };
 		document.documentElement.scrollTop = (scrollTop -= 20);
+		document.body.scrollTop = (scrollTop -= 20);
 		requestAnimFrame(backToTop);
 	}
 }
