@@ -17,8 +17,8 @@ var port = normalizePort(process.env.PORT || '3001');
 if(process.env.NODE_ENV == 'production'){
   var https = require('https'),
     option = {
-    key:fs.readFileSync('../config/ssl/2_www.xiaobaozong.cn.key', 'utf8'), 
-    cert:fs.readFileSync('../config/ssl/1_www.xiaobaozong.cn_bundle.crt', 'utf8')
+    key:fs.readFileSync('./config/ssl/2_www.xiaobaozong.cn.key', 'utf8'), 
+    cert:fs.readFileSync('./config/ssl/1_www.xiaobaozong.cn_bundle.crt', 'utf8')
   };
   server = https.createServer(option, app.callback());
   port = 443;
