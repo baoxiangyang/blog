@@ -8,19 +8,19 @@ var app = require('../app');
 var debug = require('debug')('demo:server');
 var http = require('http');
 var fs = require('fs'), option = {};
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3001');
 if(process.env.NODE_ENV == 'production'){
   http = require('https');
   option = {
     key:fs.readFileSync('./config/ssl/2_www.xiaobaozong.cn.key', 'utf8'), 
     cert:fs.readFileSync('./config/ssl/1_www.xiaobaozong.cn_bundle.crt', 'utf8')
   };
+  port = 443;
 }
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || '3001');
 // app.set('port', port);
 
 /**
