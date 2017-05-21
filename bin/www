@@ -7,6 +7,14 @@
 var app = require('../app');
 var debug = require('debug')('demo:server');
 var http = require('http');
+var fs = require('fs'), option = {};
+if(process.env.NODE_ENV == 'production'){
+  http = require('https');
+  option = {
+    key:fs.readFileSync('./config/ssl/2_www.xiaobaozong.cn.key', 'utf8'), 
+    cert:fs.readFileSync('./config/ssl/1_www.xiaobaozong.cn_bundle.crt', 'utf8')
+  };
+}
 
 /**
  * Get port from environment and store in Express.
@@ -19,7 +27,7 @@ var port = normalizePort(process.env.PORT || '3001');
  * Create HTTP server.
  */
 
-var server = http.createServer(app.callback());
+var server = http.createServer(option, app.callback());
 
 /**
  * Listen on provided port, on all network interfaces.

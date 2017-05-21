@@ -1,8 +1,11 @@
 let router = require('koa-router')(),
+	logFile = require('../config/config.js').logFile,
 	mongo = require('../dbs/mongodb.js'),
 	fs = require('fs'),
 	fsPromise = require('../common/fsPromise.js'),
-	path = require('path');
+	path = require('path'),
+	getArticle = require('../common/getArticle.js'),
+	htmlSavePath = require('../config/config.js').htmlSavePath;
 //获取文章列表
 router.post('/articleList', async function (ctx, next) {
 	let findObj = {
@@ -49,41 +52,79 @@ router.post('/articleList', async function (ctx, next) {
 				findObj.find = {};
 		}
 	}
-	
-	let articleData = await mongo.findArticleArr(findObj);
-	ctx.body = {
-		error: 0,
-		data: {
-			articleData
-		},
-		msg: '获取文章列表成功'
-	};
+	try{
+		let articleData = await mongo.findArticleArr(findObj);
+		ctx.body = {
+			errorCode: 0,
+			data: {
+				articleData
+			},
+			msg: '获取文章列表成功'
+		};
+	}catch (e) {
+		ctx.body = {
+			errorCode: -1,
+			msg: e
+		};
+	}
 });
 //获取文章详情
 router.post('/articleDatails', async function(ctx, next){
 	let id = ctx.request.body.id,
-		filePath = './html/'+ id +'.html';
+		filePath = htmlSavePath + '/' + id +'.html';
 	if(fs.existsSync(filePath)){
 		let data = await fsPromise(filePath, 'readFile');
 		if(data.error){
 			ctx.body = {
-				error: -2,
+				errorCode: -2,
 				msg: '读取文章失败请稍后再试！',
 				data: null
 			};
 			return false;
 		}
 		ctx.body = {
-			error: 0,
+			errorCode: 0,
 			msg: '',
 			data: data.data
 		}; 
 	}else{
 		ctx.body = {
-			error: -1,
+			errorCode: -1,
 			msg: '此文章不存在',
 			data: null
 		}; 
+	}
+});
+//获取需要爬取的文章地址
+router.post('/crawlerArticle', async function(ctx, next){
+	let body = ctx.request.body;
+	if(!body.url){
+		ctx.body = {
+			errorCode: -2,
+			errorMsg: '请输入需要获取的文章地址'
+		};
+	}else{
+		getArticle(ctx.request.body);
+		ctx.body = {
+			errorCode: 0,
+			data: '爬取文章指令下发成功'
+		};
+
+	}
+});
+//获取爬虫日志
+router.post('/articleLog', async function(ctx, next){
+	try {
+		let log = await fsPromise(logFile, 'readFile');
+		ctx.body = {
+			errorCode: 0,
+			data: log.data
+		};
+	}catch (e){
+		ctx.body = {
+			errorCode: -3,
+			msg: e
+		};
 	}
 });
 module.exports = router;
