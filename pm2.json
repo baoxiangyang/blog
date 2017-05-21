@@ -1,0 +1,7 @@
+{	
+	"name": "blog",
+	"script": "bin/run",
+	"env": {
+	    "NODE_ENV": "production"
+	}
+}
