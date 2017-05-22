@@ -28,7 +28,7 @@ function getData(url, imgpath){
 					author: $('.article__author a').text().trim(),
 					time: returnTime($('.article__author').find('a').remove().end().text().trim()),
 					description: $('meta[name="description"]').attr('content'),
-					address: url
+					address: addr + url
 
 				},
 				container = $('.wrap .article__content');
