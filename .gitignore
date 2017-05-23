@@ -1,5 +1,6 @@
-
 /node_modules/
 /article/
 /public/dist/
-/config/ssl/
+/config/
+/views/*.html
+/tempFile
