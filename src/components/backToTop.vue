@@ -1,8 +1,10 @@
 <template>
-	<div class="backTop" v-show="isShow">
-    <a href="javascript:;" class="el-icon-arrow-up" title="回到顶部" @click="BackTop"></a>
-    <a href="javascript:;" class="el-icon-arrow-left" title="返回" @click="routerBack"></a>
-  </div>
+  <transition name="fade">
+    <div class="backTop" v-show="isShow">
+      <a href="javascript:;" class="el-icon-arrow-up" title="回到顶部" @click="BackTop"></a>
+      <a href="javascript:;" class="el-icon-arrow-left" title="返回" @click="routerBack"></a>
+    </div>
+  </transition>
 </template>
 <script type="text/javascript">
   import { backToTop as BackTop, throttle} from '../base.js';
@@ -57,5 +59,11 @@
         display: block;
       }
     }
+  }
+  .fade-enter-active, .fade-leave-active {
+    transition: opacity .5s
+  }
+  .fade-enter, .fade-leave-active {
+    opacity: 0
   }
 </style>

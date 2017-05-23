@@ -34,6 +34,10 @@ let findArticleArr = function({find = {}, pageSize = 10, currentPage = 1}){
 		});
 	});
 };
+//查询单条文章信息
+let findOneArticle = function(id){
+	return SfModel.findOne({id: id}, {_id: 0, __v: 0});
+};
 //判断文章在数据库中是否存在
 let isArticle = async function(obj){
 	return new Promise((resolve, reject) =>{
@@ -69,6 +73,7 @@ let saveArticle = async function(obj){
 
 module.exports = {
 	findArticleArr,
+	findOneArticle,
 	isArticle,
 	saveArticle
 };

@@ -74,20 +74,32 @@ router.post('/articleDatails', async function(ctx, next){
 	let id = ctx.request.body.id,
 		filePath = htmlSavePath + '/' + id +'.html';
 	if(fs.existsSync(filePath)){
-		let data = await fsPromise(filePath, 'readFile');
-		if(data.error){
+		let fileData = null, articleDatail = null;
+		if(ctx.request.body.datails){
+			try {
+				articleDatail = await (async function(id){
+					return await mongo.findOneArticle(id);
+				})(id);
+			}catch(e){
+				articleDatail = '获取文章详情错误';
+			} 
+		}
+		try {
+			fileData = await fsPromise(filePath, 'readFile');
+			ctx.body = {
+				errorCode: 0,
+				msg: '',
+				data: {
+					fileData: fileData.data,
+					articleDatail
+				}
+			}; 
+		}catch(error){
 			ctx.body = {
 				errorCode: -2,
-				msg: '读取文章失败请稍后再试！',
-				data: null
+				msg: '获取文章失败，请稍后再试'
 			};
-			return false;
 		}
-		ctx.body = {
-			errorCode: 0,
-			msg: '',
-			data: data.data
-		}; 
 	}else{
 		ctx.body = {
 			errorCode: -1,
