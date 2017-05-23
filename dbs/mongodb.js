@@ -1,7 +1,7 @@
 let mongoose = require('mongoose'),
 	mongoConfig = require('../config/config.js').mongodb,
 	schema = require('./mongoSchema.js'),
-	db = mongoose.connect('mongodb://'+ mongoConfig.host + ':'+ mongoConfig.port + '/'+mongoConfig.dbs);
+	db = mongoose.connect(`mongodb://${mongoConfig.user}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.dbs}`);
 	mongoose.Promise = global.Promise;
 
 db.connection.on('open', function(){

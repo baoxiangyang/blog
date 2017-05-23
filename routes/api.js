@@ -1,5 +1,6 @@
 let router = require('koa-router')(),
-	logFile = require('../config/config.js').logFile,
+	config = require('../config/config.js'),
+	logFile = config.logFile,
 	mongo = require('../dbs/mongodb.js'),
 	fs = require('fs'),
 	fsPromise = require('../common/fsPromise.js'),
@@ -98,10 +99,17 @@ router.post('/articleDatails', async function(ctx, next){
 //获取需要爬取的文章地址
 router.post('/crawlerArticle', async function(ctx, next){
 	let body = ctx.request.body;
+	if(body.password != config.password){
+		ctx.body = {
+			errorCode: -2,
+			msg: '密码错误请重新输入'
+		};
+		return false;
+	}
 	if(!body.url){
 		ctx.body = {
 			errorCode: -2,
-			errorMsg: '请输入需要获取的文章地址'
+			msg: '请输入需要获取的文章地址'
 		};
 	}else{
 		getArticle(ctx.request.body);

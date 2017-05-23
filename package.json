@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "webpack --config=./webpack/webpack.dev.js && ./node_modules/.bin/nodemon bin/run",
+    "start": "webpack --config=./webpack/webpack.dev.js && node bin/run",
     "koa": "./node_modules/.bin/runkoa bin/www",
     "pm2": "webpack --config=./webpack/webpack.pro.js && pm2 start pm2.json",
     "pro": "set NODE_ENV=production & export NODE_ENV=production && webpack --config=./webpack/webpack.pro.js && node bin/run",
