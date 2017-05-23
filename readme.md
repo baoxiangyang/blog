@@ -2,5 +2,5 @@
 技术机构：<br />
 	后台采用koa2 + mongodb <br />
 	前端采用vue2 + element<br />
-	提供一个数据库只读账户 db: dbs, user:test  pad:123456<br>
+	提供一个数据库只读账户 db: dbs, user:test  pwd:123456<br>
 站长QQ: 791736879
