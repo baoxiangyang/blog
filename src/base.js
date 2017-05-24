@@ -51,7 +51,7 @@ export function backToTop(){
           function( callback ){
             window.setTimeout(callback, 1000 / 60);
           };
-        scrollTop -= 20;
+        scrollTop -= 100;
         scrollTop = scrollTop <= 0 ? 0 : scrollTop;
 		document.documentElement.scrollTop = scrollTop;
 		document.body.scrollTop = scrollTop;
