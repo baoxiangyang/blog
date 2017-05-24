@@ -1,2 +1,6 @@
 共1篇文章
-TypeError: Cannot read property '0' of null
+开始获取第 0 条数据,url: /p/1210000009452402/read
+获取文章成功：/p/1210000009452402/read
+请求图片数量： 0
+保存成功：/p/1210000009452402/read
+{"__v":0,"id":"1210000009452402","title":"Node监视文件以实现热更新","description":"一起来SegmentFault 头条阅读和讨论清蒸不是水煮分享的技术内容《Node监视文件以实现热更新》","address":"https://segmentfault.com/r/1250000009452401?shareId=1210000009452402","_id":"5925b0ecd7c5a03e5ad13c6c","source":"ngtmuzi.com","author":"","label":["node"],"time":"2017-05-16T16:00:00.000Z"}

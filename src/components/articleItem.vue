@@ -1,6 +1,17 @@
 <template>
 	<section class="articleItem">
-      <h3><router-link :to="{name: 'articleDetails', query: { id: detailsData.id }}">{{detailsData.title}}</router-link> <small >作者：<span>{{detailsData.author}}</span> 时间：<time :datetime="detailsData.time">{{detailsData.timeMsg}}</time></small ></h3>
+      <h3>
+        <router-link :to="{name: 'articleDetails', query: { id: detailsData.id }}">{{detailsData.title}}</router-link> 
+        <small>
+            <template v-if="!!detailsData.author">
+              作者：<span>{{detailsData.author}}</span>
+            </template>
+            <template v-else>
+              来源：<span>{{detailsData.source}}</span>
+            </template>
+            时间：<time :datetime="detailsData.time">{{detailsData.timeMsg}}</time>
+        </small >
+      </h3>
       <div>{{detailsData.description}}</div>
       <p>
         <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in detailsData.label">{{item}}</el-tag>

@@ -3,7 +3,12 @@
     <section v-if="currentItem.id">
       <h2>{{currentItem.title}}</h2>
       <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in currentItem.label">{{item}}</el-tag>
-      作者：<strong class="author">{{currentItem.author}}</strong>
+      <template v-if="!!currentItem.author">
+        作者：<span>{{currentItem.author}}</span>
+      </template>
+      <template v-else>
+        来源：<span><a :href="currentItem.address">{{currentItem.source}}</a></span>
+      </template>
       时间：<time :datetime="currentItem.time">{{currentItem.timeMsg}}</time>
     </section>
     <div v-html="detail"></div>

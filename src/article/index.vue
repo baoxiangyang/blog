@@ -88,7 +88,11 @@
     beforeRouteEnter(to, from, next) {
       next(vm => {
         vm.oldSearch = '';
-        vm.set_articleStatus({activeIndex: '/article?type=all', type: 'all'});
+        if(to.query){
+          vm.set_articleStatus({activeIndex: to.fullPath, type: to.query.type});
+        }else{
+          vm.set_articleStatus({activeIndex: '/article?type=all', type: 'all'});
+        }
         vm.get_articleList({currentPage:1, type: vm.type});
       });
     },
