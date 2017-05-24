@@ -1,7 +1,8 @@
 module.exports = {
 	mongodb: {
 		host: '119.23.70.244',
-		password: '',
+		user: 'test',
+		password: '123456',
 		port: 27017,
 		dbs: 'dbs'
 	},
@@ -11,5 +12,6 @@ module.exports = {
 	},
 	imgSavePath: './article',
 	htmlSavePath: './article/html',
-	logFile: './tempFile/getArticleLog.txt'
+	logFile: './tempFile/getArticleLog.txt',
+	password: 'xxx'
 };

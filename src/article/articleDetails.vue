@@ -1,6 +1,6 @@
 <template>
   <article class="articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
-    <section>
+    <section v-if="currentItem.id">
       <h2>{{currentItem.title}}</h2>
       <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in currentItem.label">{{item}}</el-tag>
       作者：<strong class="author">{{currentItem.author}}</strong>
@@ -13,14 +13,15 @@
 <script type="text/javascript">
   import router from '../router.js';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
-  import { backToTop } from '../base.js';
+  import { backToTop, formatTime } from '../base.js';
   export default {
     data() {
       return {
         detailLoading: false,
         detail: '',
         typeArr: ['primary', 'success', 'warning', 'danger'],
-        reg: /(src=\")(\/img\/)/g
+        reg: /(src=\")(\/img\/)/g,
+        articleDatail: null
       };
     },
     created() {
@@ -33,10 +34,18 @@
         list: state => state.articleModule.list,
       }),
       currentItem: function() {
-        let id = this.$route.params.id;
-        return this.list.filter((item, index) => {
-          return item.id == id;
-        })[0];
+        if(!this.articleDatail){
+          let id = this.$route.query.id,
+            data = {};
+          if(this.list && this.list.length){
+            data = this.list.filter((item, index) => {
+              return item.id == id;
+            })[0];
+          }
+          return data;
+        }else{
+          return this.articleDatail;
+        }
       }
     },
     methods: {
@@ -44,22 +53,32 @@
         'set_articleStatus'
       ]),
       getDetail() {
-        if(!this.$route.params.id){
+        if(!this.$route.query.id){
           router.push({name: 'article', query:{type: 'all'}});
           return false;
         }
+        let postData = this.$route.query;
         this.detailLoading = true;
+        if(!this.currentItem.id){
+          postData.datails = true;
+        }
         //获取文章信息
-        this.$http.post('/api/articleDatails', this.$route.params).then(res => {
+        this.$http.post('/api/articleDatails', postData).then(res => {
           this.detailLoading = false;
-          if(!res.data.error){
-            this.detail = res.data.data.replace(this.reg, '$1https://segmentfault.com$2');
+          console.log(123);
+          if(res.data.errorCode === 0){
+            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2');
+            if(res.data.data.articleDatail){
+              let articleDatail = res.data.data.articleDatail;
+              articleDatail.timeMsg = formatTime(articleDatail.time, true);
+              this.articleDatail = articleDatail;
+            }
           }else{
-            this.set_articleStatus({error: res.data.error, errorMsg: res.data.msg});
+            this.set_articleStatus({errorCode: res.data.errorCode, msg: res.data.msg});
           }
         }).catch(error => {
           this.detailLoading = false;
-          this.set_articleStatus({error: true, errorMsg: '网络错误请重试！', errorCode: error.status});
+          this.set_articleStatus({msg: '网络错误请重试！', errorCode: error.status});
         });
       },
       randomType(){
@@ -74,6 +93,8 @@
             message: this.msg, 
             type: 'error'
           });
+          this.set_articleStatus({errorCode: 0});
+          router.go(-1);
         }
       }
     },

@@ -1,7 +1,7 @@
 let mongoose = require('mongoose'),
 	mongoConfig = require('../config/config.js').mongodb,
 	schema = require('./mongoSchema.js'),
-	db = mongoose.connect('mongodb://'+ mongoConfig.host + ':'+ mongoConfig.port + '/'+mongoConfig.dbs);
+	db = mongoose.connect(`mongodb://${mongoConfig.user}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.dbs}`);
 	mongoose.Promise = global.Promise;
 
 db.connection.on('open', function(){
@@ -33,6 +33,10 @@ let findArticleArr = function({find = {}, pageSize = 10, currentPage = 1}){
 			errorCode: -1
 		});
 	});
+};
+//查询单条文章信息
+let findOneArticle = function(id){
+	return SfModel.findOne({id: id}, {_id: 0, __v: 0});
 };
 //判断文章在数据库中是否存在
 let isArticle = async function(obj){
@@ -69,6 +73,7 @@ let saveArticle = async function(obj){
 
 module.exports = {
 	findArticleArr,
+	findOneArticle,
 	isArticle,
 	saveArticle
 };

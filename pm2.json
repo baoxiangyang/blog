@@ -1,7 +1,10 @@
 {	
 	"name": "blog",
-	"script": "bin/run",
+	"script": "export NODE_ENV=production & webpack --config=./webpack/webpack.pro.js  && node --harmony-async-await bin/run",
+	"log_date_format"  : "YYYY-MM-DD HH:mm Z",
 	"env": {
 	    "NODE_ENV": "production"
-	}
+	},
+	"error_file": "tempFile/stderr.log",
+  	"out_file": "tempFile/stdout.log",
 }

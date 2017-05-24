@@ -2,3 +2,5 @@
 /article/
 /public/dist/
 /config/
+/views/*.html
+/tempFile

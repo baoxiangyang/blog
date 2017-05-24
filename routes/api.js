@@ -1,5 +1,6 @@
 let router = require('koa-router')(),
-	logFile = require('../config/config.js').logFile,
+	config = require('../config/config.js'),
+	logFile = config.logFile,
 	mongo = require('../dbs/mongodb.js'),
 	fs = require('fs'),
 	fsPromise = require('../common/fsPromise.js'),
@@ -73,20 +74,32 @@ router.post('/articleDatails', async function(ctx, next){
 	let id = ctx.request.body.id,
 		filePath = htmlSavePath + '/' + id +'.html';
 	if(fs.existsSync(filePath)){
-		let data = await fsPromise(filePath, 'readFile');
-		if(data.error){
+		let fileData = null, articleDatail = null;
+		if(ctx.request.body.datails){
+			try {
+				articleDatail = await (async function(id){
+					return await mongo.findOneArticle(id);
+				})(id);
+			}catch(e){
+				articleDatail = '获取文章详情错误';
+			} 
+		}
+		try {
+			fileData = await fsPromise(filePath, 'readFile');
+			ctx.body = {
+				errorCode: 0,
+				msg: '',
+				data: {
+					fileData: fileData.data,
+					articleDatail
+				}
+			}; 
+		}catch(error){
 			ctx.body = {
 				errorCode: -2,
-				msg: '读取文章失败请稍后再试！',
-				data: null
+				msg: '获取文章失败，请稍后再试'
 			};
-			return false;
 		}
-		ctx.body = {
-			errorCode: 0,
-			msg: '',
-			data: data.data
-		}; 
 	}else{
 		ctx.body = {
 			errorCode: -1,
@@ -98,10 +111,17 @@ router.post('/articleDatails', async function(ctx, next){
 //获取需要爬取的文章地址
 router.post('/crawlerArticle', async function(ctx, next){
 	let body = ctx.request.body;
+	if(body.password != config.password){
+		ctx.body = {
+			errorCode: -2,
+			msg: '密码错误请重新输入'
+		};
+		return false;
+	}
 	if(!body.url){
 		ctx.body = {
 			errorCode: -2,
-			errorMsg: '请输入需要获取的文章地址'
+			msg: '请输入需要获取的文章地址'
 		};
 	}else{
 		getArticle(ctx.request.body);
