@@ -76,16 +76,13 @@ router.post('/articleDatails', async function(ctx, next){
 	if(fs.existsSync(filePath)){
 		let fileData = null, articleDatail = null;
 		if(ctx.request.body.datails){
-			try {
-				articleDatail = await (async function(id){
-					return await mongo.findOneArticle(id);
-				})(id);
-			}catch(e){
-				articleDatail = '获取文章详情错误';
-			} 
+			articleDatail = (async function(id){
+				return await mongo.findOneArticle(id);
+			})(id);
 		}
 		try {
 			fileData = await fsPromise(filePath, 'readFile');
+			articleDatail = await articleDatail;
 			ctx.body = {
 				errorCode: 0,
 				msg: '',
@@ -97,7 +94,8 @@ router.post('/articleDatails', async function(ctx, next){
 		}catch(error){
 			ctx.body = {
 				errorCode: -2,
-				msg: '获取文章失败，请稍后再试'
+				msg: '获取文章失败，请稍后再试',
+				articleDatail
 			};
 		}
 	}else{

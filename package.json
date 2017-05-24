@@ -4,10 +4,8 @@
   "private": true,
   "scripts": {
     "start": "webpack --config=./webpack/webpack.dev.js && node --harmony-async-await bin/run",
-    "koa": "./node_modules/.bin/runkoa bin/www",
     "pm2": "pm2 start pm2.json",
-    "pro": "set NODE_ENV=production & export NODE_ENV=production && webpack --config=./webpack/webpack.pro.js && node --harmony-async-await bin/run",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pro": "set NODE_ENV=production & export NODE_ENV=production && webpack --config=./webpack/webpack.pro.js && node --harmony-async-await bin/run"
   },
   "dependencies": {
     "axios": "^0.16.1",

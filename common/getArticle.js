@@ -17,9 +17,8 @@ module.exports = async function (data) {
 				let result = await mongo.saveArticle(detailData);
 				fs.appendFileSync(logFile, '保存成功：' + url + '\n' + JSON.stringify(result) + '\n');
 			}
-			console.log(detailData);
 		}catch (error){
-			console.log(error);
+			console.log('获取文章失败', error);
 			fs.appendFileSync(logFile, error + '\n');
 		}
 	}

@@ -66,8 +66,6 @@ let saveArticle = async function(obj){
 				resolve(doc);
 			}
 		});
-	}).catch(e =>{
-		console.log(e);
 	});
 }; 
 

@@ -19,7 +19,7 @@ function getData(url, imgpath){
 				return;
 			}
 			writeLog('获取文章成功：'+ url); 
-			let	addr = 'https://segmentfault.com', promiseArr = [],
+			let	promiseArr = [],
 				$ = cheerio.load(body, {decodeEntities: false}),
 				dataObject = {
 					id: path.basename(url),
@@ -29,7 +29,6 @@ function getData(url, imgpath){
 					time: returnTime($('.article__author').find('a').remove().end().text().trim()),
 					description: $('meta[name="description"]').attr('content'),
 					address: addr + url
-
 				},
 				container = $('.wrap .article__content');
 				if(!container.html()){
@@ -137,7 +136,7 @@ function getData(url, imgpath){
 					});
 				}else{
 					mkdirsSync(htmlSavePath);
-					fs.writeFile(htmlSavePath + '/'+ path.basename(url) +'.html', container.html().trim().slice(12, -14).trim(), function(err){
+					fs.writeFile(htmlSavePath + '/'+ path.basename(url) +'.html', container.html().trim(), function(err){
 						if(err){
 							reject({
 								err: err,
