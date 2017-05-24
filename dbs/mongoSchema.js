@@ -5,7 +5,8 @@ articleList_Schema =  new Mongoose.Schema({
 	title: {type: String},
 	time: {type: Date, default: Date.now},
 	label: {type: Array, default: []},
-	author: {type: String},
+	author: {type: String, default: ''},
+	source: {type: String, default: ''},
 	description: {type: String},
 	address: {type: String}
 });

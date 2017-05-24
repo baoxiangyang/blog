@@ -19,18 +19,32 @@ function getData(url, imgpath){
 				return;
 			}
 			writeLog('获取文章成功：'+ url); 
-			let	promiseArr = [],
-				$ = cheerio.load(body, {decodeEntities: false}),
-				dataObject = {
-					id: path.basename(url),
-					title: $('#articleTitle').text().trim(),
-					label: returnLabel($),
-					author: $('.article__author a').text().trim(),
-					time: returnTime($('.article__author').find('a').remove().end().text().trim()),
-					description: $('meta[name="description"]').attr('content'),
-					address: addr + url
-				},
-				container = $('.wrap .article__content');
+			let	promiseArr = [], $, dataObject, container;
+				$ = cheerio.load(body, {decodeEntities: false});
+				if(url.search('/p/') !== 0){
+					dataObject = {
+						id: path.basename(url),
+						title: $('#articleTitle').text().trim(),
+						label: returnLabel($),
+						author: $('.article__author a').text().trim(),
+						time: returnTime($('.article__author').find('a').remove().end().text().trim()),
+						description: $('meta[name="description"]').attr('content'),
+						address: addr + url
+					};
+					container = $('.wrap .article__content');
+				}else{
+					let tempAddr = $('.news__read-meta a').attr('href');
+					dataObject = {
+						id: url.match(/\d+/) && url.match(/\d+/),
+						title: $('.news__read-title').text().trim(),
+						source: $('.news__read-meta a').text(),
+						time: returnTime($('.news__read-meta').text().split('，')[1].split(' ')[0]),
+						description: $('meta[name="description"]').attr('content'),
+						address: tempAddr.search('http') == -1 ? addr + tempAddr : tempAddr
+					};
+					container = $('.news__read-content');
+					dataObject.label = returnNewLabel(container);
+				}
 				if(!container.html()){
 					writeLog('文章获取失败： '+ url + '没有文章内容', true);
 					reject({
@@ -119,7 +133,7 @@ function getData(url, imgpath){
 				if(promiseArr.length){
 					Promise.all(promiseArr).then((data)=>{
 						mkdirsSync(htmlSavePath);
-						fs.writeFile(htmlSavePath + '/'+ path.basename(url) +'.html', container.html().trim().slice(12, -14).trim(), function(err){
+						fs.writeFile(htmlSavePath + '/'+ dataObject.id +'.html', container.html().trim().slice(12, -14).trim(), function(err){
 							if(err){
 								reject({
 									err: err,
@@ -136,7 +150,7 @@ function getData(url, imgpath){
 					});
 				}else{
 					mkdirsSync(htmlSavePath);
-					fs.writeFile(htmlSavePath + '/'+ path.basename(url) +'.html', container.html().trim(), function(err){
+					fs.writeFile(htmlSavePath + '/'+ dataObject.id +'.html', container.html().trim(), function(err){
 						if(err){
 							reject({
 								err: err,
@@ -197,6 +211,14 @@ function returnLabel($){
 		arr.push($(this).find('a').text());
 	});
 	return arr;
+}
+
+function returnNewLabel(container){
+	let typeArr = ['webpack', 'html', 'node', 'gulp', 'javascript', 'vue', 'react', 'css'],
+		str = container.text();
+		return typeArr.filter(function(item){
+			return str.search(new RegExp(item, 'i')) != -1;
+		});
 }
 function writeLog(log, error){
 	if(error){

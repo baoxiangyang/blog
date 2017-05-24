@@ -85,6 +85,13 @@
         }
       }
     },
+    beforeRouteEnter(to, from, next) {
+      next(vm => {
+        vm.oldSearch = '';
+        vm.set_articleStatus({activeIndex: '/article?type=all', type: 'all'});
+        vm.get_articleList({currentPage:1, type: vm.type});
+      });
+    },
     components: {
       BackTop: backToTop
     }

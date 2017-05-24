@@ -1,6 +1,6 @@
 {	
 	"name": "blog",
-	"script": "webpack --config=./webpack/webpack.pro.js  && node --harmony-async-await bin/www",
+	"script": "bin/www",
 	"log_date_format"  : "YYYY-MM-DD HH:mm Z",
 	"env": {
 	    "NODE_ENV": "production"
