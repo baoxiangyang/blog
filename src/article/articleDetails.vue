@@ -25,7 +25,7 @@
         detailLoading: false,
         detail: '',
         typeArr: ['primary', 'success', 'warning', 'danger'],
-        reg: /(src=\")(\/img\/)/g,
+        reg: /(<img.+?\ssrc=\")(\/img\/.+?)(\.png|\.jpg|\.gif|\.jpeg)(\")/g,
         articleDatail: null
       };
     },
@@ -70,9 +70,9 @@
         //获取文章信息
         this.$http.post('/api/articleDatails', postData).then(res => {
           this.detailLoading = false;
-          console.log(123);
           if(res.data.errorCode === 0){
-            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2');
+            window.fileData = res.data.data.fileData;
+            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2$4');
             if(res.data.data.articleDatail){
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);

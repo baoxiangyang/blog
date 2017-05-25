@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "webpack --config=./webpack/webpack.dev.js && node --harmony-async-await bin/run",
+    "start": "./node_modules/.bin/nodemon bin/run & webpack --config=./webpack/webpack.dev.js",
     "pm2": "webpack --config=./webpack/webpack.pro.js && pm2 start pm2.json",
     "pro": "set NODE_ENV=production & export NODE_ENV=production && webpack --config=./webpack/webpack.pro.js && node --harmony-async-await bin/run"
   },
