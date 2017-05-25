@@ -40,14 +40,28 @@
       onSubmit(formName) {
         this.$refs[formName].validate((valid) => {
           if(valid){
-            this.postAddress();
+            let urlArr = null;
+            if(this.form.url.indexOf('[{') != -1){
+                try{
+                  urlArr = JSON.parse(this.form.url);
+                }catch(e){
+                  this.$message({
+                    showClose: true,
+                    message: 'url解析失败',
+                    type: 'error'
+                  });
+                  console.log(e);
+                  return false;
+                }
+            }
+            this.postAddress(urlArr);
           }
         });
       },
-      postAddress() {
+      postAddress(urlArr) {
         this.axios.post('/api/crawlerArticle', {
           cookie: this.form.cookie,
-          url: this.form.url,
+          url: urlArr ? urlArr : this.form.url,
           password: this.form.password
         }).then(res => {
           if(res.data.errorCode == 0){
