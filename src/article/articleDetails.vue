@@ -89,20 +89,7 @@
       randomType(){
         return parseInt(Math.random() * this.typeArr.length);
       }
-    },
-    watch: {
-      errorCode: function  (val, oldVal) {
-        if(val != 0){
-          this.$message({
-            showClose: true,
-            message: this.msg, 
-            type: 'error'
-          });
-          this.set_articleStatus({errorCode: 0});
-          router.go(-1);
-        }
-      }
-    },
+    }
   };
 </script>
 <style lang="less">

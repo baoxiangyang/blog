@@ -36,9 +36,7 @@
         total: state => state.articleModule.total,
         loading: state => state.articleModule.loading,
         type: state => state.articleModule.type,
-        search: state => state.articleModule.search,
-        errorCode: state => state.articleModule.errorCode,
-        msg: state => state.articleModule.msg
+        search: state => state.articleModule.search
       }),
       ...mapGetters({
         list: 'articleList'
@@ -65,37 +63,20 @@
     },
     beforeRouteEnter(to, from, next) {
       next(vm => {
-        vm.set_articleStatus({type: (to.query.type || 'all')});
-        if(!(vm.list && vm.list.length)) vm.handleCurrentChange(1);
-        if(vm.type != 'all'){
-          vm.set_articleStatus({activeIndex: to.fullPath});
+        if(vm.currentPage && vm.currentPage != 1){
+          vm.set_articleStatus({currentPage: 1});
+        }else{
+          vm.get_articleList({type: to.query.type || 'all', search: to.query.search, currentPage: 1 });
         }
       });
     },
     beforeRouteUpdate(to, from, next){
-      this.set_articleStatus({type: (to.query.type || 'all')});
-      if(!this.search && this.type != 'all'){
-        this.set_articleStatus({activeIndex: to.fullPath});
-      }else{
-        this.set_articleStatus({activeIndex: '/article?type=all'});
-      }
-      if(this.currentPage != 1){
-        this.set_articleStatus({currentPage: 1});
-      }else{
+      if(this.currentPage == 1){
         this.handleCurrentChange(1);
+      }else{
+        this.set_articleStatus({currentPage: 1});
       }
       next();
-    },
-    watch: {
-      errorCode: function  (val, oldVal) {
-        if(val != 0){
-          this.$message({
-            showClose: true,
-            message: this.msg, 
-            type: 'error'
-          });
-        }
-      }
     },
     components: {
       articleItem: articleItem

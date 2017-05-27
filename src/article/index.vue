@@ -27,52 +27,55 @@
   export default {
     data() {
       return {
-        oldSearch: ''
+        oldSearch: undefined
       };
     },
     computed:{
       ...mapState({
         activeIndex: state => state.articleModule.activeIndex,
-        currentPage: state => state.articleModule.currentPage,
         search: state => state.articleModule.search,
         type: state => state.articleModule.type,
-        errorCode: state => state.articleModule.errorCode,
-        msg: state => state.articleModule.msg
+        msg: state => state.articleModule.msg,
+        errorCode: state => state.articleModule.errorCode
       }),
     },
     methods: {
-      ...mapActions([
-        'get_articleList' 
-      ]),
       ...mapMutations([
         'set_articleStatus'
       ]),
       //input搜索
       handleSearchClick(){
-        if(this.oldSearch == this.search){
-          if(this.currentPage != 1){
-            this.set_articleStatus({currentPage: 1});
-          }else{
-            this.get_articleList({currentPage:1, type: this.type, search: this.search});
-          }
-        }else{
-          this.$router.push({ path: '/article', query: {type: 'all', search: this.search}});
+        if(this.oldSearch === this.search){
+          return false;
         }
         this.oldSearch = this.search;
+        this.$router.push({ name: 'article', query: {type: 'all', search: this.search}});
+        
       },
       handleInputChange(value){
         this.set_articleStatus({search: value});
       },
       handleSelect(index){
+        this.oldSearch = undefined;
         this.set_articleStatus({search: ''});
-        if(this.activeIndex == index){
-          if(this.currentPage == 1){
-            this.get_articleList({currentPage:1, type: this.type});
-          }else{
-            this.set_articleStatus({currentPage: 1});
-          }
-        }
       }
+    },
+    beforeRouteEnter(to, from, next) {
+      next(vm => {
+        (to.name == 'articleList') && vm.set_articleStatus({
+          activeIndex: `/article?type=${to.query.type || 'all'}`, 
+          type: to.query.type || 'all', 
+          search: to.query.search
+        });
+      });
+    },
+    beforeRouteUpdate(to, from, next){
+      (to.name == 'articleList') && this.set_articleStatus({
+        activeIndex: `/article?type=${to.query.type}`, 
+        type: to.query.type, 
+        search: to.query.search
+      });
+      next();
     },
     watch: {
       errorCode: function  (val, oldVal) {
@@ -82,19 +85,9 @@
             message: this.msg, 
             type: 'error'
           });
+          this.set_articleStatus({errorCode: 0});
         }
       }
-    },
-    beforeRouteEnter(to, from, next) {
-      next(vm => {
-        vm.oldSearch = '';
-        if(to.query){
-          vm.set_articleStatus({activeIndex: to.fullPath, type: to.query.type});
-        }else{
-          vm.set_articleStatus({activeIndex: '/article?type=all', type: 'all'});
-        }
-        vm.get_articleList({currentPage:1, type: vm.type});
-      });
     },
     components: {
       BackTop: backToTop
