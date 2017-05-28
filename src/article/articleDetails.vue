@@ -72,7 +72,7 @@
           this.detailLoading = false;
           if(res.data.errorCode === 0){
             window.fileData = res.data.data.fileData;
-            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2"');
+            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2\"');
             if(res.data.data.articleDatail){
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);
