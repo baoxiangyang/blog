@@ -25,7 +25,7 @@
         detailLoading: false,
         detail: '',
         typeArr: ['primary', 'success', 'warning', 'danger'],
-        reg: /(<img.*?\ssrc=\")(\/img\/.+?)(\.png|\.jpg|\.gif|\.jpeg)(\")/g,
+        reg: /(<img.*?\ssrc=\")(\/img\/.+?)((\.png|\.jpg|\.gif|\.jpeg)?)(\")/g,
         articleDatail: null
       };
     },
