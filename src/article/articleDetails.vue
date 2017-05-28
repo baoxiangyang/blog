@@ -25,7 +25,7 @@
         detailLoading: false,
         detail: '',
         typeArr: ['primary', 'success', 'warning', 'danger'],
-        reg: /(<img.*?\ssrc=\")(\/img\/.+?)((\.png|\.jpg|\.gif|\.jpeg)?)(\")/g,
+        reg: /(<img.*?\ssrc=\")(\/img\/\S*?)((\.png|\.jpg|\.gif|\.jpeg)?)(\")/g,
         articleDatail: null
       };
     },
@@ -72,7 +72,7 @@
           this.detailLoading = false;
           if(res.data.errorCode === 0){
             window.fileData = res.data.data.fileData;
-            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2$4');
+            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2"');
             if(res.data.data.articleDatail){
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);
