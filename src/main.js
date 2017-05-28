@@ -9,7 +9,7 @@ import VueAxios from 'vue-axios';
 
 Vue.use(ElementUI);
 Vue.use(VueAxios, axios);
-window.a = new Vue({
+new Vue({
   el: '#app',
   store,
   router,

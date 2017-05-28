@@ -25,7 +25,7 @@
         detailLoading: false,
         detail: '',
         typeArr: ['primary', 'success', 'warning', 'danger'],
-        reg: /(<img.+?\ssrc=\")(\/img\/.+?)(\.png|\.jpg|\.gif|\.jpeg)(\")/g,
+        reg: /(<img.*?\ssrc=\")(\/img\/.+?)(\.png|\.jpg|\.gif|\.jpeg)(\")/g,
         articleDatail: null
       };
     },
@@ -81,9 +81,13 @@
           }else{
             this.set_articleStatus({errorCode: res.data.errorCode, msg: res.data.msg});
           }
+          if(res.data.errorCode != 0){
+            router.back();
+          }
         }).catch(error => {
           this.detailLoading = false;
           this.set_articleStatus({msg: '网络错误请重试！', errorCode: error.status});
+          router.back();
         });
       },
       randomType(){
