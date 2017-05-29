@@ -178,17 +178,18 @@ function returnTime(str){
 			arr.unshift('2017');
 		}
 	switch (true){
-		case str.indexOf('小时前') != -1:
+		case str.indexOf('分钟') != -1:
+			timeNumber = Date.now() - Number(arr[0]) * 1000 * 60;
+			return new Date(timeNumber);
+		case str.indexOf('小时') != -1:
 			timeNumber = Date.now() - Number(arr[0])*1000*60*60;
-			tempTime = new Date(timeNumber).setHours(0, 0, 0);
-			return new Date(tempTime);
-		case str.indexOf('天前') != -1:
+			return new Date(timeNumber);
+		case str.indexOf('天') != -1:
 			timeNumber = Date.now() - Number(arr[0])*1000*60*60*24;
 			tempTime = new Date(timeNumber).setHours(0, 0, 0);
 			return new Date(tempTime);
 		default:
 			return arr ?  new Date(arr.join(',')) : new Date();
-
 	}
 }
 function mkdirsSync(dirpath, mode) { 
