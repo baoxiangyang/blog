@@ -1,5 +1,6 @@
 <template>
   <div class="articleList">
+    <link rel="stylesheet" href="/stylesheets/github.css">
     <div class="articleHeader">
       <el-menu :default-active="activeIndex" :router="true" @select="handleSelect" class="articleNav maxWidth" mode="horizontal">
         <el-menu-item index="/article?type=all">全部</el-menu-item>
