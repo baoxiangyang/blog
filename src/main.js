@@ -6,10 +6,13 @@ import store from './store.js';
 import router from './router.js';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
-
+import myAjax from './common/myAjax.js';
+import {assign, Promise} from './common/base.js';
+assign();
+Promise();
 Vue.use(ElementUI);
-Vue.use(VueAxios, axios);
-new Vue({
+Vue.use(myAjax, axios);
+window.a = new Vue({
   el: '#app',
   store,
   router,

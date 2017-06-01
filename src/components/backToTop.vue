@@ -7,7 +7,7 @@
   </transition>
 </template>
 <script type="text/javascript">
-  import { backToTop as BackTop, throttle} from '../base.js';
+  import { backToTop as BackTop, throttle} from '../common/base.js';
   import router from '../router.js';
 	export default {
     name: 'backToTop',

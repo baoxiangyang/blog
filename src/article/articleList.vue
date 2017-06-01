@@ -22,7 +22,7 @@
 <script type="text/javascript">
   import articleItem from '../components/articleItem.vue';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
-  import { backToTop } from '../base.js';
+  import { backToTop } from '../common/base.js';
   export default {
     data() {
       return {

@@ -1,8 +1,6 @@
 import {set_articleList, set_articleStatus} from '../mutation-types.js';
 import axios from 'axios';
-import {formatTime, assign} from "../base.js";
-import { Message } from 'element-ui';
-assign();
+import {formatTime} from '../common/base.js';
 const articleModule = {
 	state: {
 		list: [],
@@ -38,6 +36,7 @@ const articleModule = {
 	actions: {
 		//获取文章列表
 		get_articleList({commit, state}, postData) {
+			console.log(axios)
 			commit(set_articleStatus, {loading: true});
 			return axios.post('/api/articleList', postData).then(res => {
 				commit(set_articleList, res.data.data.articleData);

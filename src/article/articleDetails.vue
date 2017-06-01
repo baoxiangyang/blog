@@ -18,7 +18,7 @@
 <script type="text/javascript">
   import router from '../router.js';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
-  import { backToTop, formatTime } from '../base.js';
+  import { backToTop, formatTime } from '../common/base.js';
   export default {
     data() {
       return {
@@ -68,7 +68,7 @@
           postData.datails = true;
         }
         //获取文章信息
-        this.$http.post('/api/articleDatails', postData).then(res => {
+        this.$myAjax.post(this, '/api/articleDatails', postData).then(res => {
           this.detailLoading = false;
           if(res.data.errorCode === 0){
             window.fileData = res.data.data.fileData;
