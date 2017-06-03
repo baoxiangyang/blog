@@ -7,8 +7,10 @@ module.exports = {
 		dbs: 'dbs'
 	},
 	redis: {
-		host: '',
-		password: ''
+		host: '127.0.0.1',
+		password: '',
+		port: 6379,
+		ttl: 60 * 30 //30分钟过期
 	},
 	imgSavePath: './article',
 	htmlSavePath: './article/html',

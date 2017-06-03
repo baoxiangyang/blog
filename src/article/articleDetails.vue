@@ -68,7 +68,7 @@
           postData.datails = true;
         }
         //获取文章信息
-        this.$myAjax.post(this, '/api/articleDatails', postData).then(res => {
+        this.$myAjax.post(this, '/article/articleDatails', postData).then(res => {
           this.detailLoading = false;
           if(res.data.errorCode === 0){
             window.fileData = res.data.data.fileData;

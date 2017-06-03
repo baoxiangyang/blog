@@ -2,13 +2,14 @@ const Koa = require('koa');
 const app = new Koa();
 const router = require('koa-router')();
 const views = require('koa-views');
-//const co = require('co');
 const convert = require('koa-convert');
 const json = require('koa-json');
 //const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser')();
 const logger = require('koa-logger');
 const favicon = require('koa-favicon');
+import session from 'koa-session2';
+import redisStore from './common/store.js';
 const process = require('process');
 
 if(process.env.NODE_ENV != 'production'){
@@ -32,7 +33,7 @@ if(process.env.NODE_ENV != 'production'){
 }
 
 const index = require('./routes/index');
-const api = require('./routes/api');
+const article = require('./routes/article');
 // middlewares
 app.use(convert(bodyparser));
 app.use(convert(json()));
@@ -42,6 +43,12 @@ app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
 
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));
+//session
+app.use(session({
+  key: "xiaobaozongID",
+  store: redisStore,
+  httpOnly: true
+}));
 // logger
 app.use(async (ctx, next) => {
   const start = new Date();
@@ -51,7 +58,7 @@ app.use(async (ctx, next) => {
 });
 
 router.use('/', index.routes(), index.allowedMethods());
-router.use('/api', api.routes(), api.allowedMethods());
+router.use('/article', article.routes(), article.allowedMethods());
 
 app.use(router.routes(), router.allowedMethods());
 // response

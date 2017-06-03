@@ -12,25 +12,30 @@
       </el-form-item>
       <el-form-item label="邮箱：" prop="email">
         <el-input v-model="registerForm.email" placeholder="用于找回密码">
-          <el-button slot="append" class="getCode" >获取验证码</el-button>
+          <el-button slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode" >获取验证码</el-button>
         </el-input>
       </el-form-item>
       <el-form-item label="验证码：" prop="verificationCode"> 
-        <el-input v-model="registerForm.verificationCode" placeholder="请输入验证码"></el-input>
+        <el-input v-model="registerForm.verificationCode"  placeholder="请输入验证码"></el-input>
       </el-form-item>
       <el-form-item label="上传头像：" prop="userAvatar">
           <el-upload
             class="avatar-uploader"
-            action="https://jsonplaceholder.typicode.com/posts/"
+            action="/upAvatar"
             :show-file-list="false"
+            accept="image/*"
+            :with-credentials="true"
             :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+            :on-error="handleAvatarError"
+            name="userAvatar"
           >
-          <img v-if="registerForm.userAvatar" :src="registerForm.userAvatar" class="avatar">
-          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+          <img v-if="userAvatar" :src="userAvatar" class="avatar">
+          <i v-else class="el-icon-plus avatar-uploader-icon" v-loading="userAvatarUpload"></i>
         </el-upload>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitForm('registerForm')" style="width:200px">注 册</el-button>
+        <el-button type="primary" :disabled="submitBtn" @click="submitForm('registerForm')" style="width:200px">注 册</el-button>
         <el-button @click="resetForm('registerForm')">重 置</el-button>
       </el-form-item>
     </el-form>
@@ -54,18 +59,21 @@
         }
       };
       return {
+        userAvatarUpload: false,
+        submitBtn: false,
+        isGetCode: true,
+        userAvatar: '',
         registerForm: {
           userName: '',
           passwrod: '',
           checkpasswrod: '',
           email: '',
-          verificationCode: '',
-          userAvatar: ''
+          verificationCode: ''
         },
         rules: {
           userName: [
             { required: true, message: '请输入用户名', trigger: 'blur'},
-            { type:'string', min: 3, max: 10, pattern: /^[0-9A-Za-z_\u0000-\u00FF]$/, message: '请输入正确格式的用户名', trigger: 'blur'}
+            { type:'string', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/, message: '请输入正确格式的用户名', trigger: 'blur'}
           ],
           passwrod:[
             { required: true, message: '密码不能不为空', trigger: 'blur'},
@@ -84,8 +92,33 @@
       };
     },
     methods: {
+      handeGetCode (){
+        console.log(123)
+      },
       handleAvatarSuccess(res, file) {
-        this.imageUrl = URL.createObjectURL(file.raw);
+        this.userAvatar = URL.createObjectURL(file.raw);
+        this.userAvatarUpload = false;
+        this.submitBtn = false;
+      },
+      beforeAvatarUpload(file){
+        let isImage = /^image\//.test(file.type),
+          isSize = file.size / 1000 < 500;
+          if (!isImage) {
+            this.$message.error('上传头像只能是图片!');
+            return false;
+          }
+          if (!isSize) {
+            this.$message.error('上传头像图片大小不能超过 500K!');
+            return false;
+          }
+          this.userAvatarUpload = true;
+          this.submitBtn = true;
+        return true;
+      },
+      handleAvatarError(err, file) {
+        this.$message.error('头像上传失败请重试!');
+        this.userAvatarUpload = false;
+        this.submitBtn = false;
       },
       submitForm(formName) {
         this.$refs[formName].validate((valid) => {
@@ -111,6 +144,12 @@
     .el-form {
       width: 60%;
       display: inline-block;
+      .getCode {
+        color: #000;
+         &:hover {
+          color: #20a0ff
+        } 
+      }
     }
     .loginList {
       display: inline-block;

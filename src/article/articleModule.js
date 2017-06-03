@@ -38,7 +38,7 @@ const articleModule = {
 		get_articleList({commit, state}, postData) {
 			console.log(axios)
 			commit(set_articleStatus, {loading: true});
-			return axios.post('/api/articleList', postData).then(res => {
+			return axios.post('/article/articleList', postData).then(res => {
 				commit(set_articleList, res.data.data.articleData);
 			}).catch(error => {
 				commit(set_articleStatus, {error: true, msg: '网络错误请重试！', errorCode: error.status, loading: false});

@@ -59,7 +59,7 @@
         });
       },
       postAddress(urlArr) {
-        this.$myAjax.post(this, '/api/crawlerArticle', {
+        this.$myAjax.post(this, '/article/crawlerArticle', {
           cookie: this.form.cookie,
           url: urlArr ? urlArr : this.form.url,
           password: this.form.password
@@ -86,7 +86,7 @@
         });
       },
       getLog() {
-        this.$myAjax.post(this, '/api/articleLog').then(res => {
+        this.$myAjax.post(this, '/article/articleLog').then(res => {
           this.logData = res.data.data;
         }).catch(err => {
           this.$message({
