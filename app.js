@@ -32,8 +32,9 @@ if(process.env.NODE_ENV != 'production'){
   /*热更新结束*/
 }
 
-const index = require('./routes/index');
-const article = require('./routes/article');
+const index = require('./routes/index'),
+  article = require('./routes/article'),
+  register = require('./routes/register.js');
 // middlewares
 app.use(convert(bodyparser));
 app.use(convert(json()));
@@ -59,6 +60,7 @@ app.use(async (ctx, next) => {
 
 router.use('/', index.routes(), index.allowedMethods());
 router.use('/article', article.routes(), article.allowedMethods());
+router.use('/register', register.routes(), register.allowedMethods());
 
 app.use(router.routes(), router.allowedMethods());
 // response

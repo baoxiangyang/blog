@@ -12,7 +12,7 @@
       </el-form-item>
       <el-form-item label="邮箱：" prop="email">
         <el-input v-model="registerForm.email" placeholder="用于找回密码">
-          <el-button slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode" >获取验证码</el-button>
+          <el-button style="width:110px" slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode" >{{codeText}}</el-button>
         </el-input>
       </el-form-item>
       <el-form-item label="验证码：" prop="verificationCode"> 
@@ -21,7 +21,7 @@
       <el-form-item label="上传头像：" prop="userAvatar">
           <el-upload
             class="avatar-uploader"
-            action="/upAvatar"
+            action="/register/upAvatar"
             :show-file-list="false"
             accept="image/*"
             :with-credentials="true"
@@ -35,7 +35,7 @@
         </el-upload>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" :disabled="submitBtn" @click="submitForm('registerForm')" style="width:200px">注 册</el-button>
+        <el-button type="primary" :disabled="submitBtn" @click="submitForm('registerForm')" style="width:200px">{{submitText}}</el-button>
         <el-button @click="resetForm('registerForm')">重 置</el-button>
       </el-form-item>
     </el-form>
@@ -50,19 +50,21 @@
   export default {
     data() {
       let checkpasswrod = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('确认密码不能为空'));
-        } else if (value !== this.registerForm.passwrod) {
+        if (value !== this.registerForm.passwrod) {
           callback(new Error('两次输入密码不一致!'));
         } else {
           callback();
         }
       };
       return {
+        codeText: '获取验证码',
         userAvatarUpload: false,
         submitBtn: false,
+        submitText: '注 册',
         isGetCode: true,
         userAvatar: '',
+        msg: '',
+        errorCode: '',
         registerForm: {
           userName: '',
           passwrod: '',
@@ -93,12 +95,43 @@
     },
     methods: {
       handeGetCode (){
-        console.log(123)
+        //获取验证码
+        if(!this.isGetCode){
+          return false;
+        }
+        let number = 60, interval,
+          restStatus = () => {
+            clearInterval(interval);
+            interval = null;
+            this.isGetCode = true;
+            this.codeText = '获取验证码';
+          };
+        this.isGetCode = false;
+        this.codeText = `${number}s后再获取`;
+        interval = setInterval(() => {
+          number -= 1;
+          this.codeText = `${number}s后再获取`;
+          if(number <= 0){
+            restStatus();
+          }
+        }, 1000);
+        this.$myAjax.post(this, '/register/getEmailCode', {email: this.registerForm.email}).then((res) => {
+          this.msg = res.data.msg;
+          this.errorCode = res.data.errorCode;
+          if(this.errorCode){
+            restStatus();
+          }
+        }).catch((error)=> {
+          this.errorCode = -4;
+          this.msg = '网络错误，请重试';
+          restStatus();
+        });
       },
       handleAvatarSuccess(res, file) {
         this.userAvatar = URL.createObjectURL(file.raw);
         this.userAvatarUpload = false;
         this.submitBtn = false;
+        this.submitText = '注 册';
       },
       beforeAvatarUpload(file){
         let isImage = /^image\//.test(file.type),
@@ -113,12 +146,14 @@
           }
           this.userAvatarUpload = true;
           this.submitBtn = true;
+          this.submitText = '上传头像请稍后。。。';
         return true;
       },
       handleAvatarError(err, file) {
         this.$message.error('头像上传失败请重试!');
         this.userAvatarUpload = false;
         this.submitBtn = false;
+        this.submitText = '注 册';
       },
       submitForm(formName) {
         this.$refs[formName].validate((valid) => {
@@ -133,7 +168,22 @@
       resetForm(formName) {
         this.$refs[formName].resetFields();
       }
-    }
+    },
+    watch: {
+      msg: function  (val, oldVal) {
+        if(val){
+          this.$message({
+            showClose: true,
+            message: this.msg, 
+            duration: 2000,
+            type: this.errorCode ? 'error': 'success',
+            onClose: ()=> {
+              this.msg = '';
+            }
+          });
+        }
+      }
+    },
   };
 </script>
 <style lang="less">
@@ -143,6 +193,7 @@
     padding: 25px 25px 0;
     .el-form {
       width: 60%;
+      min-width:400px;
       display: inline-block;
       .getCode {
         color: #000;
