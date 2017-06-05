@@ -2,7 +2,8 @@ var router = require('koa-router')(),
 	upload = require('../common/upload.js'),
 	base = require('../common/base.js'),
 	validator = require('../common/validator.js'),
-	sendEmail = require('../common/sendEmail.js');
+	sendEmail = require('../common/sendEmail.js'),
+	mongo = require('../dbs/index.js');
 //上传头像
 router.post('/upAvatar', upload.single('userAvatar'), async function (ctx, next) {
   ctx.session.avatarImg = ctx.req.file;
@@ -17,6 +18,17 @@ router.post('/getEmailCode', async function(ctx, next){
 			msg: '请输入正确的邮箱'
 		};
 		return false;
+	}
+	try {
+		let userList = await mongo.findUserInfo({email: ctx.request.body.email});
+		if(userList.length){
+			ctx.body = {
+				errorCode: -7,
+				msg: '此邮箱已被注册，请重新输入'
+			};
+		}
+	}catch(error){
+		console.log(error);
 	}
 	let code = base.getRandomStr(), obj = null;
 	try {
@@ -34,5 +46,36 @@ router.post('/getEmailCode', async function(ctx, next){
 		};
 	}
 	ctx.body = obj;
+});
+//判断用户是否存在
+router.post('/userNameExist', async function(ctx, next){
+	let data = ctx.request.body;
+	if(!data.userName){
+		ctx.body = {
+			errorCode: -6,
+			msg: '用户名称不能为空'
+		};
+		return false;
+	}
+	try {
+		let userList = await mongo.findUserInfo({username: data.userName});
+		if(userList.length){
+			ctx.body = {
+				errorCode: -1,
+				msg: '用户名已存在'
+			};
+		}else{
+			ctx.body = {
+				errorCode: 0,
+				msg: ''
+			};
+		}
+	}catch(error){
+		console.log(error);
+		ctx.body = {
+			errorCode: 0,
+			msg: ''
+		};
+	}
 });
 module.exports = router;

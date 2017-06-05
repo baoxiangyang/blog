@@ -1,7 +1,7 @@
 <template>
   <div class="registerMain">
     <el-form :model="registerForm" :rules="rules" ref="registerForm" label-width="100px">
-      <el-form-item label="用户名：" prop="userName"> 
+      <el-form-item label="用户名：" prop="userName" :error="isuserNameExist"> 
         <el-input v-model="registerForm.userName" placeholder="3~10个字符,包含字母/中文/数字/下划线" :autofocus="true"></el-input>
       </el-form-item>
       <el-form-item label="密码：" prop="passwrod">
@@ -10,7 +10,7 @@
       <el-form-item label="确认密码：" prop="checkpasswrod">
         <el-input v-model="registerForm.checkpasswrod" type="password" placeholder="确认密码"></el-input>
       </el-form-item>
-      <el-form-item label="邮箱：" prop="email">
+      <el-form-item label="邮箱：" prop="email" :error="isEmailExist">
         <el-input v-model="registerForm.email" placeholder="用于找回密码">
           <el-button style="width:110px" slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode" >{{codeText}}</el-button>
         </el-input>
@@ -55,6 +55,19 @@
         } else {
           callback();
         }
+      },
+      userNameExist = (rule, value, callback) => {
+        this.$myAjax.post(this, '/register/userNameExist', {
+          userName: value
+        }).then((res) => {
+          if(!res.data.errorCode){
+            callback();
+          }else{
+            callback(new Error('用户名以存在，请重新输入'));
+          }
+        }).catch(error => {
+          callback();
+        });
       };
       return {
         codeText: '获取验证码',
@@ -65,6 +78,8 @@
         userAvatar: '',
         msg: '',
         errorCode: '',
+        isuserNameExist: '',
+        isEmailExist: '',
         registerForm: {
           userName: '',
           passwrod: '',
@@ -75,7 +90,8 @@
         rules: {
           userName: [
             { required: true, message: '请输入用户名', trigger: 'blur'},
-            { type:'string', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/, message: '请输入正确格式的用户名', trigger: 'blur'}
+            { type:'string', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/, message: '请输入正确格式的用户名', trigger: 'blur'},
+            { validator: userNameExist, trigger: 'blur'}
           ],
           passwrod:[
             { required: true, message: '密码不能不为空', trigger: 'blur'},
@@ -106,6 +122,7 @@
             this.isGetCode = true;
             this.codeText = '获取验证码';
           };
+        clearInterval(interval);
         this.isGetCode = false;
         this.codeText = `${number}s后再获取`;
         interval = setInterval(() => {
@@ -115,11 +132,16 @@
             restStatus();
           }
         }, 1000);
-        this.$myAjax.post(this, '/register/getEmailCode', {email: this.registerForm.email}).then((res) => {
-          this.msg = res.data.msg;
+        this.$myAjax.post(this, '/register/getEmailCode', {
+          email: this.registerForm.email
+        }).then((res) => {
           this.errorCode = res.data.errorCode;
           if(this.errorCode){
             restStatus();
+            this.isEmailExist = res.data.msg;
+          }else {
+            this.isEmailExist = '';
+            this.msg = res.data.msg;
           }
         }).catch((error)=> {
           this.errorCode = -4;
@@ -156,14 +178,14 @@
         this.submitText = '注 册';
       },
       submitForm(formName) {
-        this.$refs[formName].validate((valid) => {
+        /*this.$refs[formName].validate((valid) => {
           if (valid) {
             alert('submit!');
           } else {
             console.log('error submit!!');
             return false;
           }
-        });
+        });*/
       },
       resetForm(formName) {
         this.$refs[formName].resetFields();
@@ -218,7 +240,6 @@
           width: 28px;
           height: 28px;
           background-repeat: no-repeat;
-          
           background-image: url(/images/login.svg);
         }
         .icon-qq {

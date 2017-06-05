@@ -10,7 +10,7 @@ let Mongoose = require('mongoose'),
 module.exports = function(db){
 	const UserModel = db.model('users', user_Schema);
 	return {
-		findUserInfo({username, email, passwrod}){
+		findUserInfo({username, email, passwrod}, showInfo = {__v: 0}){
 			let findObj = null;
 			if(!username && !email && !passwrod){
 				throw Error('请至少输入一个查询条件');
@@ -20,7 +20,7 @@ module.exports = function(db){
 			}else{
 				findObj = {$or:[{userName: username}, {email:email}]};
 			}
-			return UserModel.find(findObj, {__v: 0});
+			return UserModel.find(findObj, showInfo);
 		}
 	};
 };
