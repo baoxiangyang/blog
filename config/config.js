@@ -8,7 +8,7 @@ module.exports = {
 	},
 	redis: {
 		host: '127.0.0.1',
-		password: '',
+		password: '123456',
 		port: 6379,
 		ttl: 60 * 30 //30分钟过期
 	},

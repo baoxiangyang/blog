@@ -3,7 +3,7 @@
     <header>
       <el-menu theme="dark" :default-active="activeIndex" class="nav maxWidth" @select="handleSelect">
         <el-row>
-          <el-col :sm="5" class="headerItem">
+          <el-col :span="5" class="headerItem">
             <h1>
               <router-link :to="{name: 'index'}">小包总</router-link>
             </h1>
@@ -14,7 +14,7 @@
             <el-menu-item index="3">DEMO</el-menu-item>
             <el-menu-item index="4">简介</el-menu-item>
           </el-col> -->
-          <el-col :sm="5" class="headerItem" :push="14">
+          <el-col :span="5" class="headerItem" :push="14">
             <el-button type="success" size="small" @click="tips">登录</el-button>
             <el-button type="info" size="small" @click="tips">注册</el-button>
           </el-col>
@@ -59,6 +59,7 @@
     min-height: 100%;
   }
   .main {
+    min-width: 770px;
     header {
       height: 60px;
       background-color: #324157;

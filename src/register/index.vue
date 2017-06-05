@@ -237,6 +237,9 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    .el-upload__input {
+      display: none;
+    }
   }
   .avatar-uploader .el-upload:hover {
     border-color: #20a0ff;

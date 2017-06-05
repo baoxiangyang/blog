@@ -1,7 +1,7 @@
 let router = require('koa-router')(),
 	config = require('../config/config.js'),
 	logFile = config.logFile,
-	mongo = require('../dbs/mongodb.js'),
+	mongo = require('../dbs/index.js'),
 	fs = require('fs'),
 	base = require('../common/base.js'),
 	fsPromise = base.fsPromise,

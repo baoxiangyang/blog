@@ -1,6 +1,6 @@
 let saveArticle = require('./saveArticle.js'),
 	fs = require('fs'),
-	mongo = require('../dbs/mongodb.js'),
+	mongo = require('../dbs/index.js'),
 	logFile = require('../config/config.js').logFile;
 module.exports = async function (data) {
 	let urls = (typeof data.url == 'string') ? data.url.split(',') : data.url;
