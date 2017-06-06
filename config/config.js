@@ -1,8 +1,8 @@
 module.exports = {
 	mongodb: {
 		host: '119.23.70.244',
-		user: 'test',
-		password: '123456',
+		user: 'xybao',
+		password: 'baozi123',
 		port: 27017,
 		dbs: 'dbs'
 	},

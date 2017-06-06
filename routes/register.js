@@ -30,12 +30,14 @@ router.post('/', async function(ctx, next){
 				userList = userList.map((item, index) => {
 					if(item.userName == postData.userName){
 						return {
-							userName: '用户名已存在，请重新输入'
+							name: 'userName',
+							msg: '用户名已存在，请重新输入'
 						};
 					}
 					if(item.email == postData.email){
 						return {
-							email: '邮箱已存在，请重新输入'
+							name: 'email',
+							msg: '邮箱已存在，请重新输入'
 						};
 					}
 				});
@@ -94,6 +96,7 @@ router.post('/getEmailCode', async function(ctx, next){
 				errorCode: -7,
 				msg: '此邮箱已被注册，请重新输入'
 			};
+			return false;
 		}
 	}catch(error){
 		console.log(error);

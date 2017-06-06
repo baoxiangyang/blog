@@ -1,8 +1,8 @@
 <template>
   <div class="registerMain">
     <el-form :model="registerForm" :rules="rules" ref="registerForm" label-width="100px">
-      <el-form-item label="用户名：" prop="userName" :error="isuserNameExist"> 
-        <el-input v-model="registerForm.userName" placeholder="3~10个字符,包含字母/中文/数字/下划线" :autofocus="true"></el-input>
+      <el-form-item label="用户名：" prop="userName" :error="isUserNameExist"> 
+        <el-input v-model="registerForm.userName" placeholder="3~10个字符,包含字母/中文/数字/下划线" :autofocus="true" @change="userNameChange"></el-input>
       </el-form-item>
       <el-form-item label="密码：" prop="passwrod">
         <el-input v-model="registerForm.passwrod" type="password" placeholder="不少于6位"></el-input>
@@ -12,10 +12,10 @@
       </el-form-item>
       <el-form-item label="邮箱：" prop="email" :error="isEmailExist">
         <el-input v-model="registerForm.email" placeholder="用于找回密码">
-          <el-button style="width:110px" slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode" >{{codeText}}</el-button>
+          <el-button style="width:110px" slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode('registerForm')" >{{codeText}}</el-button>
         </el-input>
       </el-form-item>
-      <el-form-item label="验证码：" prop="verificationCode"> 
+      <el-form-item label="验证码：" prop="verificationCode" :error="codeErrorText"> 
         <el-input v-model.number="registerForm.verificationCode"  placeholder="请输入验证码"></el-input>
       </el-form-item>
       <el-form-item label="上传头像：" prop="userAvatar">
@@ -57,10 +57,16 @@
         }
       },
       userNameExist = (rule, value, callback) => {
+        if(this.noUserNameExist){
+          callback();
+          return false;
+        }
         this.$myAjax.post(this, '/register/userNameExist', {
           userName: value
         }).then((res) => {
           if(!res.data.errorCode){
+            //校验成功后不在向后台发送校验，除非value发生改变在校验
+            this.noUserNameExist = true;
             callback();
           }else{
             callback(new Error('用户名以存在，请重新输入'));
@@ -85,8 +91,10 @@
         userAvatar: '',
         msg: '',
         errorCode: '',
-        isuserNameExist: '',
+        isUserNameExist: '',
         isEmailExist: '',
+        codeErrorText: '',
+        noUserNameExist: false,
         registerForm: {
           userName: '',
           passwrod: '',
@@ -121,43 +129,51 @@
       };
     },
     methods: {
-      handeGetCode (){
-        //获取验证码
-        if(!this.isGetCode){
-          return false;
-        }
-        let number = 60, interval,
-          restStatus = () => {
-            clearInterval(interval);
-            interval = null;
-            this.isGetCode = true;
-            this.codeText = '获取验证码';
-          };
-        clearInterval(interval);
-        this.isGetCode = false;
-        this.codeText = `${number}s后再获取`;
-        interval = setInterval(() => {
-          number -= 1;
+      userNameChange(){
+        //userName发生改变后，继续校验username在后台是否存在
+        this.noUserNameExist = false;
+      },
+      handeGetCode (formName){
+        this.isEmailExist = '';
+        //通过校验之后获取验证码
+        this.$refs[formName].validateField('email', (err) => {
+          if(!this.isGetCode || err){
+            return false;
+          }
+          let number = 60, interval,
+            restStatus = () => {
+              clearInterval(interval);
+              interval = null;
+              this.isGetCode = true;
+              this.codeText = '获取验证码';
+            };
+          clearInterval(interval);
+          this.isGetCode = false;
           this.codeText = `${number}s后再获取`;
-          if(number <= 0){
+          interval = setInterval(() => {
+            number -= 1;
+            this.codeText = `${number}s后再获取`;
+            if(number <= 0){
+              restStatus();
+            }
+          }, 1000);
+          //获取验证码
+          this.$myAjax.post(this, '/register/getEmailCode', {
+            email: this.registerForm.email
+          }).then((res) => {
+            this.errorCode = res.data.errorCode;
+            if(this.errorCode){
+              restStatus();
+              this.isEmailExist = res.data.msg;
+            }else {
+              this.isEmailExist = '';
+              this.msg = res.data.msg;
+            }
+          }).catch((error)=> {
+            this.errorCode = -4;
+            this.msg = '网络错误，请重试';
             restStatus();
-          }
-        }, 1000);
-        this.$myAjax.post(this, '/register/getEmailCode', {
-          email: this.registerForm.email
-        }).then((res) => {
-          this.errorCode = res.data.errorCode;
-          if(this.errorCode){
-            restStatus();
-            this.isEmailExist = res.data.msg;
-          }else {
-            this.isEmailExist = '';
-            this.msg = res.data.msg;
-          }
-        }).catch((error)=> {
-          this.errorCode = -4;
-          this.msg = '网络错误，请重试';
-          restStatus();
+          });
         });
       },
       handleAvatarSuccess(res, file) {
@@ -196,7 +212,32 @@
         this.$refs[formName].validate((valid) => {
           if (valid) {
             this.$myAjax.post(this, '/register', this.registerForm).then(res => {
-              console.log(res.data)
+              let result = res.data;
+              switch (result.errorCode) {
+                case 0:
+                  console.log('ok');
+                  break;
+                case -1:
+                  this.msg = result.msg;
+                  this.errorCode = result.errorCode;
+                  break;
+                case -8:
+                  this.codeErrorText = result.msg;
+                  break;
+                case -9:
+                  result.data.forEach((item, index) => {
+                    if(item.name =='userName'){
+                      this.isUserNameExist = item.msg;
+                    }
+                    if(item.name =='email'){
+                      this.isEmailExist = item.msg;
+                    }
+                  });
+                  break;
+                default:
+                  console.log(result);
+                  break;
+              }
             }).catch(error => {
               this.errorCode = -4;
               this.msg = '网络错误，请重试';
@@ -229,7 +270,7 @@
   .registerMain {
     display: table;
     margin: 0 auto;
-    padding: 25px 25px 0;
+    padding: 50px 25px 0;
     .el-form {
       width: 60%;
       min-width:400px;
