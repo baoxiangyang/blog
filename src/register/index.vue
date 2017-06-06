@@ -16,7 +16,7 @@
         </el-input>
       </el-form-item>
       <el-form-item label="验证码：" prop="verificationCode"> 
-        <el-input v-model="registerForm.verificationCode"  placeholder="请输入验证码"></el-input>
+        <el-input v-model.number="registerForm.verificationCode"  placeholder="请输入验证码"></el-input>
       </el-form-item>
       <el-form-item label="上传头像：" prop="userAvatar">
           <el-upload
@@ -68,6 +68,13 @@
         }).catch(error => {
           callback();
         });
+      },
+      numberLength = (rule, value, callback) => {
+        if (value.toString().length !== 6) {
+          callback(new Error('请输入6位数字验证码'));
+        }else{
+          callback();
+        }
       };
       return {
         codeText: '获取验证码',
@@ -85,7 +92,8 @@
           passwrod: '',
           checkpasswrod: '',
           email: '',
-          verificationCode: ''
+          verificationCode: '',
+          userAvatar: ''
         },
         rules: {
           userName: [
@@ -94,7 +102,7 @@
             { validator: userNameExist, trigger: 'blur'}
           ],
           passwrod:[
-            { required: true, message: '密码不能不为空', trigger: 'blur'},
+            { required: true, message: '密码不能为空', trigger: 'blur'},
             { min: 6, message: '密码不能少于6个字符', trigger: 'blur'}
           ],
           checkpasswrod:[
@@ -105,7 +113,10 @@
             { required: true, message: '邮箱不能为空', trigger: 'blur'},
             { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur'}
           ],
-          verificationCode:[{ required: true, message: '验证码不能为空', trigger: 'blur'}]
+          verificationCode:[
+            { required: true, type:'number', message: '验证码不能为空', trigger: 'blur'},
+            { validator: numberLength, trigger: 'blur' },
+          ]
         }
       };
     },
@@ -150,7 +161,11 @@
         });
       },
       handleAvatarSuccess(res, file) {
-        this.userAvatar = URL.createObjectURL(file.raw);
+        let createObjectURL = function(blob){
+          return window[window.webkitURL ? 'webkitURL' : 'URL']['createObjectURL'](blob);
+        };
+        this.userAvatar = createObjectURL(file.raw);
+        this.registerForm.userAvatar = res.avatarImg;
         this.userAvatarUpload = false;
         this.submitBtn = false;
         this.submitText = '注 册';
@@ -178,14 +193,16 @@
         this.submitText = '注 册';
       },
       submitForm(formName) {
-        /*this.$refs[formName].validate((valid) => {
+        this.$refs[formName].validate((valid) => {
           if (valid) {
-            alert('submit!');
-          } else {
-            console.log('error submit!!');
-            return false;
+            this.$myAjax.post(this, '/register', this.registerForm).then(res => {
+              console.log(res.data)
+            }).catch(error => {
+              this.errorCode = -4;
+              this.msg = '网络错误，请重试';
+            });
           }
-        });*/
+        });
       },
       resetForm(formName) {
         this.$refs[formName].resetFields();

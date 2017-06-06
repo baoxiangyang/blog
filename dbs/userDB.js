@@ -21,6 +21,9 @@ module.exports = function(db){
 				findObj = {$or:[{userName: username}, {email:email}]};
 			}
 			return UserModel.find(findObj, showInfo);
+		},
+		saveUserInfo(obj){
+			return new UserModel(obj).save();
 		}
 	};
 };

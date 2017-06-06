@@ -1,17 +1,15 @@
 let fs = require('fs');
-function fsPromise(file, type) {
+function fsPromise(type) {
+    let arg = Array.prototype.slice.call(arguments, 1);
 	return new Promise((resolve, reject) => {
-		fs[type](file, 'utf8', function(err, data){
-			resolve({
-				error: err,
-				data: data
-			});
-			if(err){
-				reject({err: err});
-			}else{
-				resolve({data: data });
-			}
-		});
+        arg.push(function(err, data){
+            if(err){
+                reject({err: err});
+            }else{
+                resolve({data: data });
+            }
+        });
+        fs[type].apply(fs, arg);
 	});
 }
 /*

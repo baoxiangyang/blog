@@ -4,9 +4,8 @@ const router = require('koa-router')();
 const views = require('koa-views');
 const convert = require('koa-convert');
 const json = require('koa-json');
-//const onerror = require('koa-onerror');
+const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser')();
-const logger = require('koa-logger');
 const favicon = require('koa-favicon');
 import session from 'koa-session2';
 import redisStore from './common/store.js';
@@ -38,7 +37,6 @@ const index = require('./routes/index'),
 // middlewares
 app.use(convert(bodyparser));
 app.use(convert(json()));
-app.use(convert(logger()));
 
 app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
@@ -67,7 +65,6 @@ app.use(router.routes(), router.allowedMethods());
 
 app.on('error', function(err, ctx){
   console.log(err);
-  logger.error('server error', err, ctx);
 });
 
 module.exports = app;

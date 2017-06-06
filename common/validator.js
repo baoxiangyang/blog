@@ -23,7 +23,7 @@ function validator (data, rules) {
 		for(let y = 0; y < rule.length; y++){
 			let yRule = rule[y];
             if(yRule.required && !value){
-                errArr.push({name: rulesArr[i], message: yRule.message || '次字段不能为空'});
+                errArr.push({name: rulesArr[i], message: yRule.message || '此字段不能为空'});
                 continue rules;
             }
             if(!value){
@@ -34,18 +34,18 @@ function validator (data, rules) {
 			for(let z = 0; z < ruleArr.length; z++){
 				switch (ruleArr[z]) {
 					case 'minLength':
-						value.length < yRule[ruleArr[z]] && errArr.push({name: rulesArr[i], message: yRule.message || `次字段长度不小于${yRule[ruleArr[z]]}`});
+						value.toString().length < yRule[ruleArr[z]] && errArr.push({name: rulesArr[i], message: yRule.message || `此字段长度不小于${yRule[ruleArr[z]]}`});
 						break;
 					case 'maxLength':
-						value.length > yRule[ruleArr[z]] && errArr.push({name: rulesArr[i], message: yRule.message || `次字段长度不大于${yRule[ruleArr[z]]}`});
+						value.toString().length > yRule[ruleArr[z]] && errArr.push({name: rulesArr[i], message: yRule.message || `此字段长度不大于${yRule[ruleArr[z]]}`});
 						break;
 					case 'type':
 						switch (yRule.type) {
 							case 'string':
-								typeof value !== 'string' && errArr.push({name: rulesArr[i], message: yRule.message || '次字段必须为String类型'});
+								typeof value !== 'string' && errArr.push({name: rulesArr[i], message: yRule.message || '此字段必须为String类型'});
 								break;
 							case 'number':
-								typeof value !== 'number' && errArr.push({name: rulesArr[i], message: yRule.message || '次字段必须为Number类型'});
+								typeof value !== 'number' && errArr.push({name: rulesArr[i], message: yRule.message || '此字段必须为Number类型'});
 								break;
 							case 'email':
 								!emailReg.test(value) && errArr.push({name: rulesArr[i], message: yRule.message || '错误的邮箱地址'});
@@ -54,11 +54,13 @@ function validator (data, rules) {
 								!yRule.pattern.test(value) && errArr.push({name: rulesArr[i], message: yRule.message || '此字段不符合规则'});
 								break;
 							default:
-								console.error(`type:${yRule.type} 此校验规则不存在`);
+								console.log(`type:${yRule.type} 此校验规则不存在`);
 						}
 						break;
+					case "pattern":
+						break;
 					default:
-						console.error(`${ruleArr[z]} 此校验规则不存在`);
+						console.log(`${ruleArr[z]} 此校验规则不存在`);
 						break;
 				}
 			}

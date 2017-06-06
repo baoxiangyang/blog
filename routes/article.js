@@ -82,7 +82,7 @@ router.post('/articleDatails', async function(ctx, next){
 			})(id);
 		}
 		try {
-			fileData = await fsPromise(filePath, 'readFile');
+			fileData = await fsPromise('readFile', filePath, 'utf8');
 			articleDatail = await articleDatail;
 			ctx.body = {
 				errorCode: 0,
@@ -134,7 +134,7 @@ router.post('/crawlerArticle', async function(ctx, next){
 //获取爬虫日志
 router.post('/articleLog', async function(ctx, next){
 	try {
-		let log = await fsPromise(logFile, 'readFile');
+		let log = await fsPromise('readFile', logFile, 'utf8');
 		ctx.body = {
 			errorCode: 0,
 			data: log.data
