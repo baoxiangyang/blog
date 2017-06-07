@@ -15,7 +15,7 @@
             <el-menu-item index="4">简介</el-menu-item>
           </el-col> -->
           <el-col :span="5" class="headerItem" :push="14">
-            <el-button type="success" size="small" @click="tips">登录</el-button>
+            <el-button type="success" size="small" @click="set_dialogLogin(true)">登录</el-button>
             <el-button type="info" size="small" @click="tips">注册</el-button>
           </el-col>
         </el-row>
@@ -30,6 +30,8 @@
 </template>
 <script type="text/javascript">
   import Login from '../components/login.vue';
+  import { mapState, mapMutations } from 'vuex';
+  import { set_dialogLogin } from '../mutation-types.js';
   export default {
     data() {
       return {
@@ -43,6 +45,7 @@
       handleIconClick() {
 
       },
+      ...mapMutations([set_dialogLogin]),
       tips() {
          this.$message({
           showClose: true,

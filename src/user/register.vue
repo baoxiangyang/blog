@@ -41,12 +41,13 @@
     </el-form>
     <ul class="loginList">
       <li>快速登录</li>
-      <li><el-button><i class="icon-qq"></i> QQ账户</el-button></li>
-      <li><el-button type="success"><i class="icon-github"></i> GITHUB账户</el-button></li>
+      <li><el-button><i class="myIcon myIcon-qq"></i> QQ账户</el-button></li>
+      <li><el-button type="success"><i class="myIcon myIcon-github"></i> GITHUB账户</el-button></li>
     </ul>
   </div>
 </template>
 <script type="text/javascript">
+  import '../style/user.less';
   export default {
     data() {
       let checkpasswrod = (rule, value, callback) => {
@@ -294,20 +295,6 @@
         margin: 10px 0;
         span {
           display: block;
-        }
-        i {
-          display: inline-block;
-          vertical-align: middle;
-          width: 28px;
-          height: 28px;
-          background-repeat: no-repeat;
-          background-image: url(/images/login.svg);
-        }
-        .icon-qq {
-          background-position: -84px -28px;
-        }
-        .icon-github {
-          background-position: -28px -28px;
         }
       }
     }
