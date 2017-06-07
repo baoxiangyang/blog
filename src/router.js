@@ -5,7 +5,7 @@ import article from './article/index.vue';
 import articleList from './article/articleList.vue';
 import articleDetails from './article/articleDetails.vue';
 import crawler from './crawler/index.vue';
-import register from './register/index.vue';
+import register from './user/register.vue';
 Vue.use(VueRouter);
 
 export default new VueRouter({

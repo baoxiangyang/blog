@@ -21,6 +21,7 @@
         </el-row>
       </el-menu>
     </header>
+    <Login></Login>
     <router-view></router-view>
     <footer class="record">
       <a href="http://www.miitbeian.gov.cn">渝ICP备16013153号</a>
@@ -28,11 +29,11 @@
   </div>
 </template>
 <script type="text/javascript">
+  import Login from '../components/login.vue';
   export default {
     data() {
       return {
-        activeIndex: '1',
-        headerInput: ''
+        activeIndex: '1'
       };
     },
     methods: {
@@ -48,6 +49,9 @@
           message: '努力开发中。。。'
         });
       }
+    },
+    components: {
+      Login
     }
   };
 </script>

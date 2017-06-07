@@ -36,7 +36,6 @@ const articleModule = {
 	actions: {
 		//获取文章列表
 		get_articleList({commit, state}, postData) {
-			console.log(axios)
 			commit(set_articleStatus, {loading: true});
 			return axios.post('/article/articleList', postData).then(res => {
 				commit(set_articleList, res.data.data.articleData);

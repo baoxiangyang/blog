@@ -33,7 +33,7 @@ if(process.env.NODE_ENV != 'production'){
 
 const index = require('./routes/index'),
   article = require('./routes/article'),
-  register = require('./routes/register.js');
+  user = require('./routes/user.js');
 // middlewares
 app.use(convert(bodyparser));
 app.use(convert(json()));
@@ -58,7 +58,7 @@ app.use(async (ctx, next) => {
 
 router.use('/', index.routes(), index.allowedMethods());
 router.use('/article', article.routes(), article.allowedMethods());
-router.use('/register', register.routes(), register.allowedMethods());
+router.use('/user', user.routes(), user.allowedMethods());
 
 app.use(router.routes(), router.allowedMethods());
 // response
