@@ -48,6 +48,8 @@
 </template>
 <script type="text/javascript">
   import '../style/user.less';
+  import { set_dialogLogin} from '../mutation-types.js';
+  import { mapState, mapMutations } from 'vuex';
   export default {
     data() {
       let checkpassword = (rule, value, callback) => {
@@ -130,6 +132,7 @@
       };
     },
     methods: {
+      ...mapMutations([set_dialogLogin]),
       userNameChange(){
         //userName发生改变后，继续校验username在后台是否存在
         this.noUserNameExist = false;
@@ -171,8 +174,6 @@
               this.msg = res.data.msg;
             }
           }).catch((error)=> {
-            this.errorCode = -4;
-            this.msg = '网络错误，请重试';
             restStatus();
           });
         });
@@ -217,7 +218,16 @@
               let result = res.data;
               switch (result.errorCode) {
                 case 0:
-                  console.log('ok');
+                  this.errorCode = 0;
+                  this.$notify({
+                    title: '成功',
+                    message: '注册成功请登录',
+                    type: 'success',
+                    duration: 1500,
+                    onClose:() => {
+                      this.set_dialogLogin(true);
+                    }
+                  });
                   break;
                 case -1:
                   this.msg = result.msg;
@@ -241,10 +251,6 @@
                   break;
               }
               this.submitBtn = false;
-            }).catch(error => {
-              this.submitBtn = false;
-              this.errorCode = -4;
-              this.msg = '网络错误，请重试';
             });
           }
         });
@@ -267,7 +273,7 @@
           });
         }
       }
-    },
+    }
   };
 </script>
 <style lang="less">

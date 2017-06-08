@@ -9,32 +9,32 @@
           <el-form-item label="用户名 或 邮箱" prop="userName"> 
             <el-input v-model="loginForm.userName" placeholder="请输入用户名或邮箱"></el-input>
           </el-form-item>
-          <el-form-item label="密码" prop="password">
+          <el-form-item label="密码" prop="password" :error="loginText">
             <el-button type="text" class="forgetPassword" @click="isLogin = false">忘记密码</el-button>
             <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
           </el-form-item>
           <el-form-item>
             <el-checkbox v-model="loginForm.remember">记住登录状态</el-checkbox>
-            <el-button type="success" class="submit" @click="loginSubmit('loginForm')">登录</el-button>
+            <el-button type="success" :disabled="loginBtn" class="submit" @click="loginSubmit('loginForm')">登录</el-button>
           </el-form-item>
         </el-form>
-        <el-form v-else key="recover" :model="recoverForm" :rules="recoverRules" ref="loginForm" label-position="top">
-          <el-form-item label="邮箱" prop="email"> 
+        <el-form v-else key="recover" :model="recoverForm" :rules="recoverRules" ref="recoverForm" label-position="top">
+          <el-form-item label="邮箱" prop="email" :error="isEmailExist"> 
             <el-input v-model="recoverForm.email" placeholder="请输入用邮箱地址"></el-input>
           </el-form-item>
           <el-form-item label="验证码" prop="verificationCode">
-            <el-input v-model.number="recoverForm.verificationCode" type="password" placeholder="请输入验证码">
-              <el-button style="width:110px" slot="append" :class="{ getCode: isGetCode }" @click="handeGetCode('recoverForm')" >{{codeText}}</el-button>
+            <el-input v-model.number="recoverForm.verificationCode" placeholder="请输入验证码">
+              <el-button style="width:110px" slot="append" :class="{ getCode: isGetCode }" @click="handleGetCode('recoverForm')" >{{codeText}}</el-button>
             </el-input>
           </el-form-item>
-          <el-form-item label="密码：" prop="passwrod">
-            <el-input v-model="recoverForm.passwrod" type="password" placeholder="不少于6位"></el-input>
+          <el-form-item label="密码：" prop="password">
+            <el-input v-model="recoverForm.password" type="password" placeholder="不少于6位"></el-input>
           </el-form-item>
-          <el-form-item label="确认密码：" prop="checkpasswrod">
-            <el-input v-model="recoverForm.checkpasswrod" type="password" placeholder="确认密码"></el-input>
+          <el-form-item label="确认密码：" prop="checkpassword">
+            <el-input v-model="recoverForm.checkpassword" type="password" placeholder="确认密码"></el-input>
           </el-form-item>
           <el-form-item class="recoverItem">
-            <el-button type="danger">重置密码</el-button>
+            <el-button type="danger" :disabled="recoverBtn" @click="handleRecoverPassword('recoverForm')">重置密码</el-button>
             <el-button type="text" @click="isLogin = true">GO登录</el-button>
           </el-form-item>
         </el-form>
@@ -53,8 +53,8 @@
   import { set_dialogLogin, set_userInfo} from '../mutation-types.js';
   export default {
     data() {
-      let checkpasswrod = (rule, value, callback) => {
-        if (value !== this.registerForm.passwrod) {
+      let checkpassword = (rule, value, callback) => {
+        if (value !== this.recoverForm.password) {
           callback(new Error('两次输入密码不一致!'));
         } else {
           callback();
@@ -71,7 +71,13 @@
         isLogin: true,
         title: '用户登录',
         codeText: '获取验证码',
+        loginText: '',
         isGetCode: true,
+        isEmailExist: '',
+        errorCode: '',
+        msg: '',
+        loginBtn: false,
+        recoverBtn: false,
         loginForm: {
           userName: '',
           password: '',
@@ -97,9 +103,9 @@
             { required: true, message: '请输入密码', trigger: 'blur'},
             { min: 6, message: '密码不能少于6个字符', trigger: 'blur'}
           ],
-          checkpasswrod:[
+          checkpassword:[
             { required: true, message: '请确认密码', trigger: 'blur'},
-            { validator: checkpasswrod, trigger: 'blur' }
+            { validator: checkpassword, trigger: 'blur' }
           ],
           email:[
             { required: true, message: '请输入邮箱地址', trigger: 'blur'},
@@ -120,15 +126,85 @@
         //登录
         this.$refs[formName].validate(valid => {
           if(valid){
+            this.loginBtn = true;
             this.$myAjax.post(this, '/user/login', this[formName]).then(res => {
-
+              if(res.data.errorCode){
+                this.errorCode = res.data.errorCode;
+                this.msg = res.data.msg;
+              }else if(!res.data.errorCode && res.data.data){
+                this.set_userInfo(res.data.data);
+                this.set_dialogLogin(false);
+                if(this.$route.name == 'register'){
+                  this.$router.push({name: 'index'});
+                }
+              }else{
+                this.loginText = res.data.msg;
+              }
+              this.loginBtn = false;
+            }).catch(error => {
+              this.loginBtn = false;
             });
           }
         });
-
       },
-      handeGetCode(formName){
+      handleGetCode(formName){
         //获取验证码
+        this.isEmailExist = '';
+        this.$refs[formName].validateField('email', (err) => {
+          if(!this.isGetCode || err){
+            return false;
+          }
+          let number = 60, interval,
+            restStatus = () => {
+              clearInterval(interval);
+              interval = null;
+              this.isGetCode = true;
+              this.codeText = '获取验证码';
+            };
+          clearInterval(interval);
+          this.isGetCode = false;
+          this.codeText = `${number}s后再获取`;
+          interval = setInterval(() => {
+            number -= 1;
+            this.codeText = `${number}s后再获取`;
+            if(number <= 0){
+              restStatus();
+            }
+          }, 1000);
+          //获取验证码
+          this.$myAjax.post(this, '/user/getEmailCode', {
+            email: this.recoverForm.email,
+            recover: true
+          }).then((res) => {
+            this.errorCode = res.data.errorCode;
+            if(this.errorCode){
+              restStatus();
+              this.isEmailExist = res.data.msg;
+            }else {
+              this.isEmailExist = '';
+              this.msg = res.data.msg;
+            }
+          }).catch((error)=> {
+            restStatus();
+          });
+        });
+      },
+      handleRecoverPassword(formName){
+        this.$refs[formName].validate(valid => {
+          if(valid){
+            this.recoverBtn = true;
+            this.$myAjax.post(this, '/user/recoverPassword', this[formName]).then(res => {
+              if(!res.data.errorCode){
+                this.isLogin = true;
+              }
+              this.errorCode = res.data.errorCode;
+              this.msg = res.data.msg;
+              this.recoverBtn = false;
+            }).catch(error => {
+              this.recoverBtn = false;
+            });
+          }
+        });
       },
       handelBeforeClose(done){
         this.set_dialogLogin(false);
@@ -143,6 +219,21 @@
           toggleLgoin.style.height="376px";
         }else{
           toggleLgoin.style.height="216px";
+        }
+      }
+    },
+    watch: {
+      msg: function  (val, oldVal) {
+        if(val){
+          this.$message({
+            showClose: true,
+            message: this.msg, 
+            duration: 2000,
+            type: this.errorCode ? 'error': 'success',
+            onClose: ()=> {
+              this.msg = '';
+            }
+          });
         }
       }
     }

@@ -19,7 +19,10 @@
 		Vue.prototype.$myAjax.post = function(self){
 			return axios.post(...(Array.prototype.slice.call(arguments, 1))).then((res)=>{
 				return Promise.resolve(res);
-			});
+			}).catch((error)=> {
+              self.errorCode = -4;
+              self.msg = '网络错误，请重试';
+            });
 		};
 	}
 	if (typeof exports == "object") {

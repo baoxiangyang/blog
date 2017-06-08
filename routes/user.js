@@ -4,6 +4,7 @@ var router = require('koa-router')(),
 	validator = require('../common/validator.js'),
 	sendEmail = require('../common/sendEmail.js'),
 	mongo = require('../dbs/index.js'),
+	config = require('../config/config.js'),
 	fs = require('fs');
 //注册接口
 router.post('/register', async function(ctx, next){
@@ -18,7 +19,7 @@ router.post('/register', async function(ctx, next){
 		ctx.body = validate;
 		return false;
 	}
-	if(postData.verificationCode != ctx.session.emailCode){
+	if(postData.verificationCode != ctx.session.emailCode.code && postData.email != ctx.session.emailCode.email){
 		obj = {
 			errorCode: -8,
 			msg: '验证码错误，请重新输入'
@@ -60,8 +61,7 @@ router.post('/register', async function(ctx, next){
 				});
 				obj = {
 					errorCode: 0,
-					msg: '注册成功',
-					data: result
+					msg: '注册成功'
 				};
 			}	
 		}catch(error){
@@ -91,10 +91,18 @@ router.post('/getEmailCode', async function(ctx, next){
 	}
 	try {
 		let userList = await mongo.findUserInfo({email: ctx.request.body.email});
-		if(userList.length){
+
+		if(userList.length && !ctx.request.body.recover){
 			ctx.body = {
 				errorCode: -7,
 				msg: '此邮箱已被注册，请重新输入'
+			};
+			return false;
+		}
+		if(!userList.length && ctx.request.body.recover){
+			ctx.body = {
+				errorCode: -7,
+				msg: '此邮箱未被注册，请重新输入'
 			};
 			return false;
 		}
@@ -104,7 +112,10 @@ router.post('/getEmailCode', async function(ctx, next){
 	let code = base.getRandomStr(), obj = null;
 	try {
 		let info = await sendEmail({to: ctx.request.body.email, code: code});
-		ctx.session.emailCode = code;
+		ctx.session.emailCode = {
+			code,
+			email: ctx.request.body.email
+		};
 		obj = {
 			errorCode: 0,
 			msg: '发送验证码成功，请登录邮箱获取！'
@@ -153,13 +164,28 @@ router.post('/userNameExist', async function(ctx, next){
 router.post('/login', async function(ctx, next){
 	let data = ctx.request.body;
 	try{
-		console.log(data)
 		let	userInfo = await mongo.findUserInfo(data);
 		if(userInfo.length){
+			if(data.remember){
+				let loginStatus = base.getRandomStr({
+					number: true, capitalLetter: true, 
+					lowerLetter: true, len: 30
+				}) + Date.now();
+				await mongo.updateUserInfo({email: userInfo[0].email}, {loginStatus});
+				ctx.cookies.set('loginStatus', loginStatus, {
+					maxAge: config.loginStatusTime,
+					httpOnly:true,
+					overwrite:true
+				});
+			}
+			ctx.session.userInfo = userInfo[0];
 			ctx.body = {
 				errorCode: 0,
 				msg:'登录成功',
-				data: userInfo[0]
+				data: {
+					userName: userInfo[0].userName,
+					avatarImg: userInfo[0].avatarImg
+				}
 			};
 		}else{
 			ctx.body = {
@@ -173,6 +199,31 @@ router.post('/login', async function(ctx, next){
 		ctx.body = {
 			errorCode: -1,
 			msg: '登录失败，请重试'
+		};
+	}
+});
+//找回密码
+router.post('/recoverPassword', async function(ctx, next){
+	let data = ctx.request.body;
+	if(data.email != ctx.session.emailCode.email && data.verificationCode != ctx.session.emailCode.code){
+		ctx.body = {
+			errorCode: -1,
+			msg: '邮箱或然验证码错误，请重新输入'
+		};
+		return false;
+	}
+	try {
+		let update = await mongo.updateUserInfo({email: data.email}, {password: data.password});
+		console.log(update);
+		ctx.body = {
+			errorCode: 0,
+			msg: '修改密码成功,请登录'
+		};
+	}catch(e){
+		console.error(e);
+		ctx.body = {
+			errorCode: -2,
+			msg: '修改密码失败，请重试'
 		};
 	}
 });

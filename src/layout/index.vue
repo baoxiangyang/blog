@@ -15,7 +15,7 @@
             <el-menu-item index="4">简介</el-menu-item>
           </el-col> -->
           <el-col :span="5" class="headerItem" :push="14">
-            <el-button type="success" size="small" @click="set_dialogLogin(true)">登录</el-button>
+            <el-button type="success" class="loginBtn" size="small" @click="set_dialogLogin(true)">登录</el-button>
               <router-link :to="{name: 'register'}">
                 <el-button type="info" size="small">注册</el-button>
               </router-link>
@@ -86,6 +86,9 @@
       .headerItem {
         height: 60px;
         line-height: 60px;
+        .loginBtn {
+          margin-right: 10px;
+        }
         h1 {
           font-size: 18px;
           padding-left: 25px;
