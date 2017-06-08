@@ -1,7 +1,7 @@
 let Mongoose = require('mongoose'),
 	user_Schema =  new Mongoose.Schema({
 	userName: {type: String, index: { unique: true, dropDups: true }},
-	passwrod: {type: String},
+	password: {type: String},
 	email: {type: String, unique: true},
 	avatarImg: {type: String, default: ''},
 	level: {type: Number, default: 10},
@@ -10,15 +10,15 @@ let Mongoose = require('mongoose'),
 module.exports = function(db){
 	const UserModel = db.model('users', user_Schema);
 	return {
-		findUserInfo({username, email, passwrod}, showInfo = {__v: 0}){
+		findUserInfo({userName, email, password}, showInfo = {__v: 0}){
 			let findObj = null;
-			if(!username && !email && !passwrod){
+			if(!userName && !email && !password){
 				throw Error('请至少输入一个查询条件');
 			}
-			if(passwrod){
-				findObj = {$or:[{userName: username, passwrod: passwrod}, {email: username, passwrod: passwrod}]};
+			if(password){
+				findObj = {$or:[{userName: userName, password: password}, {email: userName, password: password}]};
 			}else{
-				findObj = {$or:[{userName: username}, {email:email}]};
+				findObj = {$or:[{userName: userName}, {email:email}]};
 			}
 			return UserModel.find(findObj, showInfo);
 		},

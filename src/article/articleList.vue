@@ -23,6 +23,7 @@
   import articleItem from '../components/articleItem.vue';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
   import { backToTop } from '../common/base.js';
+  import { set_articleStatus } from '../mutation-types.js';
   export default {
     data() {
       return {
@@ -46,9 +47,7 @@
       ...mapActions([
         'get_articleList' 
       ]),
-      ...mapMutations([
-        'set_articleStatus'
-      ]),
+      ...mapMutations([set_articleStatus]),
       //点击分页
       handleCurrentChange(currentPage){
         backToTop();

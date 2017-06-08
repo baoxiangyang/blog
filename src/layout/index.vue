@@ -16,7 +16,9 @@
           </el-col> -->
           <el-col :span="5" class="headerItem" :push="14">
             <el-button type="success" size="small" @click="set_dialogLogin(true)">登录</el-button>
-            <el-button type="info" size="small" @click="tips">注册</el-button>
+              <router-link :to="{name: 'register'}">
+                <el-button type="info" size="small">注册</el-button>
+              </router-link>
           </el-col>
         </el-row>
       </el-menu>
@@ -29,7 +31,7 @@
   </div>
 </template>
 <script type="text/javascript">
-  import Login from '../components/login.vue';
+  import Login from '../user/login.vue';
   import { mapState, mapMutations } from 'vuex';
   import { set_dialogLogin } from '../mutation-types.js';
   export default {

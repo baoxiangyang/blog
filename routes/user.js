@@ -10,7 +10,7 @@ router.post('/register', async function(ctx, next){
 	let postData = ctx.request.body;
 	let validate = validator(postData, {
 		userName: [{required: true}, {type: 'regexp', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/}],
-		passwrod: {required: true, minLength: 6},
+		password: {required: true, minLength: 6},
 		email:{required: true, type:'email'},
 		verificationCode: {required: true, minLength: 6, maxLength: 6, type: 'number'}
 	}), obj = null;
@@ -54,7 +54,7 @@ router.post('/register', async function(ctx, next){
 				}
 				let result = await mongo.saveUserInfo({
 					userName: postData.userName,
-					passwrod: postData.passwrod,
+					password: postData.password,
 					email: postData.email,
 					avatarImg: avatarImgPath
 				});
@@ -146,6 +146,33 @@ router.post('/userNameExist', async function(ctx, next){
 		ctx.body = {
 			errorCode: 0,
 			msg: ''
+		};
+	}
+});
+//登录
+router.post('/login', async function(ctx, next){
+	let data = ctx.request.body;
+	try{
+		console.log(data)
+		let	userInfo = await mongo.findUserInfo(data);
+		if(userInfo.length){
+			ctx.body = {
+				errorCode: 0,
+				msg:'登录成功',
+				data: userInfo[0]
+			};
+		}else{
+			ctx.body = {
+				errorCode: 0,
+				msg:'用户后密码错误，请重新登录',
+				data: null
+			};
+		}
+	}catch(err){
+		console.error(err);
+		ctx.body = {
+			errorCode: -1,
+			msg: '登录失败，请重试'
 		};
 	}
 });

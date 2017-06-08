@@ -4,11 +4,11 @@
       <el-form-item label="用户名：" prop="userName" :error="isUserNameExist"> 
         <el-input v-model="registerForm.userName" placeholder="3~10个字符,包含字母/中文/数字/下划线" :autofocus="true" @change="userNameChange"></el-input>
       </el-form-item>
-      <el-form-item label="密码：" prop="passwrod">
-        <el-input v-model="registerForm.passwrod" type="password" placeholder="不少于6位"></el-input>
+      <el-form-item label="密码：" prop="password">
+        <el-input v-model="registerForm.password" type="password" placeholder="不少于6位"></el-input>
       </el-form-item>
-      <el-form-item label="确认密码：" prop="checkpasswrod">
-        <el-input v-model="registerForm.checkpasswrod" type="password" placeholder="确认密码"></el-input>
+      <el-form-item label="确认密码：" prop="checkpassword">
+        <el-input v-model="registerForm.checkpassword" type="password" placeholder="确认密码"></el-input>
       </el-form-item>
       <el-form-item label="邮箱：" prop="email" :error="isEmailExist">
         <el-input v-model="registerForm.email" placeholder="请输入邮箱地址，用于找回密码"></el-input>
@@ -50,8 +50,8 @@
   import '../style/user.less';
   export default {
     data() {
-      let checkpasswrod = (rule, value, callback) => {
-        if (value !== this.registerForm.passwrod) {
+      let checkpassword = (rule, value, callback) => {
+        if (value !== this.registerForm.password) {
           callback(new Error('两次输入密码不一致!'));
         } else {
           callback();
@@ -62,7 +62,7 @@
           callback();
           return false;
         }
-        this.$myAjax.post(this, '/register/userNameExist', {
+        this.$myAjax.post(this, '/user/userNameExist', {
           userName: value
         }).then((res) => {
           if(!res.data.errorCode){
@@ -98,7 +98,7 @@
         noUserNameExist: false,
         registerForm: {
           userName: '',
-          passwrod: '',
+          password: '',
           checkpasswrod: '',
           email: '',
           verificationCode: '',
@@ -110,13 +110,13 @@
             { type:'string', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/, message: '请输入正确格式的用户名', trigger: 'blur'},
             { validator: userNameExist, trigger: 'blur'}
           ],
-          passwrod:[
+          password:[
             { required: true, message: '请输入密码', trigger: 'blur'},
             { min: 6, message: '密码不能少于6个字符', trigger: 'blur'}
           ],
-          checkpasswrod:[
+          checkpassword:[
             { required: true, message: '请确认密码', trigger: 'blur'},
-            { validator: checkpasswrod, trigger: 'blur' }
+            { validator: checkpassword, trigger: 'blur' }
           ],
           email:[
             { required: true, message: '请输入邮箱地址', trigger: 'blur'},
@@ -212,6 +212,7 @@
       submitForm(formName) {
         this.$refs[formName].validate((valid) => {
           if (valid) {
+            this.submitBtn = true;
             this.$myAjax.post(this, '/user/register', this.registerForm).then(res => {
               let result = res.data;
               switch (result.errorCode) {
@@ -239,7 +240,9 @@
                   console.log(result);
                   break;
               }
+              this.submitBtn = false;
             }).catch(error => {
+              this.submitBtn = false;
               this.errorCode = -4;
               this.msg = '网络错误，请重试';
             });

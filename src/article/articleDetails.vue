@@ -19,6 +19,7 @@
   import router from '../router.js';
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
   import { backToTop, formatTime } from '../common/base.js';
+  import { set_articleStatus } from '../mutation-types.js';
   export default {
     data() {
       return {
@@ -54,9 +55,7 @@
       }
     },
     methods: {
-      ...mapMutations([
-        'set_articleStatus'
-      ]),
+      ...mapMutations([set_articleStatus]),
       getDetail() {
         if(!this.$route.query.id){
           router.push({name: 'article', query:{type: 'all'}});
