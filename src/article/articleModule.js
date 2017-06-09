@@ -1,4 +1,4 @@
-import {set_articleList, set_articleStatus} from '../mutation-types.js';
+import {set_articleList, set_articleStatus, set_userInfo} from '../mutation-types.js';
 import axios from 'axios';
 import {formatTime} from '../common/base.js';
 const articleModule = {
@@ -35,10 +35,16 @@ const articleModule = {
 	},
 	actions: {
 		//获取文章列表
-		get_articleList({commit, state}, postData) {
+		get_articleList({state, commit, rootState}, postData) {
+			if(!rootState.userInfo){
+				postData.userInfo = true;
+			}
 			commit(set_articleStatus, {loading: true});
 			return axios.post('/article/articleList', postData).then(res => {
 				commit(set_articleList, res.data.data.articleData);
+				if(res.data.userInfo){
+					commit(set_userInfo, res.data.userInfo);
+				}
 			}).catch(error => {
 				commit(set_articleStatus, {error: true, msg: '网络错误请重试！', errorCode: error.status, loading: false});
 			});

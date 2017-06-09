@@ -15,10 +15,21 @@
             <el-menu-item index="4">简介</el-menu-item>
           </el-col> -->
           <el-col :span="5" class="headerItem" :push="14">
-            <el-button type="success" class="loginBtn" size="small" @click="set_dialogLogin(true)">登录</el-button>
+            <template v-if="!userInfo">
+              <el-button type="success" class="loginBtn" size="small" @click="set_dialogLogin(true)">登录</el-button>
               <router-link :to="{name: 'register'}">
                 <el-button type="info" size="small">注册</el-button>
               </router-link>
+            </template>
+            <template v-else>
+              <el-dropdown class="userAvatar" @command="handleCommand">
+                <img :src="userInfo.avatarImg || '/images/userAvatar/defualtUser.png'" :title="userInfo.userName" :alt="userInfo.userName">
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item>我的主页</el-dropdown-item>
+                  <el-dropdown-item command="logOut">退出</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </template>
           </el-col>
         </el-row>
       </el-menu>
@@ -33,12 +44,17 @@
 <script type="text/javascript">
   import Login from '../user/login.vue';
   import { mapState, mapMutations } from 'vuex';
-  import { set_dialogLogin } from '../mutation-types.js';
+  import { set_dialogLogin, set_userInfo} from '../mutation-types.js';
   export default {
     data() {
       return {
-        activeIndex: '1'
+        activeIndex: '1',
+        errorCode: 0,
+        msg: ''
       };
+    },
+    computed: {
+      ...mapState(['userInfo'])
     },
     methods: {
       handleSelect(key, keyPath) {
@@ -47,16 +63,34 @@
       handleIconClick() {
 
       },
-      ...mapMutations([set_dialogLogin]),
-      tips() {
-         this.$message({
-          showClose: true,
-          message: '努力开发中。。。'
-        });
-      }
+      handleCommand(command){
+        if(command == 'logOut'){
+          this.$myAjax.post(this, '/user/logOut').then(res => {
+            this.set_userInfo(null);
+            this.errorCode = res.data.errorCode;
+            this.msg = res.data.msg;
+          });
+        }
+      },
+      ...mapMutations([set_dialogLogin, set_userInfo])
     },
     components: {
       Login
+    },
+    watch: {
+      msg: function  (val, oldVal) {
+        if(val){
+          this.$message({
+            showClose: true,
+            message: this.msg, 
+            duration: 2000,
+            type: this.errorCode ? 'error': 'success',
+            onClose: ()=> {
+              this.msg = '';
+            }
+          });
+        }
+      }
     }
   };
 </script>
@@ -88,6 +122,12 @@
         line-height: 60px;
         .loginBtn {
           margin-right: 10px;
+        }
+        .userAvatar img {
+          height: 40px;
+          width: 40px;
+          background-color: #fff;
+          border-radius: 50%
         }
         h1 {
           font-size: 18px;

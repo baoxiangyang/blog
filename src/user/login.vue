@@ -35,7 +35,7 @@
           </el-form-item>
           <el-form-item class="recoverItem">
             <el-button type="danger" :disabled="recoverBtn" @click="handleRecoverPassword('recoverForm')">重置密码</el-button>
-            <el-button type="text" @click="isLogin = true">GO登录</el-button>
+            <el-button type="text" @click="isLogin = true" class="goLogin">GO登录</el-button>
           </el-form-item>
         </el-form>
       </transition>
@@ -137,6 +137,11 @@
                 if(this.$route.name == 'register'){
                   this.$router.push({name: 'index'});
                 }
+                this.$notify({
+                  title: '成功',
+                  message: '登录成功，请尽情的玩耍',
+                  type: 'success'
+                });
               }else{
                 this.loginText = res.data.msg;
               }
@@ -262,6 +267,9 @@
       font-weight: bold;
     }
     .forgetPassword {
+      &:hover, &:focus {
+        text-decoration: underline;
+      }
       float: right;
       margin-top: -34px;
     }
@@ -283,6 +291,11 @@
         &:last-child {
           width: 30%;
           float: right;
+        }
+      }
+      .goLogin {
+        &:hover, &:focus {
+          text-decoration: underline;
         }
       }
     }

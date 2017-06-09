@@ -7,6 +7,7 @@ const json = require('koa-json');
 const onerror = require('koa-onerror');
 const bodyparser = require('koa-bodyparser')();
 const favicon = require('koa-favicon');
+const mongo = require('./dbs/index.js');
 import session from 'koa-session2';
 import redisStore from './common/store.js';
 const process = require('process');
@@ -55,7 +56,21 @@ app.use(async (ctx, next) => {
   const ms = new Date() - start;
   console.log(`${ctx.method} ${ctx.url} - ${ms}ms`);
 });
-
+//处理记住登录状态
+app.use(async (ctx, next)=> {
+  let loginStatus = ctx.cookies.get('loginStatus');
+  if(loginStatus && !ctx.session.userInfo){
+    ctx.session.userInfo = (await mongo.findUserInfo({loginStatus: loginStatus}))[0];
+  }
+  await next();
+  if(loginStatus && ctx.request.body.userInfo && ctx.session.userInfo.loginStatus === loginStatus){
+    ctx.body.userInfo = {
+      userName: ctx.session.userInfo.userName,
+      avatarImg: ctx.session.userInfo.avatarImg,
+      userId: ctx.session.userInfo._id
+    };
+  }
+});
 router.use('/', index.routes(), index.allowedMethods());
 router.use('/article', article.routes(), article.allowedMethods());
 router.use('/user', user.routes(), user.allowedMethods());
