@@ -1,8 +1,8 @@
 module.exports = {
 	mongodb: {
 		host: '119.23.70.244',
-		user: 'test',
-		password: '123456',
+		user: 'xybao',
+		password: 'baozi123',
 		port: 27017,
 		dbs: 'dbs'
 	},
@@ -15,6 +15,6 @@ module.exports = {
 	loginStatusTime: 1000 * 60 * 60 * 24 * 15, //登录状态保存时间(ms)
 	imgSavePath: './article',
 	htmlSavePath: './article/html',
-	logFile: './tempFile/getArticleLog.txt',
+	logFile: '../tempFile/getArticleLog.txt',
 	password: 'xxx'
 };

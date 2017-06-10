@@ -62,7 +62,7 @@ function getData(url, option = {}){
 				writeLog('请求图片数量： '+ imgs.length);
 				if(imgs.length){
 					imgs.filter(function(item, index) {
-						let src = $(this).data('src'),
+						let src = $(this).data('src') || $(this).attr('src'),
 							_src = undefined;
 						if(src){
 							let self = $(this);
