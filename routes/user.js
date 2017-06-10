@@ -174,9 +174,10 @@ router.post('/login', async function(ctx, next){
 				await mongo.updateUserInfo({email: userInfo[0].email}, {loginStatus});
 				ctx.cookies.set('loginStatus', loginStatus, {
 					maxAge: config.loginStatusTime,
-					httpOnly:true,
-					overwrite:true
+					httpOnly: true,
+					overwrite: true
 				});
+				userInfo[0].loginStatus = loginStatus;
 			}
 			ctx.session.userInfo = userInfo[0];
 			ctx.body = {
@@ -184,7 +185,8 @@ router.post('/login', async function(ctx, next){
 				msg:'登录成功',
 				data: {
 					userName: userInfo[0].userName,
-					avatarImg: userInfo[0].avatarImg
+					avatarImg: userInfo[0].avatarImg,
+					userId: userInfo[0]._id
 				}
 			};
 		}else{
@@ -226,5 +228,16 @@ router.post('/recoverPassword', async function(ctx, next){
 			msg: '修改密码失败，请重试'
 		};
 	}
+});
+//退出登录
+router.post('/logOut', async function(ctx, next){
+	ctx.session = {};
+	ctx.cookies.set('loginStatus', '', {
+		expires: new Date()
+	});
+	ctx.body = {
+		errorCode: 0,
+		msg: '退出登录成功'
+	};
 });
 module.exports = router;

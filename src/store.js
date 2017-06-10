@@ -7,7 +7,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     dialogLogin: false,
-    userInfo: 121
+    userInfo: null
   },
   mutations: {
     [set_dialogLogin](state, bool){
