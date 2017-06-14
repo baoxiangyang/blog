@@ -6,6 +6,7 @@ import articleList from './article/articleList.vue';
 import articleDetails from './article/articleDetails.vue';
 import crawler from './crawler/index.vue';
 import register from './user/register.vue';
+import messageBoard from './messageBoard/index.vue';
 Vue.use(VueRouter);
 
 export default new VueRouter({
@@ -19,6 +20,7 @@ export default new VueRouter({
 			]
 		},
 		{ path: '/crawler.html', name: 'crawler', component: crawler },
-		{ path: '/register.html', name: 'register', component: register }
+		{ path: '/register.html', name: 'register', component: register },
+		{ path: '/messageBoard.html', name: 'messageBoard', component: messageBoard }
   ]
 });

@@ -16,4 +16,5 @@ table { border-collapse:collapse; border-spacing:0; }
 .maxWidth {
 	max-width: 1140px;
 	margin: 0 auto !important;
+    box-sizing: border-box;
 }

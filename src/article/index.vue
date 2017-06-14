@@ -108,7 +108,6 @@
       .search {
         max-width: 200px;
         float: right;
-        margin-right: 25px;
         margin-top: 5px;
       }
     }

@@ -85,7 +85,6 @@
 <style lang="less">
   .articleLayout {
     padding: 0 5px;
-    margin: 0 !important;
     .nodata {
       padding:12px 0;
       text-align: center;

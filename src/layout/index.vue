@@ -131,7 +131,6 @@
         }
         h1 {
           font-size: 18px;
-          padding-left: 25px;
           height: 60px;
           line-height: 60px;
           margin: 0;
@@ -147,7 +146,6 @@
         }
         &:last-child {
           text-align: right;
-          padding-right: 25px;
         }
         img {
           border: 0;
