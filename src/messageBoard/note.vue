@@ -1,36 +1,62 @@
 <template>
-  <div class="note message" :style="{backgroundColor:color}">
-  	<i class="topLeft" :style="messageObj"></i>
-  </div>
+  <section class="note paper" :style="commonStyle">
+  	<i :style=""></i>
+  	<article>
+	  	<aside class="info">
+	  		<img src="/images/userAvatar/defualtUser.png" alt="">
+	  		<span class="name">xybao：</span> 
+	  	</aside>
+	  	<p>&emsp;&emsp;123454年晒还打峰峰你上课了那位客人坑我呢人离开你扔了我可能了我看呢人
+	  	另外可能未来可能r还掉色加厚底爱的 爱的阿发</p>
+	  	<time>2017-09-23 11:31:11</time>
+  	</article>
+  	<article>
+  		<p><span class="name">xybao: </span>nishi失败妈的？</p>
+  		<time>2017-09-23 11:31:11</time>
+  	</article>
+  	<el-button type="text" class="comment">评 论</el-button>
+  </section>
 </template>
 <script type="text/javascript">
   export default {
     name: 'note',
     data() {
       return {
-        color: 'rgb(206, 190, 75)'
+        bgColor: 'rgb(206, 190, 75)'
       };
     },
     computed: {
 		gradientColor() {
-			return this.similarColor(this.color, 30, true);
+			return this.similarColor(this.bgColor, 30, true);
 		},
 		gradientColor49() {
-			return this.similarColor(this.color, 30, true);
+			return this.similarColor(this.bgColor, 30, true);
 		},
-		rotate(){
+		commonStyle() {
 			let rand = Math.random(),
-			num = (rand > 0.5 ? 20 * rand : -20 * rand) ;
-			return parseInt(num) + 'deg';
+			num = parseInt(rand > 0.5 ? 20 * rand : -20 * rand);
+			return {
+				backgroundColor: this.bgColor,
+				transform: `rotate(${num}deg)`,
+				'-webkit-transform': `rotate(${num}deg)`,
+				'-moz-transform': `rotate(${num}deg)`,
+				'-ms-transform': `rotate(${num}deg)`,
+				'-o-transform': `rotate(${num}deg)`
+			};
 		},
 		messageObj(){
 			return {
-				background: `linear-gradient(135deg, ${this.gradientColor}  0%,${this.gradientColor49} 49%, #fff 50%, #fff)`
+				background: [`linear-gradient(135deg, ${this.gradientColor}  0%,${this.gradientColor49} 49%, #fff 50%, #fff)`,
+					`-webkit-linear-gradient(135deg, ${this.gradientColor}  0%,${this.gradientColor49} 49%, #fff 50%, #fff)`,
+					`-ms-linear-gradient(135deg, ${this.gradientColor}  0%,${this.gradientColor49} 49%, #fff 50%, #fff)`,
+					`-moz-linear-gradient(135deg, ${this.gradientColor}  0%,${this.gradientColor49} 49%, #fff 50%, #fff)`,
+					`-o-linear-gradient(135deg, ${this.gradientColor}  0%,${this.gradientColor49} 49%, #fff 50%, #fff)`
+				]
 			};
 		},
 		paperObj() {
 			return {
-				backgroundColor: `${this.similarColor(this.color)}`
+				backgroundColor: `${this.similarColor(this.bgColor)}`
 			};
 		}
     },
@@ -106,5 +132,38 @@
 			border-right: 1px dashed rgba(0, 0, 0, 0.1);
 			box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.2);
 		}
+	}
+	.note {
+		.info {
+			overflow: hidden;
+			text-overflow:ellipsis;
+			white-space: nowrap;
+			img {
+				width: 30px;
+				height: 30px;
+				border-radius: 50%;
+				vertical-align: middle;
+			}
+		}
+		article {
+			margin: 5px 0;
+			.name {
+				font-weight: bold;
+				color: #009a61;
+			}
+			time {
+				display: block;
+				text-align: right;
+				font-size: 14px;
+			}
+		}
+		.comment {
+			font-weight: bold;
+			float: right;
+			display: none;
+		}
+		&:hover .comment{
+			display: inline-block;
+		} 
 	}
 </style>
