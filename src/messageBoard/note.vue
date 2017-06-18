@@ -1,28 +1,32 @@
 <template>
-  <section class="note paper" :style="commonStyle">
-  	<i :style=""></i>
+  <section :class="['note', (option.type == 'paper' ? 'paper' : 'message')]" :style="commonStyle">
+  	<i :style="option.type == 'paper' ? paperObj : messageObj" 
+  		:class="{'topLeft': option.type == 'messageTop'}"></i>
   	<article>
 	  	<aside class="info">
-	  		<img src="/images/userAvatar/defualtUser.png" alt="">
-	  		<span class="name">xybao：</span> 
+	  		<img :src="option.commenter.userInfo.avatarImg" alt="">
+	  		<span class="name">{{option.commenter.userInfo.userName}}：</span> 
 	  	</aside>
-	  	<p>&emsp;&emsp;123454年晒还打峰峰你上课了那位客人坑我呢人离开你扔了我可能了我看呢人
-	  	另外可能未来可能r还掉色加厚底爱的 爱的阿发</p>
-	  	<time>2017-09-23 11:31:11</time>
+	  	<p>&emsp;&emsp;{{option.commenter.content}}</p>
+	  	<time>{{option.commenter.time}}</time>
   	</article>
-  	<article>
-  		<p><span class="name">xybao: </span>nishi失败妈的？</p>
-  		<time>2017-09-23 11:31:11</time>
+  	<article  v-for="(item, index) in option.commentList" :key="index" class="commentList">
+  		<p><span class="name">{{item.name}}: </span>{{item.content}}</p>
+  		<time>{{item.time}}</time>
   	</article>
-  	<el-button type="text" class="comment">评 论</el-button>
+  	<template v-if="!option.noBtn">
+		<el-button type="text" class="comment">评 论</el-button>
+  	</template>
   </section>
 </template>
 <script type="text/javascript">
   export default {
     name: 'note',
+    props:["option"],
     data() {
       return {
-        bgColor: 'rgb(206, 190, 75)'
+		bgColor: this.option.bgColor || 'rgb(206, 190, 75)',
+		color: this.option.color || '#000'
       };
     },
     computed: {
@@ -34,9 +38,10 @@
 		},
 		commonStyle() {
 			let rand = Math.random(),
-			num = parseInt(rand > 0.5 ? 20 * rand : -20 * rand);
+			num = parseInt(rand > 0.5 ? 15 * rand : -15 * rand);
 			return {
 				backgroundColor: this.bgColor,
+				color: this.color,
 				transform: `rotate(${num}deg)`,
 				'-webkit-transform': `rotate(${num}deg)`,
 				'-moz-transform': `rotate(${num}deg)`,
@@ -87,7 +92,6 @@
 		position: relative;
 		padding:15px;
 		border-radius: 5px;
-		margin: 50px;
 		i {
 			content: '';
 			width: 20px;
@@ -146,7 +150,9 @@
 			}
 		}
 		article {
-			margin: 5px 0;
+			&:not(:last-of-type){
+				margin-bottom: 5px;
+			}
 			.name {
 				font-weight: bold;
 				color: #009a61;
@@ -156,6 +162,10 @@
 				text-align: right;
 				font-size: 14px;
 			}
+
+		}
+		.commentList {
+			font-size: 14px;
 		}
 		.comment {
 			font-weight: bold;

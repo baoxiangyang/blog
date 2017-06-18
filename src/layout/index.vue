@@ -15,7 +15,7 @@
             <el-menu-item index="4">简介</el-menu-item>
           </el-col> -->
           <el-col :span="5" class="headerItem" :push="14">
-            <template v-if="!userInfo">
+            <template v-if="!userInfo.userName">
               <el-button type="success" class="loginBtn" size="small" @click="set_dialogLogin(true)">登录</el-button>
               <router-link :to="{name: 'register'}">
                 <el-button type="info" size="small">注册</el-button>

@@ -7,7 +7,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     dialogLogin: false,
-    userInfo: null
+    userInfo: {}
   },
   mutations: {
     [set_dialogLogin](state, bool){
@@ -15,6 +15,7 @@ export default new Vuex.Store({
     },
     [set_userInfo](state, data) {
       state.userInfo = data;
+      // state.userInfo = Object.assign({}, data);
     }
   },
   modules: {
