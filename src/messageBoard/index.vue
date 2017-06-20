@@ -5,9 +5,9 @@
     <el-dialog
       title="创建留言" class="addDialog"
       :visible.sync="createMessage">
-      <el-form :inline="false" :model="createForm">
+      <el-form :inline="false" :model="createForm" :rules="createRules" ref="createForm">
         <el-form-item label="风格">
-          <el-select v-model="createForm.type" placeholder="请选择风格" @change="noteTypeChange">
+          <el-select v-model="createForm.type" placeholder="请选择风格">
             <el-option
               v-for="item in noteType"
               :key="item.value"
@@ -17,15 +17,22 @@
           </el-select>
         </el-form-item>
         <el-form-item label="背景颜色">
-          <el-color-picker v-model="createForm.bgColor"></el-color-picker>
+          <el-color-picker color-format="rgb" v-model="createForm.bgColor"></el-color-picker>
           <span class="fontSpan">字体颜色</span>
-          <el-color-picker v-model="createForm.color"></el-color-picker>
+          <el-color-picker color-format="rgb" v-model="createForm.color"></el-color-picker>
         </el-form-item>
-        <el-form-item label="内容">
-          <el-input type="textarea" v-model="createForm.commenter.content" placeholder="请输入留言"></el-input>
+        <el-form-item label="内容" prop="content" :rules="[
+            { required: true, message: '留言内容不能为空'},
+            {max: 220, message: '留言内容不能超过200个字', trigger: 'blur'}
+          ]">
+          <el-input type="textarea" @change="contentChange" v-model="createForm.commenter.content" placeholder="请输入留言"></el-input>
         </el-form-item>
         <el-form-item label="预览">
           <Note :option="createForm" v-if="createForm.commenter.userInfo.userName"></Note>
+        </el-form-item>
+        <el-form-item class="createBtns">
+          <el-button type="primary" @click="onSubmit('createForm')">创建</el-button>
+          <el-button @click="resetForm('createForm')">取消</el-button>
         </el-form-item>
       </el-form>
   </el-dialog>
@@ -42,14 +49,18 @@
         createMessage: true,
         createForm: {
           bgColor: 'rgb(206, 190, 75)',
-          color: '#000',
+          color: 'rgb(0, 0, 0)',
           type: 'paper',
           noBtn: true,
+          content: '',
           commenter: {
             userInfo: {},
             content: '',
             time: formatTime(Date.now(), null, true)
           }
+        },
+        createRules: {
+          
         },
         noteType: [{label: '风格一', value: 'paper'}, 
             {label: '风格二', value: 'message'},
@@ -72,7 +83,22 @@
       })
     },
     methods: {
-      noteTypeChange (){}
+      onSubmit(formName) {
+        this.$refs[formName].validate((valid) =>{
+          if(valid){
+            this.$myAjax.post(this, '/messageWall/message', this.createForm).then(res => {
+              console.log(res);
+            });
+          }
+        });
+      },
+      resetForm(formName) {
+        this.$refs[formName].resetFields();
+        this.createMessage = false;
+      },
+      contentChange(val){
+        this.createForm.content = val;
+      }
     },
     watch: {
       userInfo (val){
@@ -114,6 +140,9 @@
           textarea {
             height: 80px;
             resize: none;
+          }
+          .createBtns {
+            text-align: right;
           }
         }
       }

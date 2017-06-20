@@ -34,7 +34,8 @@ if(process.env.NODE_ENV != 'production'){
 
 const index = require('./routes/index'),
   article = require('./routes/article'),
-  user = require('./routes/user.js');
+  user = require('./routes/user.js'),
+  messageWall = require('./routes/messageWall.js');
 // middlewares
 app.use(convert(bodyparser));
 app.use(convert(json()));
@@ -74,6 +75,7 @@ app.use(async (ctx, next)=> {
 router.use('/', index.routes(), index.allowedMethods());
 router.use('/article', article.routes(), article.allowedMethods());
 router.use('/user', user.routes(), user.allowedMethods());
+router.use('/messageWall', messageWall.routes(), messageWall.allowedMethods());
 
 app.use(router.routes(), router.allowedMethods());
 // response

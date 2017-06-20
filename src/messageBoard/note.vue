@@ -25,23 +25,22 @@
     props:["option"],
     data() {
       return {
-		bgColor: this.option.bgColor || 'rgb(206, 190, 75)',
-		color: this.option.color || '#000'
+		
       };
     },
     computed: {
 		gradientColor() {
-			return this.similarColor(this.bgColor, 30, true);
+			return this.similarColor(this.option.bgColor, 30, true);
 		},
 		gradientColor49() {
-			return this.similarColor(this.bgColor, 30, true);
+			return this.similarColor(this.option.bgColor, 30, true);
 		},
 		commonStyle() {
 			let rand = Math.random(),
 			num = parseInt(rand > 0.5 ? 15 * rand : -15 * rand);
 			return {
-				backgroundColor: this.bgColor,
-				color: this.color,
+				backgroundColor: this.option.bgColor,
+				color: this.option.color,
 				transform: `rotate(${num}deg)`,
 				'-webkit-transform': `rotate(${num}deg)`,
 				'-moz-transform': `rotate(${num}deg)`,
@@ -61,7 +60,7 @@
 		},
 		paperObj() {
 			return {
-				backgroundColor: `${this.similarColor(this.bgColor)}`
+				backgroundColor: `${this.similarColor(this.option.bgColor)}`
 			};
 		}
     },
@@ -97,8 +96,8 @@
 			width: 20px;
 			height: 20px;
 			position: absolute;
-			right: -2px;
-			bottom: -2px;
+			right: -1px;
+			bottom: -1px;
 		    background: linear-gradient(135deg, #675e25 24%,#675c12 49%,#fff 50%,#fff);
 		    border-top-left-radius: 50% 25%;
 		    box-shadow: -3px -4px 2px 0px #908323;
@@ -106,8 +105,8 @@
 		}
 	}
 	.topLeft {
-		left: -2px;
-		top: -2px;
+		left: -1px;
+		top: -1px;
 		transform: rotate(180deg);
 		box-shadow: 3px 4px 2px 0px #908323;
 		border-top-left-radius: 0;
@@ -156,6 +155,10 @@
 			.name {
 				font-weight: bold;
 				color: #009a61;
+			}
+			p {
+				word-break:break-all;
+				word-wrap:break-word;
 			}
 			time {
 				display: block;
