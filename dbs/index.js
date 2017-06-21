@@ -2,7 +2,8 @@ let mongoose = require('mongoose'),
 	mongoConfig = require('../config/config.js').mongodb,
 	db = mongoose.connect(`mongodb://${mongoConfig.user}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.dbs}`),
 	articleDB = require('./articleDB.js'),
-	userDB = require('./userDB.js');
+	userDB = require('./userDB.js'),
+	messageDb = require('./messageDb.js');
 	mongoose.Promise = global.Promise;
 
 db.connection.on('open', function(){
@@ -14,6 +15,6 @@ db.connection.on('error', function(err){
 });
 
 let article = articleDB(db),
-	user = userDB(db);
-
-module.exports = Object.assign(article, user);
+	user = userDB(db),
+	message = messageDb(db);
+module.exports = Object.assign(article, user, message);

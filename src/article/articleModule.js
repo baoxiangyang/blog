@@ -36,7 +36,7 @@ const articleModule = {
 	actions: {
 		//获取文章列表
 		get_articleList({state, commit, rootState}, postData) {
-			if(!rootState.userInfo){
+			if(!rootState.userInfo.userId){
 				postData.userInfo = true;
 			}
 			commit(set_articleStatus, {loading: true});

@@ -4,10 +4,9 @@ let Mongoose = require('mongoose'),
 		bgColor: {type: String, default: ''},
 		color: {type: String, default: ''},
 		type: {type: String, default: ''},
-		content: {type: String, default: ''},
 		commenter: {
 			userInfo: {
-				type : Mongoose.Schema.ObjectId,
+				type : Mongoose.Schema.Types.ObjectId,
 				ref : 'users'
 			},
             content: {type: String, default: ''},
@@ -15,7 +14,7 @@ let Mongoose = require('mongoose'),
 		},
 		commentList:[{
 			commentInfo: {
-				type : Mongoose.Schema.ObjectId,
+				type : Mongoose.Schema.Types.ObjectId,
 				ref : 'users'
 			},
 			content: {type: String, default: ''},
@@ -28,6 +27,10 @@ module.exports = function (db) {
 		saveMessage(data){
 			//保存留言
 			return new MessageModel(data).save();
+		},
+		findMessage(data){
+			//查询留言
+			return MessageModel.find(data).populate('commenter.userInfo');
 		}
 	};
 };

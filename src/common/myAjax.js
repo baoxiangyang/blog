@@ -17,7 +17,7 @@
 			});
 		};
 		Vue.prototype.$myAjax.post = function(self, url, data){
-			if(!self.$store.state.userInfo){
+			if(!self.$store.state.userInfo.userId){
 				data.userInfo = true;
 			}
 			return axios.post(url, data).then((res)=>{

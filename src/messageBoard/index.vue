@@ -46,7 +46,7 @@
     name: 'messageBoard',
     data() {
       return {
-        createMessage: true,
+        createMessage: false,
         createForm: {
           bgColor: 'rgb(206, 190, 75)',
           color: 'rgb(0, 0, 0)',
