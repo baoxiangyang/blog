@@ -1,5 +1,6 @@
 <template>
-  <section :class="['note', (option.type == 'paper' ? 'paper' : 'message')]" :style="commonStyle">
+  <section :class="['note', (option.type == 'paper' ? 'paper' : 'message')]" 
+  	:style="commonStyle">
   	<i :style="option.type == 'paper' ? paperObj : messageObj" 
   		:class="{'topLeft': option.type == 'messageTop'}"></i>
   	<article>
@@ -14,8 +15,10 @@
   		<p><span class="name">{{item.name}}: </span>{{item.content}}</p>
   		<time>{{item.time}}</time>
   	</article>
-  	<template v-if="!option.noBtn">
-		<el-button type="text" class="comment">评 论</el-button>
+  	<template v-if="option.btn">
+  		<el-button type="text" v-if="option.btn.edit" @click="handleClickEdit" class="edit">编 辑</el-button>
+  		<el-button type="text" v-if="option.btn.delete" @click="handleClickDelete" class="delete">删除</el-button>
+		<el-button type="text" v-if="option.btn.comment" @click="handleClickComment" class="comment">评 论</el-button>
   	</template>
   </section>
 </template>
@@ -78,6 +81,15 @@
 				return num;
 			});
 			return bool ? `rgb(${tempArr.join(', ')})` :`rgba(${tempArr.join(', ')}, .5)`;
+		},
+		handleClickEdit() {
+			this.$emit('clickEdit', this.option.id);
+		},
+		handleClickDelete() {
+			this.$emit('clickDelete', this.option.id);
+		},
+		handleClickBtn() {
+			this.$emit('clickComment', this.option.id);
 		}
     }
   };
@@ -170,12 +182,16 @@
 		.commentList {
 			font-size: 14px;
 		}
+		.edit, .delete {
+			margin-left:25px;
+			display: none;
+		}
 		.comment {
 			font-weight: bold;
 			float: right;
 			display: none;
 		}
-		&:hover .comment{
+		&:hover .comment, &:hover .edit, &:hover .delete{
 			display: inline-block;
 		} 
 	}

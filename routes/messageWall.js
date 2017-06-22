@@ -19,20 +19,30 @@ router.post('/message', async function(ctx, next){
 	data.commenter.userInfo = ctx.session.userInfo._id;
 	try {
 		let result = await mongo.saveMessage(data);
-		let userInfo = await mongo.findMessage({});
 		obj = {
 			errorCode: 0,
-			msg: result,
-			userInfo
+			data: {
+				messageId: result._id
+			},
+			msg: '留言成功'
 		};
 	}catch(e){
 		console.error(e);
 		obj = {
 			errorCode: -10,
-			msg: '数据库报错数据错误'
+			msg: '数据库报错数据错误',
+			errorMsg: e
 		};
 	}
-	//delete data.content;
 	ctx.body = obj;
+});
+//获取留言列表
+router.post('/messageList', async function(ctx, next){
+	let data = await mongo.findMessage();
+	ctx.body = {
+		errorCode: 0,
+		data,
+		msg: '请求留言数据成功'
+	};
 });
 module.exports = router;

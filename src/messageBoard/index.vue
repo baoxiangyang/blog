@@ -28,7 +28,8 @@
           <el-input type="textarea" @change="contentChange" v-model="createForm.commenter.content" placeholder="请输入留言"></el-input>
         </el-form-item>
         <el-form-item label="预览">
-          <Note :option="createForm" v-if="createForm.commenter.userInfo.userName"></Note>
+          <Note :option="createForm"
+            v-if="createForm.commenter.userInfo.userName"></Note>
         </el-form-item>
         <el-form-item class="createBtns">
           <el-button type="primary" @click="onSubmit('createForm')">创建</el-button>
@@ -51,7 +52,12 @@
           bgColor: 'rgb(206, 190, 75)',
           color: 'rgb(0, 0, 0)',
           type: 'paper',
-          noBtn: true,
+          id:1234,
+          btn: {
+            edit: true,
+            delete:true,
+            comment: true
+          },
           content: '',
           commenter: {
             userInfo: {},
@@ -98,6 +104,9 @@
       },
       contentChange(val){
         this.createForm.content = val;
+      },
+      handleComment(val){
+        alert(val)
       }
     },
     watch: {
