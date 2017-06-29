@@ -15,6 +15,16 @@ const messageModule = {
 			state = Object.assign(state, data);
 		}
 	},
+	getters: {
+		noteList: state => {
+			return state.messageList.map((item) => {
+				item.btn = {
+					comment: true
+				};
+				return item;
+			});
+		}
+	},
 	actions: {
 		get_messageList ({state, commit, rootState}, postData = {}){
 			if(!rootState.userInfo.userId){
@@ -22,7 +32,7 @@ const messageModule = {
 			}
 			commit(set_messageState, {loading: true});
 			return axios.post('/messageWall/messageList', postData).then(res => {
-				commit(get_messageList, res.data.data.messageList);
+				commit(get_messageList, res.data.data);
 				if(res.data.userInfo){
 					commit(set_userInfo, res.data.userInfo);
 				}

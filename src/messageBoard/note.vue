@@ -83,13 +83,13 @@
 			return bool ? `rgb(${tempArr.join(', ')})` :`rgba(${tempArr.join(', ')}, .5)`;
 		},
 		handleClickEdit() {
-			this.$emit('clickEdit', this.option.id);
+			this.$emit('clickEdit', this.option._id);
 		},
 		handleClickDelete() {
-			this.$emit('clickDelete', this.option.id);
+			this.$emit('clickDelete', this.option._id);
 		},
-		handleClickBtn() {
-			this.$emit('clickComment', this.option.id);
+		handleClickComment() {
+			this.$emit('clickComment', this.option._id);
 		}
     }
   };

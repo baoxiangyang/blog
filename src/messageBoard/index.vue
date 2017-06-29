@@ -36,7 +36,10 @@
           <el-button @click="resetForm('createForm')">取消</el-button>
         </el-form-item>
       </el-form>
-  </el-dialog>
+    </el-dialog>
+    <Note v-for="(item, index) in noteList" :key="index" 
+      :option="item"  @clickComment="handleComment"
+    ></Note>
   </div>
 </template>
 <script type="text/javascript">
@@ -86,7 +89,8 @@
     computed: {
       ...mapState({
         userInfo: state => state.userInfo
-      })
+      }),
+      ...mapGetters(['noteList'])
     },
     methods: {
       onSubmit(formName) {
@@ -106,8 +110,19 @@
         this.createForm.content = val;
       },
       handleComment(val){
-        alert(val)
-      }
+        this.$prompt('请输入评论内容', '评论', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputPattern: /.{5,}/,
+          inputErrorMessage: '评论内容不能少于5个字'
+        }).then(({ value }) => {
+          console.log(value);
+        });
+      },
+      ...mapActions(['get_messageList'])
+    },
+    beforeRouteEnter(to, from, next){
+      next(vm => vm.get_messageList());
     },
     watch: {
       userInfo (val){
