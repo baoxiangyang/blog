@@ -30,7 +30,25 @@ module.exports = function (db) {
 		},
 		findMessage(data){
 			//查询留言
-			return MessageModel.find(data).populate('commenter.userInfo');
+			return MessageModel.find(data, {__v: 0}).populate([{
+				path: 'commenter.userInfo',
+				select: {
+					avatarImg: 1,
+					userName: 1,
+					_id: 0
+				}
+			}, {
+				path: 'commentList.commentInfo',
+				select: {
+					avatarImg: 1,
+					userName: 1,
+					_id: 0
+				}
+			}]);
+		},
+		addComment(data){
+			//添加评论
+			return MessageModel.update({_id: data.id}, {'$push':{commentList: data.comment}});
 		}
 	};
 };

@@ -45,4 +45,13 @@ router.post('/messageList', async function(ctx, next){
 		msg: '请求留言数据成功'
 	};
 });
+router.post('/messageComment', async function(ctx, next){
+	console.log(ctx.request.body);
+	let result = await mongo.addComment(ctx.request.body);
+	ctx.body = {
+		errorCode: 0,
+		msg: '评论成功',
+		result
+	};
+});
 module.exports = router;

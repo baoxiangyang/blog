@@ -1,4 +1,5 @@
 import {get_messageList, set_messageState, set_userInfo} from '../mutation-types.js';
+import {formatTime} from '../common/base.js';
 import axios from 'axios';
 const messageModule = {
 	state: {
@@ -17,9 +18,20 @@ const messageModule = {
 	},
 	getters: {
 		noteList: state => {
+			//var heightTop = parseInt(window.getComputedStyle(document.getElementsByClassName('messageWall')[0], null).height);
+			var heightTop = 890;
 			return state.messageList.map((item) => {
+				item.top = parseInt(Math.random() * heightTop);
+				item.left = parseInt(Math.random() * 1140);
+				item.commenter.time = formatTime(item.commenter.time, true, true);
+				item.commentList.forEach(function(listItem){
+					listItem.time = formatTime(listItem.time, true, true);
+				});
+				if(top < 50){
+					item.top += 50;
+				}
 				item.btn = {
-					comment: true
+					comment: false
 				};
 				return item;
 			});

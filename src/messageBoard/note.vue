@@ -44,6 +44,8 @@
 			return {
 				backgroundColor: this.option.bgColor,
 				color: this.option.color,
+				top: (this.option.top || 0) + 'px',
+				left: (this.option.left || 0) + 'px',
 				transform: `rotate(${num}deg)`,
 				'-webkit-transform': `rotate(${num}deg)`,
 				'-moz-transform': `rotate(${num}deg)`,
@@ -149,6 +151,7 @@
 		}
 	}
 	.note {
+		position: absolute;
 		.info {
 			overflow: hidden;
 			text-overflow:ellipsis;
