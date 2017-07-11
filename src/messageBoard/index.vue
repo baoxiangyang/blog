@@ -124,7 +124,7 @@
       ...mapMutations(['set_messageState'])
     },
     mounted (){
-      let messageWall = window.getComputedStyle(this.$refs['messageWall'], null)
+      let messageWall = window.getComputedStyle(this.$refs['messageWall'], null);
       this.set_messageState({
         heightTop: parseInt(messageWall.height),
         widthLeft: parseInt(messageWall.width)
@@ -136,6 +136,7 @@
     watch: {
       userInfo (val){
         this.createForm.commenter.userInfo = val;
+        this.set_messageState({userInfo: val});
       }
     },
     components: {

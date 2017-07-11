@@ -5,14 +5,14 @@
   		:class="{'topLeft': option.type == 'messageTop'}"></i>
   	<article>
 	  	<aside class="info">
-	  		<img :src="option.commenter.userInfo.avatarImg" alt="">
+	  		<img :src="option.commenter.userInfo.avatarImg || '/images/userAvatar/defualtUser.png'" alt="">
 	  		<span class="name">{{option.commenter.userInfo.userName}}：</span> 
 	  	</aside>
 	  	<p>&emsp;&emsp;{{option.commenter.content}}</p>
 	  	<time>{{option.commenter.time}}</time>
   	</article>
   	<article  v-for="(item, index) in option.commentList" :key="index" class="commentList">
-  		<p><span class="name">{{item.name}}: </span>{{item.content}}</p>
+  		<p><span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}</p>
   		<time>{{item.time}}</time>
   	</article>
   	<template v-if="option.btn">

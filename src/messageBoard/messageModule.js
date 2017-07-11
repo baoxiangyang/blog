@@ -4,6 +4,7 @@ import axios from 'axios';
 const messageModule = {
 	state: {
 		loading: false,
+		userInfo: {},
 		messageList: [],
 		errorCode: 0,
 		heightTop: 0,
@@ -35,9 +36,16 @@ const messageModule = {
 				if(item.left > widthLeft - 220){
 					item.left = widthLeft - 220;
 				}
-				item.btn = {
-					comment: false
-				};
+				if(item.commenter.userInfo.userName == state.userInfo.userName){
+					item.btn = {
+						edit: true,
+						delete: true
+					};
+				}else{
+					item.btn = {
+						comment: false
+					};
+				}
 				return item;
 			});
 		}
