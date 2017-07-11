@@ -6,6 +6,8 @@ const messageModule = {
 		loading: false,
 		messageList: [],
 		errorCode: 0,
+		heightTop: 0,
+		widthLeft: 0,
 		msg: ''
 	},
 	mutations: {
@@ -18,17 +20,20 @@ const messageModule = {
 	},
 	getters: {
 		noteList: state => {
-			//var heightTop = parseInt(window.getComputedStyle(document.getElementsByClassName('messageWall')[0], null).height);
-			var heightTop = 890;
+			let heightTop = state.heightTop,
+				widthLeft = state.widthLeft;
 			return state.messageList.map((item) => {
 				item.top = parseInt(Math.random() * heightTop);
-				item.left = parseInt(Math.random() * 1140);
+				item.left = parseInt(Math.random() * widthLeft);
 				item.commenter.time = formatTime(item.commenter.time, true, true);
 				item.commentList.forEach(function(listItem){
 					listItem.time = formatTime(listItem.time, true, true);
 				});
-				if(top < 50){
+				if(item.top < 50){
 					item.top += 50;
+				}
+				if(item.left > widthLeft - 220){
+					item.left = widthLeft - 220;
 				}
 				item.btn = {
 					comment: false

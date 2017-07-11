@@ -1,5 +1,5 @@
 <template>
-  <div class="maxWidth messageWall" :style="wallStyle">
+  <div class="maxWidth messageWall" :style="wallStyle" ref="messageWall">
     <el-button :plain="true" type="success" class="addMessage" 
       @click="createMessage = true">快来留言吧</el-button>
     <el-dialog
@@ -92,6 +92,7 @@
       }),
       ...mapGetters(['noteList'])
     },
+
     methods: {
       onSubmit(formName) {
         this.$refs[formName].validate((valid) =>{
@@ -119,7 +120,15 @@
           console.log(value);
         });
       },
-      ...mapActions(['get_messageList'])
+      ...mapActions(['get_messageList']),
+      ...mapMutations(['set_messageState'])
+    },
+    mounted (){
+      let messageWall = window.getComputedStyle(this.$refs['messageWall'], null)
+      this.set_messageState({
+        heightTop: parseInt(messageWall.height),
+        widthLeft: parseInt(messageWall.width)
+      });
     },
     beforeRouteEnter(to, from, next){
       next(vm => vm.get_messageList());
