@@ -12,7 +12,10 @@
 	  	<time>{{option.commenter.time}}</time>
   	</article>
   	<article  v-for="(item, index) in option.commentList" :key="index" class="commentList">
-  		<p><span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}</p>
+  		<p>
+  			<span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}
+  			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment">删除</el-button>
+  		</p>
   		<time>{{item.time}}</time>
   	</article>
   	<template v-if="option.btn">
@@ -42,6 +45,7 @@
 			let rand = Math.random(),
 			num = parseInt(rand > 0.5 ? 15 * rand : -15 * rand);
 			return {
+				position: this.option.position || 'absolute',
 				backgroundColor: this.option.bgColor,
 				color: this.option.color,
 				top: (this.option.top || 0) + 'px',
@@ -151,7 +155,6 @@
 		}
 	}
 	.note {
-		position: absolute;
 		.info {
 			overflow: hidden;
 			text-overflow:ellipsis;
@@ -184,6 +187,11 @@
 		}
 		.commentList {
 			font-size: 14px;
+			.deleteComment {
+				padding: 0;
+				float: right;
+				line-height: 20px;
+			}
 		}
 		.edit, .delete {
 			margin-left:25px;

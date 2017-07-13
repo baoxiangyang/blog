@@ -1,7 +1,7 @@
 <template>
   <div class="maxWidth messageWall" :style="wallStyle" ref="messageWall">
     <el-button :plain="true" type="success" class="addMessage" 
-      @click="createMessage = true">快来留言吧</el-button>
+      @click="handleCreate">快来留言吧</el-button>
     <el-dialog
       title="创建留言" class="addDialog"
       :visible.sync="createMessage">
@@ -55,6 +55,7 @@
           bgColor: 'rgb(206, 190, 75)',
           color: 'rgb(0, 0, 0)',
           type: 'paper',
+          position: 'relative',
           id:1234,
           btn: {
             edit: true,
@@ -94,6 +95,17 @@
     },
 
     methods: {
+      handleCreate(){
+        if(this.userInfo.userName){
+          this.createMessage = true;
+        }else{
+          this.$message({
+            showClose: true,
+            message: '请先登录',
+            type: 'warning'
+          });
+        }
+      },
       onSubmit(formName) {
         this.$refs[formName].validate((valid) =>{
           if(valid){

@@ -23,12 +23,18 @@ const messageModule = {
 		noteList: state => {
 			let heightTop = state.heightTop,
 				widthLeft = state.widthLeft;
+			if(state.messageList.length < 50){
+				heightTop = heightTop / 2;
+			}
 			return state.messageList.map((item) => {
 				item.top = parseInt(Math.random() * heightTop);
 				item.left = parseInt(Math.random() * widthLeft);
 				item.commenter.time = formatTime(item.commenter.time, true, true);
 				item.commentList.forEach(function(listItem){
 					listItem.time = formatTime(listItem.time, true, true);
+					if(listItem.commentInfo.userName == state.userInfo.userName){
+						listItem.deleteCommentBtn = true;
+					}
 				});
 				if(item.top < 50){
 					item.top += 50;
