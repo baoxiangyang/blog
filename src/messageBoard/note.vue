@@ -9,14 +9,14 @@
 	  		<span class="name">{{option.commenter.userInfo.userName}}：</span> 
 	  	</aside>
 	  	<p>&emsp;&emsp;{{option.commenter.content}}</p>
-	  	<time>{{option.commenter.time}}</time>
+	  	<time>{{option.commenter.timeMsg}}</time>
   	</article>
   	<article  v-for="(item, index) in option.commentList" :key="index" class="commentList">
   		<p>
   			<span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}
   			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment">删除</el-button>
   		</p>
-  		<time>{{item.time}}</time>
+  		<time>{{item.timeMsg}}</time>
   	</article>
   	<template v-if="option.btn">
   		<el-button type="text" v-if="option.btn.edit" @click="handleClickEdit" class="edit">编 辑</el-button>
@@ -89,7 +89,7 @@
 			return bool ? `rgb(${tempArr.join(', ')})` :`rgba(${tempArr.join(', ')}, .5)`;
 		},
 		handleClickEdit() {
-			this.$emit('clickEdit', this.option._id);
+			this.$emit('clickEdit', this.option._id, this.option.commenter.content);
 		},
 		handleClickDelete() {
 			this.$emit('clickDelete', this.option._id);

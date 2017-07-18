@@ -66,7 +66,7 @@
       handleCommand(command){
         if(command == 'logOut'){
           this.$myAjax.post(this, '/user/logOut').then(res => {
-            this.set_userInfo(null);
+            this.set_userInfo({});
             this.errorCode = res.data.errorCode;
             this.msg = res.data.msg;
           });

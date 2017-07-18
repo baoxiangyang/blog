@@ -25,14 +25,12 @@ module.exports = function(db){
 			}else{
 				findObj = {loginStatus: loginStatus};
 			}
-			console.log(findObj);
 			return UserModel.find(findObj, showInfo);
 		},
 		saveUserInfo(obj){
 			return new UserModel(obj).save();
 		},
 		updateUserInfo(find, update){
-			console.log(find, update);
 			return UserModel.update(find, {$set:update});
 		}
 	};

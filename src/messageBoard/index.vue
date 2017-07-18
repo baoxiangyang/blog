@@ -5,7 +5,7 @@
     <el-dialog
       title="创建留言" class="addDialog"
       :visible.sync="createMessage">
-      <el-form :inline="false" :model="createForm" :rules="createRules" ref="createForm">
+      <el-form :inline="false" :model="createForm" ref="createForm">
         <el-form-item label="风格">
           <el-select v-model="createForm.type" placeholder="请选择风格">
             <el-option
@@ -23,13 +23,13 @@
         </el-form-item>
         <el-form-item label="内容" prop="content" :rules="[
             { required: true, message: '留言内容不能为空'},
-            {max: 220, message: '留言内容不能超过200个字', trigger: 'blur'}
+            {max: 220, message: '留言内容不能超过220个字', trigger: 'blur'}
           ]">
           <el-input type="textarea" @change="contentChange" v-model="createForm.commenter.content" placeholder="请输入留言"></el-input>
         </el-form-item>
         <el-form-item label="预览">
           <Note :option="createForm"
-            v-if="createForm.commenter.userInfo.userName"></Note>
+            v-if="userInfo.userName"></Note>
         </el-form-item>
         <el-form-item class="createBtns">
           <el-button type="primary" @click="onSubmit('createForm')">创建</el-button>
@@ -37,8 +37,8 @@
         </el-form-item>
       </el-form>
     </el-dialog>
-    <Note v-for="(item, index) in noteList" :key="index" 
-      :option="item"  @clickComment="handleComment"
+    <Note v-for="(item, index) in noteList" :key="index" @clickDelete="handleDelete"
+      :option="item"  @clickComment="handleComment" @clickEdit="handleEdit"
     ></Note>
   </div>
 </template>
@@ -57,20 +57,13 @@
           type: 'paper',
           position: 'relative',
           id:1234,
-          btn: {
-            edit: true,
-            delete:true,
-            comment: true
-          },
+          btn: false,
           content: '',
           commenter: {
-            userInfo: {},
+            userInfo: this.userInfo,
             content: '',
             time: formatTime(Date.now(), null, true)
           }
-        },
-        createRules: {
-          
         },
         noteType: [{label: '风格一', value: 'paper'}, 
             {label: '风格二', value: 'message'},
@@ -122,15 +115,48 @@
       contentChange(val){
         this.createForm.content = val;
       },
-      handleComment(val){
+      handleComment(id){
+        //点击评论
         this.$prompt('请输入评论内容', '评论', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
-          inputPattern: /.{5,}/,
-          inputErrorMessage: '评论内容不能少于5个字'
+          inputPattern: /.{5,220}/,
+          inputErrorMessage: '评论内容在5-220之间'
         }).then(({ value }) => {
-          console.log(value);
-        });
+          this.$myAjax.post(this, '/messageWall/messageComment', {
+            id, content: value
+          }).then(res => {
+            console.log(res.data);
+          });
+        }).catch(() => {});
+      },
+      handleEdit(id, content){
+        //点击编辑
+        this.$prompt('请修改内容', '编辑', {
+          inputValue: content,
+          inputPattern:  /.{5,220}/,
+          inputErrorMessage: '编辑内容在5-220之间',
+          confirmButtonText: '确定',
+          cancelButtonText: '取消'
+        }).then(({value}) => {
+          this.$myAjax.post(this, '/messageWall/editMessage', {
+            id, content: value
+          }).then(res => {
+            console.log(res.data);
+          });
+        }).catch(() => {});
+      },
+      handleDelete(id) {
+        //点击删除
+        this.$confirm('确定永久删除此条留言?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.$myAjax.post(this, '/messageWall/deleteMessage', { id }).then(res => {
+            console.log(res.data);
+          });
+        }).catch(() => {});
       },
       ...mapActions(['get_messageList']),
       ...mapMutations(['set_messageState'])

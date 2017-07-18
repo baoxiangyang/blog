@@ -29,9 +29,9 @@ const messageModule = {
 			return state.messageList.map((item) => {
 				item.top = parseInt(Math.random() * heightTop);
 				item.left = parseInt(Math.random() * widthLeft);
-				item.commenter.time = formatTime(item.commenter.time, true, true);
+				item.commenter.timeMsg = formatTime(item.commenter.time, true, true);
 				item.commentList.forEach(function(listItem){
-					listItem.time = formatTime(listItem.time, true, true);
+					listItem.timeMsg = formatTime(listItem.time, true, true);
 					if(listItem.commentInfo.userName == state.userInfo.userName){
 						listItem.deleteCommentBtn = true;
 					}

@@ -46,9 +46,20 @@ module.exports = function (db) {
 				}
 			}]);
 		},
-		addComment(data){
+		findOneMessage(data) {
+			return MessageModel.findOne(data, {__v: 0});
+		},
+		addComment(find, data){
 			//添加评论
-			return MessageModel.update({_id: data.id}, {'$push':{commentList: data.comment}});
+			return MessageModel.update(find, {$push:{commentList: data}});
+		},
+		//编辑留言内容
+		editMessage(find, updata) {
+			return MessageModel.update(find, {$set: updata});
+		},
+		//删除留言内容
+		deleteMessage(find) {
+			return MessageModel.remove(find);
 		}
 	};
 };

@@ -45,13 +45,64 @@ router.post('/messageList', async function(ctx, next){
 		msg: '请求留言数据成功'
 	};
 });
+//评论留言
 router.post('/messageComment', async function(ctx, next){
-	console.log(ctx.request.body);
-	let result = await mongo.addComment(ctx.request.body);
-	ctx.body = {
-		errorCode: 0,
-		msg: '评论成功',
-		result
-	};
+	try {
+		let body = ctx.request.body;
+		let result = await mongo.addComment({id: body.id}, {content: body.content, commentInfo: ctx.session.userInfo._id});
+		ctx.body = {
+			errorCode: 0,
+			msg: '评论成功',
+			result
+		};
+	}catch(e){
+		ctx.body = {
+			errorCode: -9,
+			msg: '评论失败，请稍后再试'
+		};
+		console.error(e);
+	}
+	
+});
+//编辑留言
+router.post('/editMessage', async function(ctx, next){
+	var body = ctx.request.body;
+	if(body.content.length > 220 || body.content.length < 5){
+		ctx.body = {
+			errorCode: 10,
+			msg: '请输入满足条件的内容',
+		};
+		return false;
+	}
+	try {
+		let updata = await mongo.editMessage({_id: body.id, 'commenter.userInfo': ctx.session.userInfo._id}, {'commenter.content': body.content});
+		ctx.body = {
+			errorCode: 0,
+			updata
+		};
+	}catch(e){
+		let message = await mongo.findOneMessage({_id: body.id});
+		ctx.body = {
+			errorCode: -1,
+			msg: '修改留言错误，请稍后再试'
+		};
+		console.error('修改留言：', e);
+	}
+});
+//删除留言
+router.post('/deleteMessage', async function(ctx, next){
+	try {
+		let message = await mongo.deleteMessage({'commenter.userInfo': ctx.session.userInfo._id, _id: ctx.request.body.id});
+		ctx.body = {
+			errorCode: 0,
+			msg: '删除留言成功',
+		};
+	}catch(e){
+		ctx.body = {
+			errorCode: -12,
+			msg: '删除留言失败',
+		};
+		console.error(e);
+	}
 });
 module.exports = router;
