@@ -56,7 +56,6 @@
           color: 'rgb(0, 0, 0)',
           type: 'paper',
           position: 'relative',
-          id:1234,
           btn: false,
           content: '',
           commenter: {
@@ -71,7 +70,9 @@
           ],
         wallStyle: {
           height: null
-        }
+        },
+        errorCode: 0,
+        msg: ''
       };
     },
     created(){
@@ -103,7 +104,15 @@
         this.$refs[formName].validate((valid) =>{
           if(valid){
             this.$myAjax.post(this, '/messageWall/message', this.createForm).then(res => {
-              console.log(res);
+              let data = res.data;
+              if(!data.errorCode){
+                let messageItem = Object.assign(JSON.parse(JSON.stringify(this.createForm)), {_id: data.data.messageId, position: 'absolute', commentList: []});
+                this.push_messageList(messageItem);
+                this.createMessage = false;
+              }else{
+                this.errorCode = data.errorCode;
+                this.msg = data.msg;
+              }
             });
           }
         });
@@ -126,7 +135,13 @@
           this.$myAjax.post(this, '/messageWall/messageComment', {
             id, content: value
           }).then(res => {
-            console.log(res.data);
+            if(!res.data.errorCode){
+              this.push_commentList({id, content: value});
+            }else{
+              let data = res.data;
+              this.errorCode = data.errorCode;
+              this.msg = data.msg;
+            }
           });
         }).catch(() => {});
       },
@@ -142,7 +157,13 @@
           this.$myAjax.post(this, '/messageWall/editMessage', {
             id, content: value
           }).then(res => {
-            console.log(res.data);
+            if(!res.data.errorCode){
+              this.edit_messageList({id, content: value});
+            }else{
+              let data = res.data;
+              this.errorCode = data.errorCode;
+              this.msg = data.msg;
+            }
           });
         }).catch(() => {});
       },
@@ -154,12 +175,19 @@
           type: 'warning'
         }).then(() => {
           this.$myAjax.post(this, '/messageWall/deleteMessage', { id }).then(res => {
-            console.log(res.data);
+            if(!res.data.errorCode){
+              this.delete_messageList(id);
+            }else{
+              let data = res.data;
+              this.errorCode = data.errorCode;
+              this.msg = data.msg;
+            }
           });
         }).catch(() => {});
       },
       ...mapActions(['get_messageList']),
-      ...mapMutations(['set_messageState'])
+      ...mapMutations(['set_messageState', 'push_messageList', 'push_commentList',
+        'delete_messageList', 'edit_messageList'])
     },
     mounted (){
       let messageWall = window.getComputedStyle(this.$refs['messageWall'], null);

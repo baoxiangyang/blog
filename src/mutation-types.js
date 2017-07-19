@@ -4,3 +4,7 @@ export const set_dialogLogin= 'set_dialogLogin';
 export const set_userInfo= 'set_userInfo';
 export const get_messageList= 'get_messageList';
 export const set_messageState= 'set_messageState';
+export const push_messageList= 'push_messageList';
+export const delete_messageList= 'delete_messageList';
+export const edit_messageList= 'edit_messageList';
+export const push_commentList= 'push_commentList';

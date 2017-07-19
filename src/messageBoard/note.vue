@@ -9,14 +9,16 @@
 	  		<span class="name">{{option.commenter.userInfo.userName}}：</span> 
 	  	</aside>
 	  	<p>&emsp;&emsp;{{option.commenter.content}}</p>
-	  	<time>{{option.commenter.timeMsg}}</time>
+	  	<time class="infoTime">{{option.commenter.timeMsg}}</time>
   	</article>
   	<article  v-for="(item, index) in option.commentList" :key="index" class="commentList">
   		<p>
   			<span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}
-  			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment">删除</el-button>
   		</p>
-  		<time>{{item.timeMsg}}</time>
+  		<p class="deleteBtn">
+  			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment">删除</el-button>
+  			<time>{{item.timeMsg}}</time>
+  		</p>
   	</article>
   	<template v-if="option.btn">
   		<el-button type="text" v-if="option.btn.edit" @click="handleClickEdit" class="edit">编 辑</el-button>
@@ -166,6 +168,10 @@
 				vertical-align: middle;
 			}
 		}
+		.infoTime {
+			display: block;
+			text-align: right;
+		}
 		article {
 			&:not(:last-of-type){
 				margin-bottom: 5px;
@@ -179,19 +185,18 @@
 				word-wrap:break-word;
 			}
 			time {
-				display: block;
-				text-align: right;
 				font-size: 14px;
 			}
 
 		}
+		.deleteBtn {
+			text-align: right;
+			.deleteComment {
+				margin-right: 5px;
+			}
+		}
 		.commentList {
 			font-size: 14px;
-			.deleteComment {
-				padding: 0;
-				float: right;
-				line-height: 20px;
-			}
 		}
 		.edit, .delete {
 			margin-left:25px;

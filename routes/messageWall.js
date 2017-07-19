@@ -2,7 +2,7 @@ var router = require('koa-router')(),
 	base = require('../common/base.js'),
 	mongo = require('../dbs/index.js');
 
-//留言解绑
+//添加留言
 router.post('/message', async function(ctx, next){
 	let data =  ctx.request.body, obj = null;
 	if(data.commenter.content.length > 200){
@@ -49,16 +49,16 @@ router.post('/messageList', async function(ctx, next){
 router.post('/messageComment', async function(ctx, next){
 	try {
 		let body = ctx.request.body;
-		let result = await mongo.addComment({id: body.id}, {content: body.content, commentInfo: ctx.session.userInfo._id});
+		console.log(body);
+		let result = await mongo.addComment({_id: body.id}, {content: body.content, commentInfo: ctx.session.userInfo._id});
 		ctx.body = {
 			errorCode: 0,
-			msg: '评论成功',
-			result
+			msg: '评论成功'
 		};
 	}catch(e){
 		ctx.body = {
 			errorCode: -9,
-			msg: '评论失败，请稍后再试'
+			msg: '评论失败，此留言已删除'
 		};
 		console.error(e);
 	}

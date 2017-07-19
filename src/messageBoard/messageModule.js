@@ -1,4 +1,5 @@
-import {get_messageList, set_messageState, set_userInfo} from '../mutation-types.js';
+import {get_messageList, set_messageState, edit_messageList, push_commentList,
+	set_userInfo, push_messageList, delete_messageList} from '../mutation-types.js';
 import {formatTime} from '../common/base.js';
 import axios from 'axios';
 const messageModule = {
@@ -17,6 +18,36 @@ const messageModule = {
 		},
 		[set_messageState] (state, data){
 			state = Object.assign(state, data);
+		},
+		[push_messageList] (state, data){
+			//创建留言
+			state.messageList.push(data);
+		},
+		[delete_messageList] (state, id) {
+			//删除留言
+			let deleteItem = state.messageList.filter(function(item, index){
+				return item._id == id;
+			})[0];
+			state.messageList.splice(state.messageList.indexOf(deleteItem), 1);
+		},
+		[edit_messageList] (state, data) {
+			//编辑留言
+			let deleteItem = state.messageList.filter(function(item, index){
+				return item._id == data.id;
+			})[0];
+			deleteItem.commenter.content = data.content;
+		},
+		[push_commentList] (state, data) {
+			//添加评论
+			let deleteItem = state.messageList.filter(function(item, index){
+				return item._id == data.id;
+			})[0];
+			console.log(deleteItem)
+			deleteItem.commentList.push({
+				content: data.content,
+				time: Date.now(),
+				commentInfo: state.userInfo
+			});
 		}
 	},
 	getters: {
@@ -49,7 +80,7 @@ const messageModule = {
 					};
 				}else{
 					item.btn = {
-						comment: false
+						comment: true
 					};
 				}
 				return item;
