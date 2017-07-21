@@ -51,7 +51,6 @@ module.exports = function (db) {
 		},
 		addComment(find, data){
 			//添加评论
-			console.log(data)
 			return MessageModel.update(find, {$push:{ commentList: data}});
 		},
 		//编辑留言内容
@@ -61,6 +60,9 @@ module.exports = function (db) {
 		//删除留言内容
 		deleteMessage(find) {
 			return MessageModel.remove(find);
+		},
+		deleteComment(find) {
+			return MessageModel.update({_id:find.id}, {$pull: {commentList: {_id: find.commentID}}});
 		}
 	};
 };

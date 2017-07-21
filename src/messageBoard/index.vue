@@ -38,7 +38,7 @@
       </el-form>
     </el-dialog>
     <Note v-for="(item, index) in noteList" :key="index" @clickDelete="handleDelete"
-      :option="item"  @clickComment="handleComment" @clickEdit="handleEdit"
+      :option="item"  @clickComment="handleComment" @clickEdit="handleEdit" @clickDeleteComment="handleDeleteComment"
     ></Note>
   </div>
 </template>
@@ -182,6 +182,25 @@
               this.errorCode = data.errorCode;
               this.msg = data.msg;
             }
+          });
+        }).catch(() => {});
+      },
+      handleDeleteComment(id, commentID){
+        //点击删除评论
+        this.$confirm('确定永久删除此条评论?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.$myAjax.post(this, '/messageWall/deleteComment', { id, commentID}).then(res => {
+            /*if(!res.data.errorCode){
+              this.delete_messageList(id);
+            }else{
+              let data = res.data;
+              this.errorCode = data.errorCode;
+              this.msg = data.msg;
+            }*/
+            console.log(res.data)
           });
         }).catch(() => {});
       },

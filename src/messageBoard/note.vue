@@ -16,7 +16,8 @@
   			<span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}
   		</p>
   		<p class="deleteBtn">
-  			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment">删除</el-button>
+  			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment"
+  				@click="handleDeleteComment(item._id)">删除</el-button>
   			<time>{{item.timeMsg}}</time>
   		</p>
   	</article>
@@ -31,11 +32,6 @@
   export default {
     name: 'note',
     props:["option"],
-    data() {
-      return {
-		
-      };
-    },
     computed: {
 		gradientColor() {
 			return this.similarColor(this.option.bgColor, 30, true);
@@ -98,6 +94,9 @@
 		},
 		handleClickComment() {
 			this.$emit('clickComment', this.option._id);
+		},
+		handleDeleteComment(commentID){
+			this.$emit('clickDeleteComment', this.option._id, commentID);
 		}
     }
   };
@@ -183,6 +182,7 @@
 			p {
 				word-break:break-all;
 				word-wrap:break-word;
+				margin-bottom: 0;
 			}
 			time {
 				font-size: 14px;
@@ -193,6 +193,7 @@
 			text-align: right;
 			.deleteComment {
 				margin-right: 5px;
+				padding: 0;
 			}
 		}
 		.commentList {

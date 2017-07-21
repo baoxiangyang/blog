@@ -105,4 +105,21 @@ router.post('/deleteMessage', async function(ctx, next){
 		console.error(e);
 	}
 });
+//删除评论
+router.post('/deleteComment', async function(ctx, next){
+	try {
+		let data = ctx.request.body;
+		let message = await mongo.deleteComment({id: data.id, commentID: data.commentID});
+		ctx.body = {
+			errorCode: 0,
+			msg: '删除评论成功',
+		};
+	}catch(e){
+		ctx.body = {
+			errorCode: -12,
+			msg: '删除评论失败',
+		};
+		console.error(e);
+	}
+});
 module.exports = router;
