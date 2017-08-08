@@ -8,3 +8,4 @@ export const push_messageList= 'push_messageList';
 export const delete_messageList= 'delete_messageList';
 export const edit_messageList= 'edit_messageList';
 export const push_commentList= 'push_commentList';
+export const delte_commenter= 'delte_commenter';

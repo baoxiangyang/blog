@@ -126,6 +126,14 @@
       },
       handleComment(id){
         //点击评论
+        if(!this.userInfo.userName){
+          this.$message({
+            showClose: true,
+            message: '请先登录',
+            type: 'warning'
+          });
+          return false;
+        }
         this.$prompt('请输入评论内容', '评论', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
@@ -193,20 +201,19 @@
           type: 'warning'
         }).then(() => {
           this.$myAjax.post(this, '/messageWall/deleteComment', { id, commentID}).then(res => {
-            /*if(!res.data.errorCode){
-              this.delete_messageList(id);
+            if(!res.data.errorCode){
+              this.delte_commenter({id, commentID});
             }else{
               let data = res.data;
               this.errorCode = data.errorCode;
               this.msg = data.msg;
-            }*/
-            console.log(res.data)
+            }
           });
         }).catch(() => {});
       },
       ...mapActions(['get_messageList']),
       ...mapMutations(['set_messageState', 'push_messageList', 'push_commentList',
-        'delete_messageList', 'edit_messageList'])
+        'delete_messageList', 'edit_messageList', 'delte_commenter'])
     },
     mounted (){
       let messageWall = window.getComputedStyle(this.$refs['messageWall'], null);

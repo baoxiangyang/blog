@@ -1,5 +1,7 @@
-import {get_messageList, set_messageState, edit_messageList, push_commentList,
-	set_userInfo, push_messageList, delete_messageList} from '../mutation-types.js';
+import {get_messageList, set_messageState, 
+	edit_messageList, push_commentList,
+	set_userInfo, push_messageList, 
+	delete_messageList, delte_commenter} from '../mutation-types.js';
 import {formatTime} from '../common/base.js';
 import axios from 'axios';
 const messageModule = {
@@ -29,6 +31,16 @@ const messageModule = {
 				return item._id == id;
 			})[0];
 			state.messageList.splice(state.messageList.indexOf(deleteItem), 1);
+		},
+		[delte_commenter] (state, ids){
+			//删除评论
+			let messageItem = state.messageList.filter(function(item, index){
+				return item._id == ids.id;
+			})[0],
+			deleteItem = state.messageList.filter(function(item, index){
+				return item._id == ids.commentID;
+			})[0];
+			messageItem.commentList.splice(messageItem.commentList.indexOf(deleteItem), 1);
 		},
 		[edit_messageList] (state, data) {
 			//编辑留言
