@@ -7,7 +7,6 @@ import axios from 'axios';
 const messageModule = {
 	state: {
 		loading: false,
-		userInfo: {},
 		messageList: [],
 		errorCode: 0,
 		heightTop: 0,
@@ -54,16 +53,15 @@ const messageModule = {
 			let deleteItem = state.messageList.filter(function(item, index){
 				return item._id == data.id;
 			})[0];
-			console.log(deleteItem)
 			deleteItem.commentList.push({
 				content: data.content,
 				time: Date.now(),
-				commentInfo: state.userInfo
+				commentInfo: data.userInfo
 			});
 		}
 	},
 	getters: {
-		noteList: state => {
+		noteList: (state, getters, rootState) => {
 			let heightTop = state.heightTop,
 				widthLeft = state.widthLeft;
 			if(state.messageList.length < 50){
@@ -75,7 +73,7 @@ const messageModule = {
 				item.commenter.timeMsg = formatTime(item.commenter.time, true, true);
 				item.commentList.forEach(function(listItem){
 					listItem.timeMsg = formatTime(listItem.time, true, true);
-					if(listItem.commentInfo.userName == state.userInfo.userName){
+					if(listItem.commentInfo.userName == rootState.userInfo.userName && listItem._id){
 						listItem.deleteCommentBtn = true;
 					}
 				});
@@ -85,7 +83,7 @@ const messageModule = {
 				if(item.left > widthLeft - 220){
 					item.left = widthLeft - 220;
 				}
-				if(item.commenter.userInfo.userName == state.userInfo.userName){
+				if(item.commenter.userInfo.userName == rootState.userInfo.userName){
 					item.btn = {
 						edit: true,
 						delete: true

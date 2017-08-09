@@ -25,7 +25,7 @@
             { required: true, message: '留言内容不能为空'},
             {max: 220, message: '留言内容不能超过220个字', trigger: 'blur'}
           ]">
-          <el-input type="textarea" @change="contentChange" v-model="createForm.commenter.content" placeholder="请输入留言"></el-input>
+          <el-input type="textarea" v-model="content" placeholder="请输入留言"></el-input>
         </el-form-item>
         <el-form-item label="预览">
           <Note :option="createForm"
@@ -51,23 +51,11 @@
     data() {
       return {
         createMessage: false,
-        createForm: {
-          bgColor: 'rgb(206, 190, 75)',
-          color: 'rgb(0, 0, 0)',
-          type: 'paper',
-          position: 'relative',
-          btn: false,
-          content: '',
-          commenter: {
-            userInfo: this.userInfo,
-            content: '',
-            time: formatTime(Date.now(), null, true)
-          }
-        },
         noteType: [{label: '风格一', value: 'paper'}, 
             {label: '风格二', value: 'message'},
             {label: '风格三', value: 'messageTop'}
-          ],
+        ],
+        content: '',
         wallStyle: {
           height: null
         },
@@ -82,12 +70,27 @@
       }
     },
     computed: {
+      createForm: function(){
+        return {
+          bgColor: 'rgb(206, 190, 75)',
+          color: 'rgb(0, 0, 0)',
+          type: 'paper',
+          position: 'relative',
+          rotate: 1,
+          btn: false,
+          content: this.content,
+          commenter: {
+            userInfo: this.userInfo,
+            content: this.content,
+            time: formatTime(Date.now(), null, true)
+          }
+        };
+      },
       ...mapState({
         userInfo: state => state.userInfo
       }),
       ...mapGetters(['noteList'])
     },
-
     methods: {
       handleCreate(){
         if(this.userInfo.userName){
@@ -121,9 +124,6 @@
         this.$refs[formName].resetFields();
         this.createMessage = false;
       },
-      contentChange(val){
-        this.createForm.content = val;
-      },
       handleComment(id){
         //点击评论
         if(!this.userInfo.userName){
@@ -144,7 +144,7 @@
             id, content: value
           }).then(res => {
             if(!res.data.errorCode){
-              this.push_commentList({id, content: value});
+              this.push_commentList({id, content: value, userInfo: this.userInfo});
             }else{
               let data = res.data;
               this.errorCode = data.errorCode;
@@ -224,12 +224,6 @@
     },
     beforeRouteEnter(to, from, next){
       next(vm => vm.get_messageList());
-    },
-    watch: {
-      userInfo (val){
-        this.createForm.commenter.userInfo = val;
-        this.set_messageState({userInfo: val});
-      }
     },
     components: {
       Note

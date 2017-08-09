@@ -16,9 +16,9 @@
   			<span class="name">{{item.commentInfo.userName}}: </span>{{item.content}}
   		</p>
   		<p class="deleteBtn">
+  			<time>{{item.timeMsg}}</time>
   			<el-button type="text" v-if="item.deleteCommentBtn" class="deleteComment"
   				@click="handleDeleteComment(item._id)">删除</el-button>
-  			<time>{{item.timeMsg}}</time>
   		</p>
   	</article>
   	<template v-if="option.btn">
@@ -41,7 +41,7 @@
 		},
 		commonStyle() {
 			let rand = Math.random(),
-			num = parseInt(rand > 0.5 ? 15 * rand : -15 * rand);
+			num = this.option.rotate || parseInt(rand > 0.5 ? 15 * rand : -15 * rand);
 			return {
 				position: this.option.position || 'absolute',
 				backgroundColor: this.option.bgColor,
@@ -105,7 +105,6 @@
 	.message {
 		display: inline-block;
 		min-height: 100px;
-		width: 200px;
 		background-color: #c7b321;
 		position: relative;
 		padding:15px;
@@ -136,7 +135,6 @@
 		position: relative;
 		display: inline-block;
 		min-height: 150px;
-		width: 200px;
 		color: #000;
 		background-color: #abcdef;
 		box-shadow: 5px 5px 7px rgba(33,33,33,0.7);
@@ -156,6 +154,10 @@
 		}
 	}
 	.note {
+		width: 250px;
+		&:hover {
+			z-index: 1000;
+		}
 		.info {
 			overflow: hidden;
 			text-overflow:ellipsis;
