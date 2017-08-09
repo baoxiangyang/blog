@@ -1,19 +1,29 @@
 <template>
-  <article class="articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
-    <section v-if="currentItem.id">
-      <h2>{{currentItem.title}}</h2>
-      <el-tag key="index" :type="typeArr[randomType()]" v-for="(item, index) in currentItem.label">{{item}}</el-tag>
-      <template v-if="!!currentItem.author">
-        作者：<span>{{currentItem.author}}</span>
-      </template>
-      <template v-else>
-        来源：<span><a :href="currentItem.address">{{currentItem.source}}</a></span>
-      </template>
-      时间：<time :datetime="currentItem.time">{{currentItem.timeMsg}}</time>
-    </section>
-    <div v-html="detail"></div>
-    <p><strong>转载地址</strong> <a :href="currentItem.address">{{currentItem.address}}</a></p>
-  </article>
+  <el-row>
+    <el-col :span="20" :gutter="20">
+      <article class="articleDetails fmt" v-loading="detailLoading" element-loading-text="拼命加载中">
+        <section v-if="currentItem.id">
+          <h2>{{currentItem.title}}</h2>
+          <el-tag :key="index" :type="typeArr[randomType()]" v-for="(item, index) in currentItem.label">{{item}}</el-tag>
+          <template v-if="!!currentItem.author">
+            作者：<span>{{currentItem.author}}</span>
+          </template>
+          <template v-else>
+            来源：<span><a :href="currentItem.address">{{currentItem.source}}</a></span>
+          </template>
+          时间：<time :datetime="currentItem.time">{{currentItem.timeMsg}}</time>
+        </section>
+        <div v-html="detail" ref="detail"></div>
+        <p><strong>转载地址</strong> <a :href="currentItem.address">{{currentItem.address}}</a></p>
+      </article>
+    </el-col>
+    <el-col :span="4">
+      <dl v-if="!! directory.length" class="directory">
+        <dt>目录</dt>
+        <dd v-for="(item, index) in directory" :key="index">{{item}}</dd>
+      </dl>
+    </el-col>
+  </el-row>
 </template>
 <script type="text/javascript">
   import router from '../router.js';
@@ -27,7 +37,8 @@
         detail: '',
         typeArr: ['primary', 'success', 'warning', 'danger'],
         reg: /(<img.*?\ssrc=\")(\/img\/\S*?)((\.png|\.jpg|\.gif|\.jpeg)?)(\")/g,
-        articleDatail: null
+        articleDatail: null,
+        directory: []
       };
     },
     created() {
@@ -71,7 +82,7 @@
           this.detailLoading = false;
           if(res.data.errorCode === 0){
             window.fileData = res.data.data.fileData;
-            this.detail = res.data.data.fileData.replace(this.reg, '$1https://segmentfault.com$2\"');
+            this.detail = res.data.data.fileData;
             if(res.data.data.articleDatail){
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);
@@ -91,6 +102,19 @@
       },
       randomType(){
         return parseInt(Math.random() * this.typeArr.length);
+      }
+    },
+    watch: {
+      detail: function(val){
+        if(val){
+          setTimeout(() => {
+            let list = this.$refs['detail'].getElementsByTagName('h2');
+            if(list.length < 2) list = this.$refs['detail'].getElementsByTagName('h3');
+            for(let i = 0, leng = list.length; i < leng; i++){
+              this.directory.push(list[i].innerText);
+            }
+          }, 0);
+        }
       }
     }
   };
@@ -120,6 +144,16 @@
     }
     p strong {
       color: #009a61;
+    }
+  }
+  .directory {
+    margin-top: 30px;
+    dd, dt {
+      margin: 5px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
     }
   }
 </style>
