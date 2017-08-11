@@ -21,49 +21,47 @@ let Mongoose = require('mongoose'),
 			time: {type: Date, default: Date.now}
 		}]
 	});
+const MessageModel = Mongoose.model('messages', message_Schema);
 
-module.exports = function (db) {
-	const MessageModel = Mongoose.model('messages', message_Schema);
-	return {
-		saveMessage(data){
-			//保存留言
-			return new MessageModel(data).save();
-		},
-		findMessage(data){
-			//查询留言
-			return MessageModel.find(data, {__v: 0}).populate([{
-				path: 'commenter.userInfo',
-				select: {
-					avatarImg: 1,
-					userName: 1,
-					_id: 0
-				}
-			}, {
-				path: 'commentList.commentInfo',
-				select: {
-					avatarImg: 1,
-					userName: 1,
-					_id: 0
-				}
-			}]);
-		},
-		findOneMessage(data) {
-			return MessageModel.findOne(data, {__v: 0});
-		},
-		addComment(find, data){
-			//添加评论
-			return MessageModel.update(find, {$push:{ commentList: data}});
-		},
-		//编辑留言内容
-		editMessage(find, updata) {
-			return MessageModel.update(find, {$set: updata});
-		},
-		//删除留言内容
-		deleteMessage(find) {
-			return MessageModel.remove(find);
-		},
-		deleteComment(find) {
-			return MessageModel.update({_id:find.id}, {$pull: {commentList: {_id: find.commentID}}});
-		}
-	};
+module.exports = {
+	saveMessage(data){
+		//保存留言
+		return new MessageModel(data).save();
+	},
+	findMessage(data){
+		//查询留言
+		return MessageModel.find(data, {__v: 0}).populate([{
+			path: 'commenter.userInfo',
+			select: {
+				avatarImg: 1,
+				userName: 1,
+				_id: 0
+			}
+		}, {
+			path: 'commentList.commentInfo',
+			select: {
+				avatarImg: 1,
+				userName: 1,
+				_id: 0
+			}
+		}]);
+	},
+	findOneMessage(data) {
+		return MessageModel.findOne(data, {__v: 0});
+	},
+	addComment(find, data){
+		//添加评论
+		return MessageModel.update(find, {$push:{ commentList: data}});
+	},
+	//编辑留言内容
+	editMessage(find, updata) {
+		return MessageModel.update(find, {$set: updata});
+	},
+	//删除留言内容
+	deleteMessage(find) {
+		return MessageModel.remove(find);
+	},
+	deleteComment(find) {
+		return MessageModel.update({_id:find.id}, {$pull: {commentList: {_id: find.commentID}}});
+	}
 };

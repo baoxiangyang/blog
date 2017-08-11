@@ -10,34 +10,32 @@ let Mongoose = require('mongoose'),
 	authId: {type: String, default: ''},
 	type: {type: String, default: 'register'}
 });
-	
-module.exports = function(db){
-	const UserModel = Mongoose.model('users', user_Schema);
-	return {
-		findUserInfo({userName, email, password, loginStatus}, showInfo = {__v: 0}){
-			let findObj = null;
-			if(!userName && !email && !password && !loginStatus){
-				throw Error('请至少输入一个查询条件');
-			}
-			if(userName || email){
-				if(password){
-					findObj = {$or:[{userName: userName, password: password}, {email: userName, password: password}]};
-				}else{
-					findObj = {$or:[{userName: userName}, {email:email}]};
-				}
-			}else{
-				findObj = {loginStatus: loginStatus};
-			}
-			return UserModel.find(findObj, showInfo);
-		},
-		findUserOne(findObj) {
-			return UserModel.findOne(findObj);
-		},
-		saveUserInfo(obj){
-			return new UserModel(obj).save();
-		},
-		updateUserInfo(find, updata){
-			return UserModel.update(find, {$set:updata});
+const UserModel = Mongoose.model('users', user_Schema);
+
+module.exports = {
+	findUserInfo({userName, email, password, loginStatus}, showInfo = {__v: 0}){
+		let findObj = null;
+		if(!userName && !email && !password && !loginStatus){
+			throw Error('请至少输入一个查询条件');
 		}
-	};
+		if(userName || email){
+			if(password){
+				findObj = {$or:[{userName: userName, password: password}, {email: userName, password: password}]};
+			}else{
+				findObj = {$or:[{userName: userName}, {email:email}]};
+			}
+		}else{
+			findObj = {loginStatus: loginStatus};
+		}
+		return UserModel.find(findObj, showInfo);
+	},
+	findUserOne(findObj) {
+		return UserModel.findOne(findObj);
+	},
+	saveUserInfo(obj){
+		return new UserModel(obj).save();
+	},
+	updateUserInfo(find, updata){
+		return UserModel.update(find, {$set:updata});
+	}
 };

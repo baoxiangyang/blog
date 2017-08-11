@@ -12,7 +12,5 @@ db.then(() =>{
 }, (err) => {
 	console.log('连接错误', err);
 });
-let article = articleDB(db),
-	user = userDB(db),
-	message = messageDb(db);
-module.exports = Object.assign(article, user, message);
+
+module.exports = Object.assign(articleDB, userDB, messageDb);

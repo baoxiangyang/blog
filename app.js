@@ -83,7 +83,7 @@ app.use(async (ctx, next) => {
 app.use(async (ctx, next)=> {
   let loginStatus = ctx.cookies.get('loginStatus');
   if(loginStatus && !ctx.session.userInfo){
-    ctx.session.userInfo = (await mongo.findUserInfo({loginStatus: loginStatus}))[0];
+    ctx.session.userInfo = await mongo.findUserOne({loginStatus: loginStatus});
   }
   await next();
   if(ctx.method == "POST" && ((ctx.session.userInfo && ctx.session.userInfo.auth) || (loginStatus && ctx.request.body.userInfo && ctx.session.userInfo.loginStatus === loginStatus))){
