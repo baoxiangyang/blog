@@ -21,8 +21,9 @@ let Mongoose = require('mongoose'),
 			time: {type: Date, default: Date.now}
 		}]
 	});
+
 module.exports = function (db) {
-	const MessageModel = db.model('messages', message_Schema);
+	const MessageModel = Mongoose.model('messages', message_Schema);
 	return {
 		saveMessage(data){
 			//保存留言

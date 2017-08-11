@@ -1,15 +1,18 @@
 let Mongoose = require('mongoose'),
 	user_Schema =  new Mongoose.Schema({
 	userName: {type: String, index: { unique: true, dropDups: true }},
-	password: {type: String},
-	email: {type: String, unique: true},
+	password: {type: String, default: ''},
+	email: {type: String, default: ''},
 	avatarImg: {type: String, default: ''},
 	level: {type: Number, default: 10},
 	time: {type: Date, default: Date.now},
-	loginStatus: {type: String, default: ''}
+	loginStatus: {type: String, default: ''},
+	authId: {type: String, default: ''},
+	type: {type: String, default: 'register'}
 });
+	
 module.exports = function(db){
-	const UserModel = db.model('users', user_Schema);
+	const UserModel = Mongoose.model('users', user_Schema);
 	return {
 		findUserInfo({userName, email, password, loginStatus}, showInfo = {__v: 0}){
 			let findObj = null;
@@ -27,11 +30,14 @@ module.exports = function(db){
 			}
 			return UserModel.find(findObj, showInfo);
 		},
+		findUserOne(findObj) {
+			return UserModel.findOne(findObj);
+		},
 		saveUserInfo(obj){
 			return new UserModel(obj).save();
 		},
-		updateUserInfo(find, update){
-			return UserModel.update(find, {$set:update});
+		updateUserInfo(find, updata){
+			return UserModel.update(find, {$set:updata});
 		}
 	};
 };

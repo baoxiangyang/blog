@@ -3,9 +3,9 @@ const Koa = require('koa'),
   router = require('koa-router')(),
   views = require('koa-views'),
   convert = require('koa-convert'),
-  json = require('koa-json'),
-  onerror = require('koa-onerror'),
-  bodyparser = require('koa-bodyparser')(),
+  /*json = require('koa-json'),
+  bodyparser = require('koa-bodyparser'),*/
+  body = require('koa-json-body'),
   favicon = require('koa-favicon'),
   mongo = require('./dbs/index.js'),
   process = require('process'),
@@ -39,14 +39,14 @@ const index = require('./routes/index'),
   user = require('./routes/user.js'),
   messageWall = require('./routes/messageWall.js');
 // middlewares
-app.use(convert(bodyparser));
-app.use(convert(json()));
+/*app.use(bodyparser());
+app.use(convert(json()));*/
 
+app.use(body({limit: '10kb', fallback: true}));
 app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
-
-
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));
+
 //session
 app.use(session({
   key: "xiaobaozongID",
@@ -86,7 +86,8 @@ app.use(async (ctx, next)=> {
     ctx.session.userInfo = (await mongo.findUserInfo({loginStatus: loginStatus}))[0];
   }
   await next();
-  if(loginStatus && ctx.request.body.userInfo && ctx.session.userInfo.loginStatus === loginStatus){
+  if(ctx.method == "POST" && ((ctx.session.userInfo && ctx.session.userInfo.auth) || (loginStatus && ctx.request.body.userInfo && ctx.session.userInfo.loginStatus === loginStatus))){
+    ctx.session.userInfo.auth = false;
     ctx.body.userInfo = {
       userName: ctx.session.userInfo.userName,
       avatarImg: ctx.session.userInfo.avatarImg,
@@ -103,7 +104,7 @@ app.use(router.routes(), router.allowedMethods());
 // response
 
 app.on('error', function(err, ctx){
-  console.log(err);
+  console.error(err);
 });
 
 module.exports = app;

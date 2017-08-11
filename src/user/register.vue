@@ -41,8 +41,8 @@
     </el-form>
     <ul class="loginList">
       <li>快速登录</li>
-      <li><el-button><i class="myIcon myIcon-qq"></i> QQ账户</el-button></li>
-      <li><el-button type="success"><i class="myIcon myIcon-github"></i> GITHUB账户</el-button></li>
+      <li><a href="/authLogin.html?type=QQ"><el-button><i class="myIcon myIcon-qq"></i> QQ账户</el-button></a></li>
+      <li><a href="/authLogin.html?type=GITHUB"><el-button type="success"><i class="myIcon myIcon-github"></i> GITHUB账户</el-button></a></li>
     </ul>
   </div>
 </template>

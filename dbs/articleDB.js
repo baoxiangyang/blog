@@ -13,21 +13,23 @@ articleList_Schema =  new Mongoose.Schema({
 });
 
 module.exports = function(db){
-	const SfModel = db.model('sfdatas', articleList_Schema);
+	const SfModel = Mongoose.model('sfdatas', articleList_Schema);
 	return {
-		//查数文章列表 返回promise
-		findArticleArr({find = {}, pageSize = 10, currentPage = 1}){
-			return	SfModel.find(find, {_id: 0, __v: 0}).sort({'time': -1}).then((docs) => {
-				let data = {
-					total: docs.length,
-					pageSize: pageSize,
-					currentPage: currentPage,
-					list: docs.slice((currentPage -1) * pageSize, currentPage * pageSize),
-					error: false
-				};
-				docs = null;
-				return Promise.resolve(data);
-			});
+		//查数文章列表(分页)
+		async findArticleArr({find = {}, pageSize = 10, currentPage = 1}){
+			let total = (async() => {
+				return await SfModel.find(find).count();
+			})(),
+			list = (async () => {
+				return await SfModel.find(find, {_id: 0, __v: 0})
+					.sort({'time': -1}).skip((currentPage - 1) * pageSize).limit(pageSize);
+			})();
+			return {
+					list: await list,
+					total: await total,
+					pageSize,
+					currentPage,
+			};
 		},
 		//查询单条文章信息
 		findOneArticle(id){

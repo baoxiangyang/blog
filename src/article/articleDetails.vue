@@ -148,6 +148,7 @@
   }
   .directory {
     margin-top: 30px;
+    position: fixed;
     dd, dt {
       margin: 5px 0;
       white-space: nowrap;

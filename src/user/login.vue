@@ -42,8 +42,8 @@
     </div>
     <p class="quickLogin">
       <span>快速登录</span>
-      <a href="" title="QQ登录"><i class="myIcon myIcon-qq"></i></a>
-      <a href="" title="GITHUB登录"><i class="myIcon myIcon-github"></i></a>
+      <a href="/authLogin.html?type=QQ" title="QQ登录"><i class="myIcon myIcon-qq"></i></a>
+      <a href="/authLogin.html?type=GITHUB" title="GITHUB登录"><i class="myIcon myIcon-github"></i></a>
     </p>
   </el-dialog>
 </template>

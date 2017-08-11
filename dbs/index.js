@@ -1,19 +1,17 @@
-let mongoose = require('mongoose'),
-	mongoConfig = require('../config/config.js').mongodb,
-	db = mongoose.connect(`mongodb://${mongoConfig.user}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.dbs}`),
-	articleDB = require('./articleDB.js'),
-	userDB = require('./userDB.js'),
-	messageDb = require('./messageDb.js');
+let mongoose = require('mongoose');
 	mongoose.Promise = global.Promise;
+let mongoConfig = require('../config/config.js').mongodb,
+db = mongoose.connect(`mongodb://${mongoConfig.user}:${mongoConfig.password}@${mongoConfig.host}:${mongoConfig.port}/${mongoConfig.dbs}`, {useMongoClient: true}),
+articleDB = require('./articleDB.js'),
+userDB = require('./userDB.js'),
+messageDb = require('./messageDb.js');
+	
 
-db.connection.on('open', function(){
+db.then(() =>{
 	console.log('连接成功');
-});
-
-db.connection.on('error', function(err){
+}, (err) => {
 	console.log('连接错误', err);
 });
-
 let article = articleDB(db),
 	user = userDB(db),
 	message = messageDb(db);
