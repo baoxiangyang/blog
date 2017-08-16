@@ -1,6 +1,5 @@
-本站是一个前端技术网站。大多数内容来自网络，如有侵权请联系站长<br />
-技术机构：<br />
-	后台采用koa2 + mongodb <br />
-	前端采用vue2 + element<br />
-	提供一个数据库只读账户 db: dbs, user:test  pwd:123456<br>
-站长QQ: 791736879
+# 技术栈
+	* 服务器： node、koa2
+	* 客户端： vue、vuex、vue-router、Element-UI 
+	* 数据库： redis、mongodb
+	* 打包： webpack
