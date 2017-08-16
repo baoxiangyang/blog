@@ -7,13 +7,14 @@ import articleDetails from './article/articleDetails.vue';
 import crawler from './crawler/index.vue';
 import register from './user/register.vue';
 import messageBoard from './messageBoard/index.vue';
+import profile from './profile/index.vue';
 Vue.use(VueRouter);
 
 export default new VueRouter({
   mode: 'hash',
   routes: [
-		{ path: '/',  redirect:'/article', name: 'index'},
-		{ path:'/article', component: article, name:'article',
+		{ path: '/',  redirect:'/article.html', name: 'index'},
+		{ path:'/article.html', component: article, name:'article',
 			children:[
 				{ path: '', component: articleList, name: 'articleList'},
 				{ path: 'articleDetails', component: articleDetails, name: 'articleDetails'}
@@ -21,6 +22,7 @@ export default new VueRouter({
 		},
 		{ path: '/crawler.html', name: 'crawler', component: crawler },
 		{ path: '/register.html', name: 'register', component: register },
-		{ path: '/messageBoard.html', name: 'messageBoard', component: messageBoard }
+		{ path: '/messageBoard.html', name: 'messageBoard', component: messageBoard },
+		{ path: '/profile.html', name: 'profile', component: profile}
   ]
 });
