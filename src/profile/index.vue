@@ -19,9 +19,9 @@
     <h2>其他</h2>
       <ul>
         <li>源码： <a href="https://github.com/baoxiangyang/blog/tree/release-v2.0.0" target="_black">GITHUB地址</a></li>
-        <li>BUG反馈： <a href="https://github.com/baoxiangyang/blog/issues" target="_black">GITHUB_Issues</a></li>
+        <li>BUG反馈： <a href="https://github.com/baoxiangyang/blog/issues" target="_black">有什么BUG冲我来</a></li>
         <li>难点：mongodb关联查询(其实也不算难点)、线上环境加速优化(cdn加载资源，压缩，打包，按需加载)</li>
-        <li>UI丑不要怪我，毕竟没有女UI设计师呀</li>
+        <li><strong>UI丑不要怪我，毕竟没有女UI设计师呀</strong></li>
         <li>QQ交流群：133240225、 193572405</li>
       </ul>
   </div>

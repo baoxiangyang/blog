@@ -21,6 +21,5 @@ module.exports = {
 	loginStatusTime: 1000 * 60 * 60 * 24 * 15, //登录状态保存时间(ms)
 	imgSavePath: './article',
 	htmlSavePath: './article/html',
-	logFile: '../tempFile/getArticleLog.txt',
-	password: 'xxx'
+	logFile: '../tempFile/getArticleLog.txt'
 };

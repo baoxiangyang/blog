@@ -54,8 +54,8 @@ function getRandomStr({number = true, lowerLetter = false, capitalLetter = false
 
 }
 
-async function isLogin (ctx, next) {
-    if(ctx.session.userInfo || ctx.session.userInfo.userName){
+async function loginGo (ctx, next) {
+    if(ctx.session.userInfo && ctx.session.userInfo.userName){
         await next();
     }else{
         ctx.body = {
@@ -65,8 +65,19 @@ async function isLogin (ctx, next) {
     }
 }
 
+async function noLoginGo(ctx, next){
+    if(ctx.session.userInfo && ctx.session.userInfo.userName){
+        ctx.body = {
+            errorCode: -98,
+            msg: '用户已登录'
+        };
+    }else{
+        await next();
+    }
+}
 module.exports = {
 	fsPromise,
 	getRandomStr,
-    isLogin
+    loginGo,
+    noLoginGo
 };

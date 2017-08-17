@@ -51,9 +51,9 @@
     data() {
       return {
         createMessage: false,
-        noteType: [{label: '风格一', value: 'paper'}, 
-            {label: '风格二', value: 'message'},
-            {label: '风格三', value: 'messageTop'}
+        noteType: [{label: '风格一', value: 'paper'}
+            /*{label: '风格二', value: 'message'},
+            {label: '风格三', value: 'messageTop'}*/
         ],
         content: '',
         wallStyle: {

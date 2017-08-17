@@ -7,7 +7,7 @@ var router = require('koa-router')(),
 	config = require('../config/config.js'),
 	fs = require('fs');
 //注册接口
-router.post('/register', async function(ctx, next){
+router.post('/register', base.noLoginGo, async function(ctx, next){
 	let postData = ctx.request.body;
 	let validate = validator(postData, {
 		userName: [{required: true}, {type: 'regexp', pattern: /^[\u4e00-\u9fa5\w]{3,20}$/}],
@@ -75,12 +75,12 @@ router.post('/register', async function(ctx, next){
 	ctx.body = obj;
 });
 //上传头像
-router.post('/upAvatar', upload.single('userAvatar'), async function (ctx, next) {
+router.post('/upAvatar', base.noLoginGo, upload.single('userAvatar'), async function (ctx, next) {
   ctx.session.avatarImg = ctx.req.file;
   ctx.body = {avatarImg: ctx.req.file.path};
 });
 //获取验证码
-router.post('/getEmailCode', async function(ctx, next){
+router.post('/getEmailCode', base.noLoginGo, async function(ctx, next){
 	let isEmail = validator(ctx.request.body, { email:{required:true, type: 'email'}});
 	if(isEmail){
 		ctx.body = {
@@ -130,7 +130,7 @@ router.post('/getEmailCode', async function(ctx, next){
 	ctx.body = obj;
 });
 //判断用户是否存在
-router.post('/userNameExist', async function(ctx, next){
+router.post('/userNameExist', base.noLoginGo, async function(ctx, next){
 	let data = ctx.request.body;
 	if(!data.userName){
 		ctx.body = {
@@ -161,7 +161,7 @@ router.post('/userNameExist', async function(ctx, next){
 	}
 });
 //登录
-router.post('/login', async function(ctx, next){
+router.post('/login', base.noLoginGo, async function(ctx, next){
 	let data = ctx.request.body;
 	try{
 		let	userInfo = await mongo.findUserInfo(data);
@@ -205,7 +205,7 @@ router.post('/login', async function(ctx, next){
 	}
 });
 //找回密码
-router.post('/recoverPassword', async function(ctx, next){
+router.post('/recoverPassword', base.noLoginGo, async function(ctx, next){
 	let data = ctx.request.body;
 	if(data.email != ctx.session.emailCode.email && data.verificationCode != ctx.session.emailCode.code){
 		ctx.body = {

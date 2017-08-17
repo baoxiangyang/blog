@@ -9,7 +9,7 @@
             </h1>
           </el-col>
           <el-col :sm="14" class="navlist" >
-            <el-menu-item :route="{name: 'article'}" index="main-1">文章</el-menu-item>
+            <el-menu-item :route="{name: 'articleList'}" index="main-1">文章</el-menu-item>
             <el-menu-item :route="{name: 'messageBoard'}" index="main-2">留言</el-menu-item>
             <el-menu-item :route="{name: 'profile'}" index="main-3">简介</el-menu-item>
           </el-col>
