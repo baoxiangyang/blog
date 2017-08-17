@@ -10,11 +10,9 @@ class RedisStore extends Store {
         let session = await this.redis.get(`xiaobaozongID:${sid}`);
         if(session){
             session = JSON.parse(session);
-            this.redis.expireat(`xiaobaozongID:${sid}`, parseInt(Date.now() / 1000) + redisConfig.ttl).then((result) => {
-                console.log('ttl change: ' + result);
-            }, (error) => {
-                console.log(error);
-            }); 
+            this.redis.expireat(`xiaobaozongID:${sid}`, parseInt(Date.now() / 1000) + redisConfig.ttl).catch(e => {
+                console.error(e);
+            });
         } else {
             session = {};
         }
