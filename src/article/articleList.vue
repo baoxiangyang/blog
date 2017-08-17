@@ -17,6 +17,9 @@
         layout="total, prev, pager, next">
       </el-pagination>
     </el-col>
+    <footer class="record">
+      <a href="http://www.miitbeian.gov.cn">渝ICP备16013153号</a>
+    </footer>
   </el-row>
 </template>
 <script type="text/javascript">
@@ -95,6 +98,16 @@
       .el-pagination {
         float: right;
       }
+    }
+  }
+  .record {
+    text-align: center;
+    width: 100%;
+    padding-bottom: 10px;
+    position: absolute;
+    bottom: 0;
+    a {
+      color: #000;
     }
   }
 </style>

@@ -4,9 +4,6 @@
       <el-form-item label="Cookie：">
         <el-input v-model="form.cookie"></el-input>
       </el-form-item>
-      <el-form-item label="Password：">
-        <el-input v-model="form.password"></el-input>
-      </el-form-item>
       <el-form-item label="文章url：" prop="url">
         <el-input type="textarea" v-model="form.url"></el-input>
       </el-form-item>
@@ -27,12 +24,10 @@
         form: {
           cookie: '',
           url: '',
-          password: ''
         },
         logData: '',
         rules: {
-          url: [{ required: true, message: '请输入文章地址，用 ”," 分割'}],
-          password: [{ required: true, message: '请输入密码'}]
+          url: [{ required: true, message: '请输入文章地址，用 ”," 分割'}]
         }
       };
     },

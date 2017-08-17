@@ -212,7 +212,7 @@
         }).catch(() => {});
       },
       ...mapActions(['get_messageList']),
-      ...mapMutations(['set_messageState', 'push_messageList', 'push_commentList',
+      ...mapMutations(['set_messageState', 'push_messageList', 'push_commentList', 'set_default_route',
         'delete_messageList', 'edit_messageList', 'delte_commenter'])
     },
     mounted (){
@@ -223,7 +223,10 @@
       });
     },
     beforeRouteEnter(to, from, next){
-      next(vm => vm.get_messageList());
+      next(vm => {
+        vm.set_default_route('main-2');
+        vm.get_messageList();
+      });
     },
     components: {
       Note

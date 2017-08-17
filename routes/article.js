@@ -108,12 +108,12 @@ router.post('/articleDatails', async function(ctx, next){
 	}
 });
 //获取需要爬取的文章地址
-router.post('/crawlerArticle', async function(ctx, next){
+router.post('/crawlerArticle', mongo.isLogin, async function(ctx, next){
 	let body = ctx.request.body;
-	if(body.password != config.password){
+	if(ctx.session.userInfo.level && ctx.session.userInfo.level > 3){
 		ctx.body = {
 			errorCode: -2,
-			msg: '密码错误请重新输入'
+			msg: '您的用户没有权限'
 		};
 		return false;
 	}

@@ -3,16 +3,16 @@
     <link rel="stylesheet" href="/stylesheets/github.css">
     <div class="articleHeader">
       <el-menu :default-active="activeIndex" :router="true" @select="handleSelect" class="articleNav maxWidth" mode="horizontal">
-        <el-menu-item index="/article?type=all">全部</el-menu-item>
-        <el-menu-item index="/article?type=javascript">javascript</el-menu-item>
-        <el-menu-item index="/article?type=html">html</el-menu-item>
-        <el-menu-item index="/article?type=css">css</el-menu-item>
-        <el-menu-item index="/article?type=webpack">webpack</el-menu-item>
-        <el-menu-item index="/article?type=gulp">gulp</el-menu-item>
-        <el-menu-item index="/article?type=node">node</el-menu-item>
-        <el-menu-item index="/article?type=vue">vue</el-menu-item>
-        <el-menu-item index="/article?type=react">react</el-menu-item>
-        <el-menu-item index="/article?type=other">其他</el-menu-item>
+        <el-menu-item index="article-all" :route="{name:'articleList', query: {type: 'all'}}">全部</el-menu-item>
+        <el-menu-item index="article-javascript" :route="{name:'articleList', query: {type: 'javascript'}}">javascript</el-menu-item>
+        <el-menu-item index="article-html" :route="{name:'articleList', query: {type: 'html'}}">html</el-menu-item>
+        <el-menu-item index="article-css" :route="{name:'articleList', query: {type: 'css'}}">css</el-menu-item>
+        <el-menu-item index="article-webpack" :route="{name:'articleList', query: {type: 'webpack'}}">webpack</el-menu-item>
+        <el-menu-item index="article-gulp" :route="{name:'articleList', query: {type: 'gulp'}}">gulp</el-menu-item>
+        <el-menu-item index="article-node" :route="{name:'articleList', query: {type: 'node'}}">node</el-menu-item>
+        <el-menu-item index="article-vue" :route="{name:'articleList', query: {type: 'vue'}}">vue</el-menu-item>
+        <el-menu-item index="article-react" :route="{name:'articleList', query: {type: 'react'}}">react</el-menu-item>
+        <el-menu-item index="article-other" :route="{name:'articleList', query: {type: 'other'}}">其他</el-menu-item>
         <el-input class="search" icon="search" v-model="search" :on-icon-click="handleSearchClick" placeholder="搜索" size="small" @change="handleInputChange"></el-input>
       </el-menu>
     </div>
@@ -42,7 +42,7 @@
     },
     methods: {
       ...mapMutations([
-        'set_articleStatus'
+        'set_articleStatus', 'set_default_route'
       ]),
       //input搜索
       handleSearchClick(){
@@ -50,8 +50,7 @@
           return false;
         }
         this.oldSearch = this.search;
-        this.$router.push({ name: 'article', query: {type: 'all', search: this.search}});
-        
+        this.$router.push({ name: 'articleList', query: {type: 'all', search: this.search}});
       },
       handleInputChange(value){
         this.set_articleStatus({search: value});
@@ -63,8 +62,9 @@
     },
     beforeRouteEnter(to, from, next) {
       next(vm => {
+        vm.set_default_route('main-1');
         (to.name == 'articleList') && vm.set_articleStatus({
-          activeIndex: `/article?type=${to.query.type || 'all'}`, 
+          activeIndex: `article-${to.query.type || 'all'}`, 
           type: to.query.type || 'all', 
           search: to.query.search
         });
@@ -72,7 +72,7 @@
     },
     beforeRouteUpdate(to, from, next){
       (to.name == 'articleList') && this.set_articleStatus({
-        activeIndex: `/article?type=${to.query.type}`, 
+        activeIndex:  `article-${to.query.type || 'all'}`, 
         type: to.query.type, 
         search: to.query.search
       });

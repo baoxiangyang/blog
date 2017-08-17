@@ -10,7 +10,7 @@ const articleModule = {
 		msg: '',
 		errorCode: 0,
 		loading: false,
-		activeIndex: '/article?type=all',
+		activeIndex: 'article-all',
 		search:'',
 		type: 'all'
 	},

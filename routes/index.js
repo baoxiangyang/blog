@@ -7,12 +7,11 @@ var router = require('koa-router')(),
 	mongo = require('../dbs/index.js'),
 	querystring = require('querystring'),
 	config = require('../config/config.js');
-router.get('/', async function (ctx, next) {
+router.get(['/', 'article', 'article/list.html', 'article/articleDetails.html', 'crawler.html', 'register.html', 'messageBoard.html', 'profile.html'], async function (ctx, next) {
   ctx.state = {
     title: '小包总'
   };
-  await ctx.render('index', {
-  });
+  await ctx.render('index');
 });
 //上传头像
 router.post('upAvatar', upload.single('userAvatar'), async function (ctx, next) {

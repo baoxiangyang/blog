@@ -3,9 +3,8 @@ const Koa = require('koa'),
   router = require('koa-router')(),
   views = require('koa-views'),
   convert = require('koa-convert'),
-  /*json = require('koa-json'),
-  bodyparser = require('koa-bodyparser'),*/
-  body = require('koa-json-body'),
+  json = require('koa-json'),
+  bodyparser = require('koa-bodyparser'),
   favicon = require('koa-favicon'),
   mongo = require('./dbs/index.js'),
   process = require('process'),
@@ -39,10 +38,9 @@ const index = require('./routes/index'),
   user = require('./routes/user.js'),
   messageWall = require('./routes/messageWall.js');
 // middlewares
-/*app.use(bodyparser());
-app.use(convert(json()));*/
+app.use(bodyparser());
+app.use(convert(json()));
 
-app.use(body({limit: '10kb', fallback: true}));
 app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));

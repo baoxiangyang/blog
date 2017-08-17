@@ -53,7 +53,20 @@ function getRandomStr({number = true, lowerLetter = false, capitalLetter = false
     return str;
 
 }
+
+async function isLogin (ctx, next) {
+    if(ctx.session.userInfo || ctx.session.userInfo.userName){
+        await next();
+    }else{
+        ctx.body = {
+            errorCode: -99,
+            msg: '用户未登录，请先登录'
+        };
+    }
+}
+
 module.exports = {
 	fsPromise,
-	getRandomStr
+	getRandomStr,
+    isLogin
 };

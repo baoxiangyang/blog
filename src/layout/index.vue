@@ -1,20 +1,19 @@
 <template>
   <div class="main">
     <header>
-      <el-menu theme="dark" :default-active="activeIndex" class="nav maxWidth" @select="handleSelect">
+      <el-menu theme="dark"  :default-active="mainDefault" :router="true" class="nav maxWidth" index="main">
         <el-row>
           <el-col :span="5" class="headerItem">
             <h1>
               <router-link :to="{name: 'index'}">小包总</router-link>
             </h1>
           </el-col>
-          <!-- <el-col :sm="14" class="navlist" >
-            <el-menu-item index="1">首页</el-menu-item>
-            <el-menu-item index="2">文章</el-menu-item>
-            <el-menu-item index="3">DEMO</el-menu-item>
-            <el-menu-item index="4">简介</el-menu-item>
-          </el-col> -->
-          <el-col :span="5" class="headerItem" :push="14">
+          <el-col :sm="14" class="navlist" >
+            <el-menu-item :route="{name: 'article'}" index="main-1">文章</el-menu-item>
+            <el-menu-item :route="{name: 'messageBoard'}" index="main-2">留言</el-menu-item>
+            <el-menu-item :route="{name: 'profile'}" index="main-3">简介</el-menu-item>
+          </el-col>
+          <el-col :span="5" class="headerItem">
             <template v-if="!userInfo.userName">
               <el-button type="success" class="loginBtn" size="small" @click="set_dialogLogin(true)">登录</el-button>
               <router-link :to="{name: 'register'}">
@@ -36,9 +35,6 @@
     </header>
     <Login></Login>
     <router-view></router-view>
-    <footer class="record">
-      <a href="http://www.miitbeian.gov.cn">渝ICP备16013153号</a>
-    </footer>
   </div>
 </template>
 <script type="text/javascript">
@@ -54,15 +50,9 @@
       };
     },
     computed: {
-      ...mapState(['userInfo'])
+      ...mapState(['userInfo', 'mainDefault'])
     },
     methods: {
-      handleSelect(key, keyPath) {
-        console.log(key, keyPath);
-      },
-      handleIconClick() {
-
-      },
       handleCommand(command){
         if(command == 'logOut'){
           this.$myAjax.post(this, '/user/logOut').then(res => {
@@ -156,15 +146,8 @@
         }
       }
     }
-    .record {
-      text-align: center;
-      width: 100%;
-      padding-bottom: 10px;
-      position: absolute;
-      bottom: 0;
-    }
-    a {
-      color: #000;
-    }
+  }
+  a {
+    color: #000;
   }
 </style>

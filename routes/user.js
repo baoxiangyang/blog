@@ -10,7 +10,7 @@ var router = require('koa-router')(),
 router.post('/register', async function(ctx, next){
 	let postData = ctx.request.body;
 	let validate = validator(postData, {
-		userName: [{required: true}, {type: 'regexp', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/}],
+		userName: [{required: true}, {type: 'regexp', pattern: /^[\u4e00-\u9fa5\w]{3,20}$/}],
 		password: {required: true, minLength: 6},
 		email:{required: true, type:'email'},
 		verificationCode: {required: true, minLength: 6, maxLength: 6, type: 'number'}

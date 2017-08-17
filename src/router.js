@@ -11,13 +11,13 @@ import profile from './profile/index.vue';
 Vue.use(VueRouter);
 
 export default new VueRouter({
-  mode: 'hash',
+  mode: 'history',
   routes: [
-		{ path: '/',  redirect:'/article.html', name: 'index'},
-		{ path:'/article.html', component: article, name:'article',
+		{ path: '/',  redirect:{name: 'articleList'}, name: 'index'},
+		{ path:'/article', component: article, name:'article',
 			children:[
-				{ path: '', component: articleList, name: 'articleList'},
-				{ path: 'articleDetails', component: articleDetails, name: 'articleDetails'}
+				{ path: 'list.html', component: articleList, name: 'articleList'},
+				{ path: 'articleDetails.html', component: articleDetails, name: 'articleDetails'}
 			]
 		},
 		{ path: '/crawler.html', name: 'crawler', component: crawler },

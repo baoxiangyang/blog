@@ -1,9 +1,9 @@
 var router = require('koa-router')(),
 	base = require('../common/base.js'),
 	mongo = require('../dbs/index.js');
-
+	
 //添加留言
-router.post('/message', async function(ctx, next){
+router.post('/message', base.isLogin, async function(ctx, next){
 	let data =  ctx.request.body, obj = null;
 	if(data.commenter.content.length > 200){
 		obj = {
@@ -46,7 +46,7 @@ router.post('/messageList', async function(ctx, next){
 	};
 });
 //评论留言
-router.post('/messageComment', async function(ctx, next){
+router.post('/messageComment', base.isLogin, async function(ctx, next){
 	try {
 		let body = ctx.request.body;
 		console.log(body);
@@ -65,7 +65,7 @@ router.post('/messageComment', async function(ctx, next){
 	
 });
 //编辑留言
-router.post('/editMessage', async function(ctx, next){
+router.post('/editMessage', base.isLogin, async function(ctx, next){
 	var body = ctx.request.body;
 	if(body.content.length > 220 || body.content.length < 5){
 		ctx.body = {
@@ -90,7 +90,7 @@ router.post('/editMessage', async function(ctx, next){
 	}
 });
 //删除留言
-router.post('/deleteMessage', async function(ctx, next){
+router.post('/deleteMessage', base.isLogin, async function(ctx, next){
 	try {
 		let message = await mongo.deleteMessage({'commenter.userInfo': ctx.session.userInfo._id, _id: ctx.request.body.id});
 		ctx.body = {
@@ -106,7 +106,7 @@ router.post('/deleteMessage', async function(ctx, next){
 	}
 });
 //删除评论
-router.post('/deleteComment', async function(ctx, next){
+router.post('/deleteComment', base.isLogin, async function(ctx, next){
 	try {
 		let data = ctx.request.body;
 		let message = await mongo.deleteComment({id: data.id, commentID: data.commentID});

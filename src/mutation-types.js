@@ -9,3 +9,4 @@ export const delete_messageList= 'delete_messageList';
 export const edit_messageList= 'edit_messageList';
 export const push_commentList= 'push_commentList';
 export const delte_commenter= 'delte_commenter';
+export const set_default_route= 'set_default_route';

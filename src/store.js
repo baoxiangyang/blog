@@ -2,12 +2,13 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import articleModule from './article/articleModule.js';
 import messageModule from './messageBoard/messageModule.js';
-import {set_dialogLogin, set_userInfo} from './mutation-types.js';
+import {set_dialogLogin, set_userInfo, set_default_route} from './mutation-types.js';
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
     dialogLogin: false,
+    mainDefault: 'main-1',
     userInfo: {}
   },
   mutations: {
@@ -17,6 +18,9 @@ export default new Vuex.Store({
     [set_userInfo](state, data) {
       state.userInfo = data;
       // state.userInfo = Object.assign({}, data);
+    },
+    [set_default_route](state, data) {
+      state.mainDefault = data;
     }
   },
   modules: {

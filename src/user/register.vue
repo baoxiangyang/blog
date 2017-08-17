@@ -2,7 +2,7 @@
   <div class="registerMain">
     <el-form :model="registerForm" :rules="rules" ref="registerForm" label-width="100px">
       <el-form-item label="用户名：" prop="userName" :error="isUserNameExist"> 
-        <el-input v-model="registerForm.userName" placeholder="3~10个字符,包含字母/中文/数字/下划线" :autofocus="true" @change="userNameChange"></el-input>
+        <el-input v-model="registerForm.userName" placeholder="3~20个字符,包含字母/中文/数字/下划线" :autofocus="true" @change="userNameChange"></el-input>
       </el-form-item>
       <el-form-item label="密码：" prop="password">
         <el-input v-model="registerForm.password" type="password" placeholder="不少于6位"></el-input>
@@ -109,7 +109,7 @@
         rules: {
           userName: [
             { required: true, message: '请输入用户名', trigger: 'blur'},
-            { type:'string', pattern: /^[\u4e00-\u9fa5\w]{3,10}$/, message: '请输入正确格式的用户名', trigger: 'blur'},
+            { type:'string', pattern: /^[\u4e00-\u9fa5\w]{3,20}$/, message: '请输入正确格式的用户名', trigger: 'blur'},
             { validator: userNameExist, trigger: 'blur'}
           ],
           password:[
