@@ -2,7 +2,7 @@
   <el-row :gutter="20" class="articleLayout" v-loading="loading"
     element-loading-text="拼命加载中">
     <el-col :span="20">
-      <articleItem  v-for="item in list" key="item.id" :detailsData="item"></articleItem>
+      <articleItem  v-for="item in list" :key="item.id" :detailsData="item"></articleItem>
       <p v-show="!list.length" class="nodata">暂无数据</p>
     </el-col>
     <el-col :span="4">

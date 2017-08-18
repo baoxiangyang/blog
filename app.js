@@ -96,8 +96,7 @@ app.use(async (ctx, next)=> {
     ctx.session.userInfo = await mongo.findUserOne({loginStatus: loginStatus});
   }
   await next();
-  if(ctx.method == "POST" && ((ctx.session.userInfo && ctx.session.userInfo.auth) || (loginStatus && ctx.request.body.userInfo && ctx.session.userInfo.loginStatus === loginStatus))){
-    ctx.session.userInfo.auth = false;
+  if(ctx.method == "POST" &&  ctx.session.userInfo && ctx.request.body.userInfo){
     ctx.body.userInfo = {
       userName: ctx.session.userInfo.userName,
       avatarImg: ctx.session.userInfo.avatarImg,

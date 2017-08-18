@@ -92,7 +92,6 @@ router.get('auth', async function(ctx, next){
 		loginData = await mongo.saveUserInfo(saveData);
 		ctx.session.userInfo = loginData;
 	}
-	ctx.session.userInfo.auth = true;
 	ctx.redirect('/');
 	}catch(e){
 		console.error(e);

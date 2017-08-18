@@ -2,7 +2,8 @@ let path = require('path'),
   webpack = require('webpack'),
   pkgInfo =require('../package.json'),
   CleanWebpackPlugin = require('clean-webpack-plugin'),
-  HtmlWebpackPlugin = require('html-webpack-plugin');
+  HtmlWebpackPlugin = require('html-webpack-plugin'),
+  ExtractText = require('extract-text-webpack-plugin');
 module.exports = {
   entry: {'main': './src/main.js'},
   output: {
@@ -14,7 +15,14 @@ module.exports = {
     rules: [
       {
         test: /\.vue$/,
-        loader: 'vue-loader'
+        loader: 'vue-loader',
+        options: {
+          loaders: {
+            less: ExtractText.extract({
+              use: ['css-loader', 'less-loader'],
+            })
+          }
+        }
       },
       {
         test: /\.js$/,
@@ -30,11 +38,15 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loader: 'style-loader!css-loader'
+        use: ExtractText.extract({
+          use: ['css-loader']
+        })
       },
       {
         test: /\.less$/,
-        loader: 'style-loader!css-loader!less-loader'
+        use: ExtractText.extract({
+          use: ['css-loader', 'less-loader']
+        })
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2)(\?\S*)?$/,
@@ -54,10 +66,10 @@ module.exports = {
     'axios': 'axios'
   }],
   plugins: [
-    new CleanWebpackPlugin(['../public/dist/main.*.js'], {
-      'root': __dirname,
-      'verbose': true,
-      'dry': true
+    new CleanWebpackPlugin(['../public/dist/*.js'], {
+      root: __dirname,
+      verbose: true,
+      dry: false
     }),
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.DefinePlugin({
@@ -77,6 +89,7 @@ module.exports = {
       template: './views/index.ejs',
       production: true,
       filename: '../../views/index.html'
-    })
+    }),
+    new ExtractText('index.[hash].css')
   ]
 };

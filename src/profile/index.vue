@@ -20,7 +20,8 @@
       <ul>
         <li>源码： <a href="https://github.com/baoxiangyang/blog/tree/release-v2.0.0" target="_black">GITHUB地址</a></li>
         <li>BUG反馈： <a href="https://github.com/baoxiangyang/blog/issues" target="_black">有什么BUG冲我来</a></li>
-        <li>难点：mongodb关联查询(其实也不算难点)、线上环境加速优化(cdn加载资源，压缩，打包，按需加载)</li>
+        <li>如若存在文章不存在的请求，<a href="tencent://message/?uin=791736879&Site=&Menu=yes">请联系我</a>，我会尽快处理 </li>
+        <li>难点：mongodb关联查询(其实也不算难点)、线上环境加速优化(cdn加载资源，压缩，打包)</li>
         <li><strong>UI丑不要怪我，毕竟没有女UI设计师呀</strong></li>
         <li>QQ交流群：133240225、 193572405</li>
       </ul>
