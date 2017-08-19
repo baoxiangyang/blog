@@ -118,7 +118,7 @@ router.get('authQQ', async function(ctx, next){
 			authId: openData.openid,
 			type: 'qq'
 		};
-		if(userInfo && userInfo.msg < 0){
+		if((userInfo && userInfo.msg < 0) || !saveData.authId){
 			console.error(userInfo);
 			await ctx.render('error', {error:{status: 500, message: '授权登录失败，请重试'}});
 			return false;
