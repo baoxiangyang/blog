@@ -83,7 +83,7 @@ router.get('authGithub', async function(ctx, next){
 		await ctx.render('error', {error:{status: 500, message: '授权登录失败，请重试'}});
 		return false;
 	}
-	let loginData = await mongo.findUserOne({authId: userInfo.id});
+	let loginData = await mongo.findUserOne({authId: saveData.authId});
 	if(loginData){
 		saveData._id = loginData._id;
 		ctx.session.userInfo = saveData;
@@ -123,7 +123,7 @@ router.get('authQQ', async function(ctx, next){
 			await ctx.render('error', {error:{status: 500, message: '授权登录失败，请重试'}});
 			return false;
 		}
-		let loginData = await mongo.findUserOne({authId: userInfo.id});
+		let loginData = await mongo.findUserOne({authId: saveData.authId});
 		if(loginData){
 			saveData._id = loginData._id;
 			ctx.session.userInfo = saveData;
