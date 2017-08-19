@@ -51,10 +51,12 @@ router.get('authLogin.html', async function(ctx, next){
 	let type =  ctx.request.query.type;
 	if(type == "GITHUB"){
 		await ctx.redirect(`https://github.com/login/oauth/authorize?client_id=${config.github.client_id}&state=${Date.now()}&redirect_uri=${config.host}${config.github.redirect_url}`);
+	}else{
+		await ctx.redirect(`https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=${config.qq.appId}&state=${Date.now()}&redirect_uri=${config.host}${config.qq.redirect_url}`);
 	}
 });
 //获取授权数据
-router.get('auth', async function(ctx, next){
+router.get('authGithub', async function(ctx, next){
 	try{
 	let code = ctx.request.query.code,
 	data = querystring.parse(await myRequest(`https://github.com/login/oauth/access_token?client_id=${config.github.client_id}&client_secret=${config.github.client_secret}&code=${code}&redirect_uri=${config.host}${config.github.redirect_url}`));
@@ -85,7 +87,7 @@ router.get('auth', async function(ctx, next){
 	if(loginData){
 		saveData._id = loginData._id;
 		ctx.session.userInfo = saveData;
-		if(saveData.userName != loginData.userName || saveData.email != loginData.email || saveData.avatarImg || loginData.avatarImg){
+		if(saveData.userName != loginData.userName || saveData.email != loginData.email || saveData.avatarImg != loginData.avatarImg){
 			mongo.updateUserInfo({authId: userInfo.id}, saveData);
 		}
 	}else{
@@ -99,4 +101,43 @@ router.get('auth', async function(ctx, next){
 	}
 });
 
+router.get('authQQ', async function(ctx, next){
+	try{
+		let code = ctx.request.query.code,
+		tokenUrl = `https://graph.qq.com/oauth2.0/token?grant_type=authorization_code&client_id=${config.qq.appId}&client_secret=${config.qq.appKey}&code=${code}&redirect_uri=${config.host}${config.qq.redirect_url}`,
+		tokenData = querystring.parse(await myRequest(tokenUrl)),
+		openId = await myRequest(`https://graph.qq.com/oauth2.0/me?access_token=${tokenData.access_token}`),
+		startIndex = openId.indexOf('{'), 
+		endIndex = openId.indexOf('}') + 1,
+		openData = JSON.parse(openId.slice(startIndex, endIndex)),
+		userInfo = JSON.parse(await myRequest(`https://graph.qq.com/user/get_user_info?access_token=${tokenData.access_token}&openid=${openData.openid}&oauth_consumer_key=${openData.client_id}`)),
+		saveData = {
+			userName: userInfo.nickname,
+			avatarImg: userInfo.figureurl_1,
+			gender: userInfo.gender,
+			authId: openData.openid,
+			type: 'qq'
+		};
+		if(userInfo && userInfo.msg < 0){
+			console.error(userInfo);
+			await ctx.render('error', {error:{status: 500, message: '授权登录失败，请重试'}});
+			return false;
+		}
+		let loginData = await mongo.findUserOne({authId: userInfo.id});
+		if(loginData){
+			saveData._id = loginData._id;
+			ctx.session.userInfo = saveData;
+			if(saveData.userName != loginData.userName || saveData.gender != loginData.gender || saveData.avatarImg != loginData.avatarImg){
+				mongo.updateUserInfo({authId: userInfo.id}, saveData);
+			}
+		}else{
+			loginData = await mongo.saveUserInfo(saveData);
+			ctx.session.userInfo = loginData;
+		}
+		ctx.redirect('/');
+	}catch(e){
+		console.error(e);
+		await ctx.render('error', {error:{ status: 500, message: '授权登录失败，请重试'}});
+	}
+});
 module.exports = router;

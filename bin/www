@@ -13,7 +13,7 @@ var server = null;
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3001');
+var port = normalizePort(process.env.PORT || '80');
 if(process.env.NODE_ENV == 'production'){
   var https = require('https'),
     option = {
