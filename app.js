@@ -75,14 +75,14 @@ app.use(async (ctx, next) => {
   const start = new Date();
   await next();
   const ms = new Date() - start;
-  console.log(`${ctx.method} ${ctx.url} - ${ms}ms`);  
+  console.log(`${ctx.method} ${ctx.url} ${ctx.status} - ${ms}ms`);  
 });
 
 //访问统计
 if(process.env.NODE_ENV == 'production'){
   app.use(async (ctx, next) => {
     await next();
-    if(ctx.url.indexOf('/img') !== 0){
+    if(ctx.url.indexOf('/img') !== 0 && ctx.status == 200){
       let data = {
         ip: ctx.ip,
         url: ctx.url,
