@@ -50,6 +50,7 @@
   import '../style/user.less';
   import { set_dialogLogin} from '../mutation-types.js';
   import { mapState, mapMutations } from 'vuex';
+  let md5 = require("blueimp-md5");
   export default {
     data() {
       let checkpassword = (rule, value, callback) => {
@@ -214,7 +215,10 @@
         this.$refs[formName].validate((valid) => {
           if (valid) {
             this.submitBtn = true;
-            this.$myAjax.post(this, '/user/register', this.registerForm).then(res => {
+            let password = md5(this.registerForm.password);
+            this.$myAjax.post(this, '/user/register', Object.assign({}, this.registerForm, {
+              password, checkpasswrod:password
+            })).then(res => {
               let result = res.data;
               switch (result.errorCode) {
                 case 0:

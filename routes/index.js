@@ -96,8 +96,12 @@ router.get('authGithub', async function(ctx, next){
 	}
 	ctx.redirect('/');
 	}catch(e){
-		console.error(e);
-		await ctx.render('error', {error:{ status: 500, message: '授权登录失败，请重试'}});
+		if(e.code == 11000){
+			await ctx.render('error', {error:{ status: 500, message: '用户名已注册，无法授权登陆'}});
+		}else{
+			console.error(e);
+			await ctx.render('error', {error:{ status: 500, message: '授权登录失败，请重试'}});
+		}
 	}
 });
 
@@ -136,8 +140,12 @@ router.get('authQQ', async function(ctx, next){
 		}
 		ctx.redirect('/');
 	}catch(e){
-		console.error(e);
-		await ctx.render('error', {error:{ status: 500, message: '授权登录失败，请重试'}});
+		if(e.code == 11000){
+			await ctx.render('error', {error:{ status: 500, message: '用户名已注册，无法授权登陆'}});
+		}else{
+			console.error(e);
+			await ctx.render('error', {error:{ status: 500, message: '授权登录失败，请重试'}});
+		}
 	}
 });
 module.exports = router;

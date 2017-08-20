@@ -49,7 +49,6 @@ router.post('/messageList', async function(ctx, next){
 router.post('/messageComment', base.loginGo, async function(ctx, next){
 	try {
 		let body = ctx.request.body;
-		console.log(body);
 		let result = await mongo.addComment({_id: body.id}, {content: body.content, commentInfo: ctx.session.userInfo._id});
 		ctx.body = {
 			errorCode: 0,
