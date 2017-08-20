@@ -86,6 +86,7 @@ router.get('authGithub', async function(ctx, next){
 	let loginData = await mongo.findUserOne({authId: saveData.authId});
 	if(loginData){
 		saveData._id = loginData._id;
+		saveData.level = loginData.loginData;
 		ctx.session.userInfo = saveData;
 		if(saveData.userName != loginData.userName || saveData.email != loginData.email || saveData.avatarImg != loginData.avatarImg){
 			mongo.updateUserInfo({authId: userInfo.id}, saveData);
@@ -130,6 +131,7 @@ router.get('authQQ', async function(ctx, next){
 		let loginData = await mongo.findUserOne({authId: saveData.authId});
 		if(loginData){
 			saveData._id = loginData._id;
+			saveData.level = loginData.loginData;
 			ctx.session.userInfo = saveData;
 			if(saveData.userName != loginData.userName || saveData.gender != loginData.gender || saveData.avatarImg != loginData.avatarImg){
 				mongo.updateUserInfo({authId: userInfo.id}, saveData);
