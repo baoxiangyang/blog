@@ -10,6 +10,7 @@ const Koa = require('koa'),
   process = require('process'),
   path = require('path'),
   fs = require('fs'),
+  zlib = require('zlib'),
   imgSavePath = require('./config/config.js').imgSavePath;
 import session from 'koa-session2';
 import redisStore from './common/store.js';
@@ -61,12 +62,14 @@ app.use(async (ctx, next) => {
       ctx.url = ctx.url.replace('?', '_');
     }
     if(fs.existsSync(imgSavePath + ctx.url)){
+      //图片压缩
       ctx.body = fs.createReadStream(imgSavePath + ctx.url);
     }else{
       await next();
     }
+  }else{
+    await next();
   }
-  await next();
 });
 
 // logger
@@ -96,13 +99,13 @@ if(process.env.NODE_ENV == 'production'){
   });
 }
 //处理记住登录状态
-app.use(async (ctx, next)=> {
+router.post('/', async (ctx, next)=> {
   let loginStatus = ctx.cookies.get('loginStatus');
   if(loginStatus && !ctx.session.userInfo){
     ctx.session.userInfo = await mongo.findUserOne({loginStatus: loginStatus});
   }
   await next();
-  if(ctx.method == "POST" &&  ctx.session.userInfo && ctx.request.body.userInfo){
+  if(ctx.session.userInfo && ctx.request.body.userInfo){
     ctx.body.userInfo = {
       userName: ctx.session.userInfo.userName,
       avatarImg: ctx.session.userInfo.avatarImg,
@@ -110,6 +113,7 @@ app.use(async (ctx, next)=> {
     };
   }
 });
+
 router.use('/', index.routes(), index.allowedMethods());
 router.use('/article', article.routes(), article.allowedMethods());
 router.use('/user', user.routes(), user.allowedMethods());
@@ -117,6 +121,7 @@ router.use('/messageWall', messageWall.routes(), messageWall.allowedMethods());
 
 app.use(router.routes(), router.allowedMethods());
 // response
+
 
 app.on('error', function(err, ctx){
   console.error(err);
