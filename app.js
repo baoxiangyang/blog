@@ -9,7 +9,8 @@ const Koa = require('koa'),
   mongo = require('./dbs/index.js'),
   process = require('process'),
   path = require('path'),
-  fs = require('fs');
+  fs = require('fs'),
+  imgSavePath = require('./config/config.js').imgSavePath;
 import session from 'koa-session2';
 import redisStore from './common/store.js';
 
@@ -41,26 +42,8 @@ const index = require('./routes/index'),
 app.use(bodyparser());
 app.use(convert(json()));
 
-//加载第三方图片
-if(process.env.NODE_ENV != 'production'){
-  app.use(async (ctx, next) => {
-    if(ctx.url.indexOf('/img') === 0){
-      ctx.url = ctx.url.replace('?', '_').replace("&", '&amp;');
-    }
-    await next();
-  });
-}else{
-  app.use(async (ctx, next) => {
-    if(ctx.url.indexOf('/img') === 0){
-      ctx.url = ctx.url.replace("&", '&amp;');
-    }
-    await next();
-  });
-}
-
 app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
-app.use(require('koa-static')(__dirname + '/article'));
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));
 
 //session
@@ -69,6 +52,22 @@ app.use(session({
   store: redisStore,
   httpOnly: true
 }));
+
+//加载第三方图片
+app.use(async (ctx, next) => {
+  if(ctx.url.indexOf('/img/') === 0){
+    ctx.url = ctx.url.replace("&", '&amp;');
+    if(process.env.NODE_ENV != 'production'){
+      ctx.url = ctx.url.replace('?', '_');
+    }
+    if(fs.existsSync(imgSavePath + ctx.url)){
+      ctx.body = fs.createReadStream(imgSavePath + ctx.url);
+    }else{
+      await next();
+    }
+  }
+  await next();
+});
 
 // logger
 app.use(async (ctx, next) => {
