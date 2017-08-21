@@ -88,11 +88,11 @@
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);
               this.articleDatail = articleDatail;
-              setTimeout(function(){
+              this.$nextTick(function(){
                 Array.prototype.forEach.call(document.querySelectorAll('pre code'), function(item){
                   hljs.highlightBlock(item);
                 });
-              }, 0)
+              });
             }
           }else{
             this.set_articleStatus({errorCode: res.data.errorCode, msg: res.data.msg});
