@@ -99,13 +99,13 @@ if(process.env.NODE_ENV == 'production'){
   });
 }
 //处理记住登录状态
-router.post('/', async (ctx, next)=> {
+app.use(async (ctx, next)=> {
   let loginStatus = ctx.cookies.get('loginStatus');
   if(loginStatus && !ctx.session.userInfo){
     ctx.session.userInfo = await mongo.findUserOne({loginStatus: loginStatus});
   }
   await next();
-  if(ctx.session.userInfo && ctx.request.body.userInfo){
+  if(ctx.method == "POST" && ctx.session.userInfo && ctx.request.body.userInfo){
     ctx.body.userInfo = {
       userName: ctx.session.userInfo.userName,
       avatarImg: ctx.session.userInfo.avatarImg,
