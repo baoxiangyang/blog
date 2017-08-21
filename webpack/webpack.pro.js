@@ -63,7 +63,8 @@ module.exports = {
     'vuex': 'Vuex',
     'vue-router': 'VueRouter',
     'element-ui': 'ELEMENT',
-    'axios': 'axios'
+    'axios': 'axios',
+    'blueimp-md5': 'md5'
   }],
   plugins: [
     new CleanWebpackPlugin(['../public/dist/*.js'], {

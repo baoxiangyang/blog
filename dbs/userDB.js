@@ -8,6 +8,7 @@ let Mongoose = require('mongoose'),
 	time: {type: Date, default: Date.now},
 	loginStatus: {type: String, default: ''},
 	authId: {type: String, default: ''},
+	gender: {type: String},
 	type: {type: String, default: 'register'}
 });
 const UserModel = Mongoose.model('users', user_Schema);

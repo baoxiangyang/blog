@@ -12,12 +12,17 @@ module.exports = {
 		port: 6379,
 		ttl: 60 * 30 //30分钟过期
 	},
-	host: 'http://192.168.205.36:3001',
+	host: 'https://www.xiaobaozong.cn',
 	github: {
-		client_id: '87a9095ff13fff448441',
-		client_secret:'c17f6fa4cc3f210dee1bda5b18f4fcc827fc9636',
-		redirect_url: '/auth'
+		client_id: 'xxx',
+		client_secret:'xxx',
+		redirect_url: '/authGithub'
 	},
+	qq: {
+		appId: 'xxx',
+		appKey: 'xxx',
+		redirect_url: '/authQQ'
+	}, 
 	loginStatusTime: 1000 * 60 * 60 * 24 * 15, //登录状态保存时间(ms)
 	imgSavePath: './article',
 	htmlSavePath: './article/html',

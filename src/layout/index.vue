@@ -24,7 +24,6 @@
               <el-dropdown class="userAvatar" @command="handleCommand">
                 <img :src="userInfo.avatarImg || '/images/userAvatar/defualtUser.png'" :title="userInfo.userName" :alt="userInfo.userName">
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item>我的主页</el-dropdown-item>
                   <el-dropdown-item command="logOut">退出</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
