@@ -7,7 +7,7 @@
       :visible.sync="createMessage">
       <el-form :inline="false" :model="createForm" ref="createForm">
         <el-form-item label="风格">
-          <el-select v-model="createForm.type" placeholder="请选择风格">
+          <el-select v-model="type" placeholder="请选择风格">
             <el-option
               v-for="item in noteType"
               :key="item.value"
@@ -17,9 +17,9 @@
           </el-select>
         </el-form-item>
         <el-form-item label="背景颜色">
-          <el-color-picker color-format="rgb" v-model="createForm.bgColor"></el-color-picker>
+          <el-color-picker color-format="rgb" v-model="bgColor"></el-color-picker>
           <span class="fontSpan">字体颜色</span>
-          <el-color-picker color-format="rgb" v-model="createForm.color"></el-color-picker>
+          <el-color-picker color-format="rgb" v-model="color"></el-color-picker>
         </el-form-item>
         <el-form-item label="内容" prop="content" :rules="[
             { required: true, message: '留言内容不能为空'},
@@ -51,6 +51,9 @@
     data() {
       return {
         createMessage: false,
+        bgColor: 'rgb(206, 190, 75)',
+        color: 'rgb(0, 0, 0)',
+        type: 'paper',
         noteType: [{label: '风格一', value: 'paper'}
             /*{label: '风格二', value: 'message'},
             {label: '风格三', value: 'messageTop'}*/
@@ -72,9 +75,9 @@
     computed: {
       createForm: function(){
         return {
-          bgColor: 'rgb(206, 190, 75)',
-          color: 'rgb(0, 0, 0)',
-          type: 'paper',
+          bgColor: this.bgColor,
+          color: this.color,
+          type: this.type,
           position: 'relative',
           rotate: 1,
           btn: false,
