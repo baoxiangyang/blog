@@ -88,15 +88,15 @@
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);
               this.articleDatail = articleDatail;
-              this.$nextTick(function(){
-                Array.prototype.forEach.call(document.querySelectorAll('pre code'), function(item){
-                  hljs.highlightBlock(item);
-                });
-              });
             }
           }else{
             this.set_articleStatus({errorCode: res.data.errorCode, msg: res.data.msg});
           }
+          this.$nextTick(function(){
+            Array.prototype.forEach.call(document.querySelectorAll('pre code'), function(item){
+              hljs.highlightBlock(item);
+            });
+          });
           if(res.data.errorCode != 0){
             router.back();
           }
