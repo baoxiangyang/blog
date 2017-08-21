@@ -64,7 +64,8 @@ module.exports = {
     'vue-router': 'VueRouter',
     'element-ui': 'ELEMENT',
     'axios': 'axios',
-    'blueimp-md5': 'md5'
+    'blueimp-md5': 'md5',
+    'highlight.js': 'hljs'
   }],
   plugins: [
     new CleanWebpackPlugin(['../public/dist/*.js'], {

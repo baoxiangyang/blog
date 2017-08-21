@@ -241,6 +241,7 @@
       position: absolute;
       top:25px;
       right: 0;
+      z-index: 1050;
       span{
         writing-mode: tb-rl;
       }

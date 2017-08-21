@@ -30,6 +30,7 @@
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex';
   import { backToTop, formatTime } from '../common/base.js';
   import { set_articleStatus } from '../mutation-types.js';
+  let hljs = require('highlight.js');
   export default {
     data() {
       return {
@@ -87,6 +88,11 @@
               let articleDatail = res.data.data.articleDatail;
               articleDatail.timeMsg = formatTime(articleDatail.time, true);
               this.articleDatail = articleDatail;
+              setTimeout(function(){
+                Array.prototype.forEach.call(document.querySelectorAll('pre code'), function(item){
+                  hljs.highlightBlock(item);
+                });
+              }, 0)
             }
           }else{
             this.set_articleStatus({errorCode: res.data.errorCode, msg: res.data.msg});
@@ -156,5 +162,8 @@
       text-overflow:ellipsis;
       white-space: nowrap;
     }
+  }
+  .fmt pre code{
+    background-color: #232323
   }
 </style>
