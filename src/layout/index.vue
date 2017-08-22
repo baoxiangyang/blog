@@ -22,7 +22,7 @@
             </template>
             <template v-else>
               <el-dropdown class="userAvatar" @command="handleCommand">
-                <img :src="userInfo.avatarImg || '/images/userAvatar/defualtUser.png'" :title="userInfo.userName" :alt="userInfo.userName">
+                <img :src="userInfo.avatarImg || '/images/userAvatar/defualtUser.png'" :title="userInfo.userName" :alt="userInfo.userName" @error="imgLoadError">
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item command="logOut">退出</el-dropdown-item>
                 </el-dropdown-menu>
@@ -60,6 +60,9 @@
             this.msg = res.data.msg;
           });
         }
+      },
+      imgLoadError(event){
+        event.target.src = '/images/userAvatar/defualtUser.png';
       },
       ...mapMutations([set_dialogLogin, set_userInfo])
     },

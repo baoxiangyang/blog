@@ -124,7 +124,7 @@ app.use(router.routes(), router.allowedMethods());
 
 
 app.on('error', function(err, ctx){
-  console.error(err);
+  console.error(err, ctx.url, ctx.request.body);
 });
 
 module.exports = app;

@@ -61,15 +61,41 @@ const messageModule = {
 		}
 	},
 	getters: {
-		noteList: (state, getters, rootState) => {
+		position(state) {
 			let heightTop = state.heightTop,
-				widthLeft = state.widthLeft;
-			if(state.messageList.length < 50){
-				heightTop = heightTop / 2;
-			}
-			return state.messageList.map((item) => {
-				item.top = parseInt(Math.random() * heightTop);
-				item.left = parseInt(Math.random() * widthLeft);
+				widthLeft = state.widthLeft,
+				tempArr = [], count = 0, cover = 50,
+				_createPosition = (item) => {
+					count++;
+					let x = parseInt(Math.random() * widthLeft),
+						y = parseInt(Math.random() * heightTop),
+						h = 183 + 65 * (item.commentList.length || 0),
+						w = 270, bool = true;
+						x = x > widthLeft - w ? widthLeft - w : x;
+						y = y > heightTop - h ?  heightTop - h : y;
+					for(let i = 0; i < tempArr.length; i++){
+						let item = tempArr[i];
+						if(!(y + h - item.y < cover || item.y + item.h - y < cover || x + w - item.x < cover || item.x + w - x < cover)){
+							bool = false;
+						}
+					}
+					if(bool){
+						item.top = y;
+						item.left = x;
+						tempArr.push({x, y, h});
+					}else{
+						if(count > 50){
+							count = 0;
+							tempArr = [];
+						}
+						_createPosition(item);
+					}
+					return item;
+				};
+			return state.messageList.map(_createPosition);
+		},
+		noteList: (state, getters, rootState) => {
+			return getters.position.map((item) => {
 				item.commenter.timeMsg = formatTime(item.commenter.time, true, true);
 				item.commentList.forEach(function(listItem){
 					listItem.timeMsg = formatTime(listItem.time, true, true);
@@ -77,12 +103,6 @@ const messageModule = {
 						listItem.deleteCommentBtn = true;
 					}
 				});
-				if(item.top < 50){
-					item.top += 50;
-				}
-				if(item.left > widthLeft - 220){
-					item.left = widthLeft - 220;
-				}
 				if(item.commenter.userInfo.userName == rootState.userInfo.userName){
 					item.btn = {
 						edit: true,
