@@ -81,8 +81,8 @@ function getData(url, option = {}){
 							imgSrcArr.push(src);
 							promiseArr.push(new Promise((resolve2, reject2) => {
 								writeLog('开始请求图片： '+ src);
-								let imgError = false;
-								let writeFile = fs.createWriteStream(imgSavePath + src), extname;
+								let imgError = false, imgPath = (imgSavePath + src).replace(/\?|\&/g, '_');
+								let writeFile = fs.createWriteStream(imgPath), extname;
 									request(_src || (addr + src), {timeout: 60000}).on('response', function(response){
 										if(response.statusCode.toString().indexOf('4') == 0){
 											self.remove();
@@ -102,7 +102,6 @@ function getData(url, option = {}){
 										self.attr('src', imgSrc);
 									}).on('error', function(err){
 										writeLog('请求图片失败： '+ (_src||src)+ ' 来至url： '+ url, true);
-										//reject2(err)
 										self.remove();
 										imgError = true;
 										reject2();
@@ -112,19 +111,20 @@ function getData(url, option = {}){
 											return ;
 										}
 										if(extname){
-											if(fs.existsSync(imgSavePath+src)){
+											let imgPath = (imgSavePath + src).replace(/\?|\&/g, '_');
+											if(fs.existsSync(imgPath)){
 												try{
 													if(src.indexOf('.') != -1){
 														resolve2('自带后缀： '+ src);
 														return;
 													}
-													fs.renameSync(imgSavePath+src, imgSavePath+ src + extname);
-													writeLog('修改图片： ' + src + extname);
+													fs.renameSync(imgPath, imgPath + extname);
+													writeLog('修改图片： ' + imgPath + extname);
 													
 												}catch(e){
 													writeLog('修图图片失败原因： .'+ src + extname + '\n' + e, true);
 												}
-												resolve2(src + extname);
+												resolve2(imgPath + extname);
 											}else {
 												writeLog('图片不存在： .'+ src+ ' 来至url： '+ url, true);
 												reject2(url);
@@ -170,7 +170,6 @@ function getData(url, option = {}){
 	});
 }
 	
-
 function returnTime(str){
 	let arr = str.match(/\d+/g), tempTime,
 		timeNumber;

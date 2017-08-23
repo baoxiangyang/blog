@@ -43,8 +43,17 @@ const index = require('./routes/index'),
 app.use(bodyparser());
 app.use(convert(json()));
 
+//加载第三方图片
+app.use(async (ctx, next) => {
+  if(ctx.url.indexOf('/img/') === 0){
+    ctx.url = ctx.url.replace(/\?|\&/g, '_');
+  }
+  await next();
+});
+
 app.use(favicon(__dirname + '/public/images/logo.jpg'));
 app.use(require('koa-static')(__dirname + '/public'));
+app.use(require('koa-static')(__dirname + '/article'));
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));
 
 //session
@@ -53,24 +62,6 @@ app.use(session({
   store: redisStore,
   httpOnly: true
 }));
-
-//加载第三方图片
-app.use(async (ctx, next) => {
-  if(ctx.url.indexOf('/img/') === 0){
-    ctx.url = ctx.url.replace("&", '&amp;');
-    if(process.env.NODE_ENV != 'production'){
-      ctx.url = ctx.url.replace('?', '_');
-    }
-    if(fs.existsSync(imgSavePath + ctx.url)){
-      //图片压缩
-      ctx.body = fs.createReadStream(imgSavePath + ctx.url);
-    }else{
-      await next();
-    }
-  }else{
-    await next();
-  }
-});
 
 // logger
 app.use(async (ctx, next) => {
