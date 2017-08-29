@@ -94,7 +94,7 @@
           }
           this.$nextTick(function(){
             Array.prototype.forEach.call(document.querySelectorAll('pre code'), function(item){
-              let htmlStr = item.innerHTML || item.innerHTML.replace(/\</g,'&lt;').replace(/\>/g, '&gt;');
+              let htmlStr = item.innerHTML && item.innerHTML.replace(/\</g,'&lt;').replace(/\>/g, '&gt;');
               item.innerHTML = htmlStr;
               hljs.highlightBlock(item)
             });
