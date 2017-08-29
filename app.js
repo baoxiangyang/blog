@@ -51,7 +51,7 @@ app.use(async (ctx, next) => {
   await next();
 });
 
-app.use(favicon(__dirname + '/public/images/logo.jpg'));
+app.use(favicon(__dirname + '/public/images/logo.ico'));
 app.use(require('koa-static')(__dirname + '/public'));
 app.use(require('koa-static')(__dirname + '/article'));
 app.use(views(__dirname + '/views', {map: {html: 'ejs' }}));

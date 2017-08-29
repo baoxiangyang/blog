@@ -14,7 +14,7 @@
           时间：<time :datetime="currentItem.time">{{currentItem.timeMsg}}</time>
         </section>
         <div v-html="detail" ref="detail"></div>
-        <p><strong>转载地址</strong> <a :href="currentItem.address">{{currentItem.address}}</a></p>
+        <p><strong>转载地址</strong> <a :href="currentItem.address" target="_black">{{currentItem.address}}</a></p>
       </article>
     </el-col>
     <el-col :span="4">
@@ -94,7 +94,9 @@
           }
           this.$nextTick(function(){
             Array.prototype.forEach.call(document.querySelectorAll('pre code'), function(item){
-              hljs.highlightBlock(item);
+              let htmlStr = item.innerHTML || item.innerHTML.replace(/\</g,'&lt;').replace(/\>/g, '&gt;');
+              item.innerHTML = htmlStr;
+              hljs.highlightBlock(item)
             });
           });
           if(res.data.errorCode != 0){
