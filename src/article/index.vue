@@ -1,7 +1,7 @@
 <template>
   <div class="articleList">
     <div class="articleHeader">
-      <el-menu :default-active="activeIndex" :router="true" @select="handleSelect" class="articleNav maxWidth" mode="horizontal">
+      <el-menu background-color="#eef1f6" :default-active="activeIndex" :router="true" @select="handleSelect" class="articleNav maxWidth" mode="horizontal">
         <el-menu-item index="article-all" :route="{name:'articleList', query: {type: 'all'}}">全部</el-menu-item>
         <el-menu-item index="article-javascript" :route="{name:'articleList', query: {type: 'javascript'}}">javascript</el-menu-item>
         <el-menu-item index="article-html" :route="{name:'articleList', query: {type: 'html'}}">html</el-menu-item>
@@ -12,11 +12,11 @@
         <el-menu-item index="article-vue" :route="{name:'articleList', query: {type: 'vue'}}">vue</el-menu-item>
         <el-menu-item index="article-react" :route="{name:'articleList', query: {type: 'react'}}">react</el-menu-item>
         <el-menu-item index="article-other" :route="{name:'articleList', query: {type: 'other'}}">其他</el-menu-item>
-        <el-input class="search" icon="search" v-model="search" :on-icon-click="handleSearchClick" placeholder="搜索" size="small" @change="handleInputChange"></el-input>
+        <el-input class="search" prefix-icon="el-icon-search" :value="search" @blur="handleSearchClick" placeholder="搜索" size="small" @change="handleInputChange"></el-input>
       </el-menu>
     </div>
     <div class="maxWidth">
-      <router-view></router-view>  
+      <router-view></router-view>
     </div>
     <BackTop></BackTop>
   </div>
@@ -63,16 +63,16 @@
       next(vm => {
         vm.set_default_route('main-1');
         (to.name == 'articleList') && vm.set_articleStatus({
-          activeIndex: `article-${to.query.type || 'all'}`, 
-          type: to.query.type || 'all', 
+          activeIndex: `article-${to.query.type || 'all'}`,
+          type: to.query.type || 'all',
           search: to.query.search
         });
       });
     },
     beforeRouteUpdate(to, from, next){
       (to.name == 'articleList') && this.set_articleStatus({
-        activeIndex:  `article-${to.query.type || 'all'}`, 
-        type: to.query.type, 
+        activeIndex:  `article-${to.query.type || 'all'}`,
+        type: to.query.type,
         search: to.query.search
       });
       next();
@@ -82,7 +82,7 @@
         if(val != 0){
           this.$message({
             showClose: true,
-            message: this.msg, 
+            message: this.msg,
             type: 'error'
           });
           this.set_articleStatus({errorCode: 0});

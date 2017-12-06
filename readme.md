@@ -2,7 +2,7 @@
 
 ## 技术栈
  * 服务器： node、koa2
- * 客户端： vue、vuex、vue-router、Element-UI 
+ * 客户端： vue、vuex、vue-router、Element-UI
  * 数据库： redis、mongodb
  * 打包： webpack
 
@@ -19,6 +19,9 @@
  * config.js中的github，qq授权登陆需要自己配置
  * mongodb账号密码只有读取权限
 
+## 2017-12-06更新
+ * Element-UI升级到2.0.7版本
+ * vue优化为按需加载
 ## QQ交流群
 	133240225、 193572405
 

@@ -2,12 +2,10 @@ var path = require('path'),
   webpack = require('webpack'),
   HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
-  entry: {
-    'main': ['./src/main.js',
-      'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000']},
+  entry: {'main': './src/dev_main.js'},
   output: {
     path: path.resolve(__dirname, '../public/dist'),
-    publicPath: '/dist',
+    publicPath: '/dist/',
     filename: '[name].build.js'
   },
   module: {
@@ -47,10 +45,6 @@ module.exports = {
       'vue$': 'vue/dist/vue.esm.js'
     }
   },
-  /*devServer: {
-    historyApiFallback: true,
-    noInfo: true
-  },*/
   performance: {
     hints: false
   },

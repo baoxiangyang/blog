@@ -8,8 +8,9 @@ module.exports = {
   entry: {'main': './src/main.js'},
   output: {
     path: path.resolve(__dirname, '../public/dist'),
-    publicPath: '/dist',
-    filename: '[name].[chunkhash].build.js'
+    publicPath: '/dist/',
+    filename: '[name].[chunkhash].build.js',
+    chunkFilename: 'chunk/[name].[chunkhash].js',
   },
   module: {
     rules: [
@@ -20,6 +21,7 @@ module.exports = {
           loaders: {
             less: ExtractText.extract({
               use: ['css-loader', 'less-loader'],
+              fallback: 'vue-style-loader'
             })
           }
         }

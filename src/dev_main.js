@@ -3,7 +3,7 @@ import VueRouter from 'vue-router';
 import ElementUI from 'element-ui';
 import index from './layout/index.vue';
 import store from './store.js';
-import router from './router.js';
+import router from './dev_router.js';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
 import myAjax from './common/myAjax.js';
@@ -16,5 +16,5 @@ new Vue({
   el: '#app',
   store,
   router,
-  render: h => h(index)
+	render: h => h(index)
 });

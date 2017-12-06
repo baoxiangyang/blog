@@ -1,7 +1,7 @@
 <template>
   <div class="main">
     <header>
-      <el-menu theme="dark"  :default-active="mainDefault" :router="true" class="nav maxWidth" index="main">
+      <el-menu background-color="#324157" text-color="#cccccc" :default-active="mainDefault" :router="true" class="nav maxWidth" index="main">
         <el-row>
           <el-col :span="5" class="headerItem">
             <h1>
@@ -74,7 +74,7 @@
         if(val){
           this.$message({
             showClose: true,
-            message: this.msg, 
+            message: this.msg,
             duration: 2000,
             type: this.errorCode ? 'error': 'success',
             onClose: ()=> {
@@ -98,6 +98,9 @@
     header {
       height: 60px;
       background-color: #324157;
+      .el-menu {
+        border-right: none;
+      }
       .el-menu-item {
         float: none !important;
         display: inline-block;

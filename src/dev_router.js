@@ -1,16 +1,14 @@
-//生产环境route按需加载
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import article from './article/index.vue';
+import articleList from './article/articleList.vue';
+import articleDetails from './article/articleDetails.vue';
+import crawler from './crawler/index.vue';
+import register from './user/register.vue';
+import messageBoard from './messageBoard/index.vue';
+import profile from './profile/index.vue';
+
 Vue.use(VueRouter);
-
-const article = () => import(/* webpackChunkName: "article" */ './article/index.vue'),
-	articleList = () => import(/* webpackChunkName: "articleList" */ './article/articleList.vue'),
-	articleDetails = () => import(/* webpackChunkName: "articleDetails" */ './article/articleDetails.vue'),
-	crawler = () => import(/* webpackChunkName: "crawler" */ './crawler/index.vue'),
-	register = () => import(/* webpackChunkName: "register" */ './user/register.vue'),
-	messageBoard = () => import(/* webpackChunkName: "messageBoard" */ './messageBoard/index.vue'),
-	profile = () => import(/* webpackChunkName: "profile" */ './profile/index.vue');
-
 export default new VueRouter({
   mode: 'history',
   routes: [

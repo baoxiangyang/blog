@@ -25,6 +25,11 @@
         <li><strong>UI丑不要怪我，毕竟没有女UI设计师呀</strong></li>
         <li>QQ交流群：133240225、 193572405</li>
       </ul>
+    <h2>2017-12-06更新</h2>
+    <ul>
+      <li>Element-UI升级到2.0.7版本</li>
+      <li>vue优化为按需加载</li>
+    </ul>
   </div>
 </template>
 <script type="text/javascript">
@@ -32,7 +37,7 @@
   export default {
     data() {
       return {
-        
+
       };
     },
     methods: {
