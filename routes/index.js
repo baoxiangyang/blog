@@ -13,6 +13,10 @@ router.get(['/', 'article', 'article/list.html', 'article/articleDetails.html', 
   };
   await ctx.render('index');
 });
+
+router.get('train', async (ctx, next) => {
+	await ctx.render('train');
+})
 //上传头像
 router.post('upAvatar', upload.single('userAvatar'), async function (ctx, next) {
   ctx.session.avatarImg = ctx.req.file;
