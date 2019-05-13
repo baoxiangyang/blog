@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <!-- 使用双花括号(double-mustache)进行 HTML 转义插值(HTML-escaped interpolation) -->
+    <title>{{ title }}</title>
+    <!-- 使用三花括号(triple-mustache)进行 HTML 不转义插值(non-HTML-escaped interpolation) -->
+    <link rel="stylesheet" href="/stylesheets/style.css">
+  	<link rel="stylesheet" href="/stylesheets/global.css">
+  	<link href="https://cdn.bootcss.com/element-ui/2.4.11/theme-chalk/index.css" rel="stylesheet">
+  	<link href="https://cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/highlight.js/9.15.6/styles/railscasts.min.css" rel="stylesheet">
+    <% if (htmlWebpackPlugin.options.production) {%>
+    <script src="https://cdn.bootcss.com/vuex/3.0.1/vuex.min.js"></script>
+    <script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
+    <script src="https://cdn.bootcss.com/vue-router/3.0.1/vue-router.min.js"></script>
+    <script src="https://cdn.bootcss.com/element-ui/2.4.11/index.js"></script>
+    <script src="https://cdn.bootcss.com/blueimp-md5/2.8.0/js/md5.min.js"></script>
+    <script src="https://cdn.bootcss.com/highlight.js/9.15.6/highlight.min.js"></script>
+    <% } %>
+
+  </head>
+  <body>
+  	<!--vue-ssr-outlet-->
+  </body>
+</html>
