@@ -15,7 +15,7 @@ function getData(url, option = {}){
 				Cookie: option.cookie || ''
 			}
 		}, function (err, res, body) {
-			if(err) {
+			if(err || res.statusCode == 400) {
 				writeLog('获取文章失败： '+ url, true);
 				reject({
 					err: err,
@@ -104,7 +104,7 @@ function getData(url, option = {}){
 										writeLog('请求图片失败： '+ (_src||src)+ ' 来至url： '+ url, true);
 										self.remove();
 										imgError = true;
-										reject2();
+										resolve2(_src);
 									}).pipe(writeFile);
 									writeFile.on('finish', function(){
 										if(imgError){
@@ -127,7 +127,7 @@ function getData(url, option = {}){
 												resolve2(imgPath + extname);
 											}else {
 												writeLog('图片不存在： .'+ src+ ' 来至url： '+ url, true);
-												reject2(url);
+												resolve2(url);
 											}
 										}
 									});
@@ -171,6 +171,9 @@ function getData(url, option = {}){
 }
 	
 function returnTime(str){
+	if (!str) {
+		return '';
+	}
 	let arr = str.match(/\d+/g), tempTime,
 		timeNumber;
 		if(arr && arr.length == 2){

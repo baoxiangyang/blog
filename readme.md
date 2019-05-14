@@ -1,3 +1,5 @@
+# 目标网站做了反爬虫，不想用钱去买代理ip 本站已死
+
 # 线上地址   <font size="5">[小包总](https://www.xiaobaozong.cn/ "小包总")</font>
 
 ## 技术栈
