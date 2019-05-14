@@ -1,14 +1,14 @@
 module.exports = {
 	mongodb: {
 		host: 'www.xiaobaozong.cn',
-		user: 'xxx',
-		password: 'xxx',
+		user: 'xiaobaozong',
+		password: 'baozi.234',
 		port: 27017,
-		dbs: 'xxx'
+		dbs: 'dbs'
 	},
 	redis: {
-		host: 'xxx',
-		password: 'xxx',
+		host: 'www.xiaobaozong.cn',
+		password: 'redis.123456',
 		port: 6379,
 		ttl: 60 * 30 //30分钟过期
 	},

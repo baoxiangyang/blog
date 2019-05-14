@@ -20,7 +20,7 @@ const index = require('./routes/index'),
   
 app.use(favicon(__dirname + '/public/images/logo.ico'));  
 app.use(require('koa-static')(__dirname + '/public'));
-app.use(renderer({server: app, isProd, templatePath: './view/index.template.html'}));
+
 
 //加载第三方图片
 app.use(async (ctx, next) => {
@@ -49,6 +49,8 @@ app.use(async (ctx, next) => {
   const ms = new Date() - start;
   console.log(`${ctx.method} ${ctx.url} ${ctx.status} - ${ms}ms`);
 });
+
+app.use(renderer({server: app, isProd, templatePath: './view/index.template.html'}));
 
 //访问统计
 if(process.env.NODE_ENV == 'production'){
